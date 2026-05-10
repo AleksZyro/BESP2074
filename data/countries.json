@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Serbia",
+    "code": "SRB",
+    "base_birth_rate": 0.0091,
+    "base_death_rate": 0.0146,
+    "base_net_migration_rate": -0.0035,
+    "stability": 0.62,
+    "eu_integration": 0.48,
+    "corruption": 0.58
+  },
+  {
+    "name": "Montenegro",
+    "code": "MNE",
+    "base_birth_rate": 0.0112,
+    "base_death_rate": 0.0109,
+    "base_net_migration_rate": -0.0028,
+    "stability": 0.60,
+    "eu_integration": 0.56,
+    "corruption": 0.55
+  },
+  {
+    "name": "Bosnia and Herzegovina",
+    "code": "BIH",
+    "base_birth_rate": 0.0084,
+    "base_death_rate": 0.0125,
+    "base_net_migration_rate": -0.0042,
+    "stability": 0.47,
+    "eu_integration": 0.38,
+    "corruption": 0.66
+  }
+]
