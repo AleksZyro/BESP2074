@@ -1,12 +1,25 @@
 from besp.loader import load_world
-from besp.simulation import simulate_year
+from besp.models import RegionYearResult
+from besp.simulation import simulate_period
 
 
-def print_results(start_year: int, end_year: int, results) -> None:
-    print(f"BESP simulation tick: {start_year} -> {end_year}")
+def print_year_results(
+    start_year: int,
+    end_year: int,
+    results: list[RegionYearResult],
+) -> None:
+    print(f"BESP simulation period: {start_year} -> {end_year}")
     print("=" * 72)
 
+    current_year: int | None = None
+
     for result in results:
+        if result.start_year != current_year:
+            current_year = result.start_year
+            print()
+            print(f"Year: {result.start_year} -> {result.end_year}")
+            print("=" * 72)
+
         print(f"{result.country_code} | {result.region_name}")
         print(f"  Start population:          {result.start_population:,}")
         print(f"  Births:                    {result.births:,}")
@@ -26,12 +39,12 @@ def print_results(start_year: int, end_year: int, results) -> None:
 
 def main() -> None:
     start_year = 2020
-    end_year = 2021
+    end_year = 2030
 
     countries = load_world("data")
-    results = simulate_year(countries, start_year)
+    results = simulate_period(countries, start_year, end_year)
 
-    print_results(start_year, end_year, results)
+    print_year_results(start_year, end_year, results)
 
 
 if __name__ == "__main__":
