@@ -6,8 +6,15 @@ Current scope:
 - Countries and regions as dataclasses
 - JSON start data
 - Loader functions
-- One annual simulation tick from 2020 to 2021
+- Multi-year annual simulation
 - Terminal output only
+
+Current simulation behavior:
+- Births and deaths by country base rates and regional modifiers
+- Region-sensitive external migration
+- Population-weighted internal migration between regions of the same country
+- Regional attractiveness based on economy, infrastructure, urbanization, metro pull and housing pressure
+- Multi-year terminal output with area, density, natural change and migration values
 
 Modeling principles:
 - No focus trees
