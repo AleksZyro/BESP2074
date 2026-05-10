@@ -24,11 +24,14 @@ def print_year_results(
         print(f"  Start population:          {result.start_population:,}")
         print(f"  Births:                    {result.births:,}")
         print(f"  Deaths:                    {result.deaths:,}")
+        print(f"  Natural change:            {result.natural_change:,}")
         print(f"  Net external migration:    {result.net_external_migration:,}")
         print(f"  Internal migration:        {result.internal_migration:,}")
         print(f"  End population:            {result.end_population:,}")
+        print(f"  Area:                      {result.area_km2:.1f} km²")
         print(f"  Density:                   {result.population_density:.1f} people/km²")
         print(f"  Housing overload:          {result.housing_overload:.3f}")
+        print(f"  Regional attractiveness:   {result.regional_attractiveness:.3f}")
         print(f"  Data confidence:           {result.data_confidence:.2f}")
 
         if result.population_note:
