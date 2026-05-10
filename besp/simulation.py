@@ -8,6 +8,16 @@ METRO_PULL_WEIGHT = 0.20
 INTERNAL_MIGRATION_STRENGTH = 0.02
 MAX_INTERNAL_MIGRATION_RATE = 0.012
 
+BASE_GDP_GROWTH = 0.008
+ATTRACTIVENESS_GDP_MULTIPLIER = 0.05
+HOUSING_GDP_PENALTY = 0.03
+UNEMPLOYMENT_GDP_DRAG = 0.02
+MIN_GDP_GROWTH = -0.03
+MAX_GDP_GROWTH = 0.08
+
+MIN_UNEMPLOYMENT_RATE = 0.04
+MAX_UNEMPLOYMENT_RATE = 0.35
+
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(value, maximum))
@@ -75,6 +85,37 @@ def calculate_external_migration_rate(country: Country, region: Region) -> float
     )
 
 
+def calculate_regional_gdp_growth_rate(region: Region) -> float:
+    attractiveness = calculate_regional_attractiveness(region)
+    overload_penalty = max(region.housing_overload - 1.0, 0.0) * HOUSING_GDP_PENALTY
+    unemployment_drag = region.unemployment_rate * UNEMPLOYMENT_GDP_DRAG
+
+    growth_rate = (
+        BASE_GDP_GROWTH
+        + (attractiveness - 0.45) * ATTRACTIVENESS_GDP_MULTIPLIER
+        - overload_penalty
+        - unemployment_drag
+    )
+
+    return clamp(growth_rate, MIN_GDP_GROWTH, MAX_GDP_GROWTH)
+
+
+def calculate_updated_unemployment_rate(
+    current_unemployment_rate: float,
+    gdp_growth_rate: float,
+    regional_attractiveness: float,
+) -> float:
+    unemployment_change = -gdp_growth_rate * 0.60
+
+    if regional_attractiveness >= 0.65:
+        unemployment_change -= 0.002
+    elif regional_attractiveness <= 0.40:
+        unemployment_change += 0.002
+
+    updated_rate = current_unemployment_rate + unemployment_change
+    return clamp(updated_rate, MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE)
+
+
 def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearResult]:
     end_year = start_year + 1
     results: list[RegionYearResult] = []
@@ -104,6 +145,7 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
 
         for region in country.regions:
             start_population = region.population
+            start_gdp_billion_eur = region.gdp_billion_eur
 
             birth_rate = country.base_birth_rate * region.birth_rate_modifier
             death_rate = country.base_death_rate * region.death_rate_modifier
@@ -121,9 +163,23 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
                 + net_external_migration
                 + internal_migration
             )
-
             region.population = max(end_population, 0)
+
             regional_attractiveness = calculate_regional_attractiveness(region)
+            gdp_growth_rate = calculate_regional_gdp_growth_rate(region)
+            region.gdp_billion_eur = max(
+                start_gdp_billion_eur * (1.0 + gdp_growth_rate),
+                0.01,
+            )
+            region.unemployment_rate = calculate_updated_unemployment_rate(
+                region.unemployment_rate,
+                gdp_growth_rate,
+                regional_attractiveness,
+            )
+
+            gdp_per_capita_eur = 0.0
+            if region.population > 0:
+                gdp_per_capita_eur = (region.gdp_billion_eur * 1_000_000_000) / region.population
 
             results.append(
                 RegionYearResult(
@@ -138,6 +194,11 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
                     net_external_migration=net_external_migration,
                     internal_migration=internal_migration,
                     end_population=region.population,
+                    start_gdp_billion_eur=start_gdp_billion_eur,
+                    end_gdp_billion_eur=region.gdp_billion_eur,
+                    gdp_growth_rate=gdp_growth_rate,
+                    gdp_per_capita_eur=gdp_per_capita_eur,
+                    unemployment_rate=region.unemployment_rate,
                     area_km2=region.area_km2,
                     population_density=region.population_density,
                     housing_overload=region.housing_overload,
@@ -186,6 +247,16 @@ def aggregate_country_results(
         net_external_migration = sum(entry.net_external_migration for entry in entries)
         internal_migration = sum(entry.internal_migration for entry in entries)
 
+        start_gdp_billion_eur = sum(entry.start_gdp_billion_eur for entry in entries)
+        end_gdp_billion_eur = sum(entry.end_gdp_billion_eur for entry in entries)
+        gdp_growth_rate = 0.0
+        if start_gdp_billion_eur > 0:
+            gdp_growth_rate = (end_gdp_billion_eur / start_gdp_billion_eur) - 1.0
+
+        gdp_per_capita_eur = 0.0
+        if end_population > 0:
+            gdp_per_capita_eur = (end_gdp_billion_eur * 1_000_000_000) / end_population
+
         region_count = len(entries)
         average_population_density = (
             sum(entry.population_density for entry in entries) / region_count
@@ -203,6 +274,14 @@ def aggregate_country_results(
             else 0.0
         )
 
+        total_weight = sum(entry.end_population for entry in entries)
+        average_unemployment_rate = 0.0
+        if total_weight > 0:
+            average_unemployment_rate = sum(
+                entry.unemployment_rate * entry.end_population
+                for entry in entries
+            ) / total_weight
+
         country_results.append(
             CountryYearResult(
                 start_year=start_year,
@@ -216,6 +295,11 @@ def aggregate_country_results(
                 natural_change=natural_change,
                 net_external_migration=net_external_migration,
                 internal_migration=internal_migration,
+                start_gdp_billion_eur=start_gdp_billion_eur,
+                end_gdp_billion_eur=end_gdp_billion_eur,
+                gdp_growth_rate=gdp_growth_rate,
+                gdp_per_capita_eur=gdp_per_capita_eur,
+                average_unemployment_rate=average_unemployment_rate,
                 average_population_density=average_population_density,
                 average_housing_overload=average_housing_overload,
                 average_regional_attractiveness=average_regional_attractiveness,
