@@ -10,6 +10,7 @@ def build_simulation_export(
     end_year: int,
     country_results: list[CountryYearResult],
     region_results: list[RegionYearResult],
+    warning_count: int = 0,
 ) -> dict:
     years: dict[str, dict[str, list[dict]]] = {}
 
@@ -27,10 +28,10 @@ def build_simulation_export(
         "meta": {
             "start_year": start_year,
             "end_year": end_year,
+            "warning_count": warning_count,
         },
         "years": years,
     }
-
 
 
 def save_simulation_export_json(export_data: dict, output_path: str | Path) -> None:
