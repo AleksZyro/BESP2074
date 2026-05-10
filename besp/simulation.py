@@ -1,17 +1,27 @@
 from besp.models import Country, CountryYearResult, Region, RegionYearResult
 
+# -----------------------------------------------------------------------------
+# Attractiveness model tuning
+# -----------------------------------------------------------------------------
 ECONOMIC_WEIGHT = 0.50
 INFRASTRUCTURE_WEIGHT = 0.20
 URBANIZATION_WEIGHT = 0.10
 METRO_PULL_WEIGHT = 0.20
 
+# -----------------------------------------------------------------------------
+# Migration model tuning
+# -----------------------------------------------------------------------------
 INTERNAL_MIGRATION_STRENGTH = 0.02
 MAX_INTERNAL_MIGRATION_RATE = 0.012
 
+# -----------------------------------------------------------------------------
+# Economy v1 tuning
+# -----------------------------------------------------------------------------
 BASE_GDP_GROWTH = 0.008
 ATTRACTIVENESS_GDP_MULTIPLIER = 0.05
 HOUSING_GDP_PENALTY = 0.03
 UNEMPLOYMENT_GDP_DRAG = 0.02
+
 MIN_GDP_GROWTH = -0.03
 MAX_GDP_GROWTH = 0.08
 
@@ -249,6 +259,7 @@ def aggregate_country_results(
 
         start_gdp_billion_eur = sum(entry.start_gdp_billion_eur for entry in entries)
         end_gdp_billion_eur = sum(entry.end_gdp_billion_eur for entry in entries)
+
         gdp_growth_rate = 0.0
         if start_gdp_billion_eur > 0:
             gdp_growth_rate = (end_gdp_billion_eur / start_gdp_billion_eur) - 1.0
