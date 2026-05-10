@@ -3,129 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BESP Dashboard v1</title>
+    <title>BESP Dashboard 4.1</title>
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-    <div class="app-shell">
+    <div class="page-shell">
         <header class="hero">
-            <div class="hero-copy">
-                <p class="eyebrow">BESP Phase 4</p>
-                <h1>Balkan Economy Simulation Player</h1>
+            <div>
+                <p class="eyebrow">BESP Phase 4.1</p>
+                <h1>Static JSON-Driven Dashboard</h1>
                 <p class="lead">
-                    Dashboard v1 sits on top of the exported simulation results:
-                    year drilldown, country drilldown, region drilldown, no map, no playback, no extra systems.
+                    This dashboard only reads the existing simulation export and displays the current
+                    metadata, country summaries, and region summaries.
                 </p>
             </div>
-            <div class="hero-summary">
-                <div class="hero-stat">
-                    <span>Simulation window</span>
-                    <strong id="simulation-window">-</strong>
-                </div>
-                <div class="hero-stat">
-                    <span>Available year steps</span>
-                    <strong id="available-steps">-</strong>
-                </div>
-                <div class="hero-stat">
-                    <span>Validation warnings</span>
-                    <strong id="warning-count">-</strong>
-                </div>
-            </div>
+            <p id="load-status" class="status-banner">Waiting for export data.</p>
         </header>
 
-        <main class="dashboard-layout">
-            <section class="panel controls-panel">
+        <main class="dashboard-grid">
+            <section class="panel">
                 <div class="section-heading">
                     <div>
-                        <p class="section-kicker">Dataset</p>
-                        <h2>Selection Controls</h2>
-                    </div>
-                    <p id="data-status" class="status-line">Waiting for export data.</p>
-                </div>
-
-                <div class="controls-grid">
-                    <label class="control">
-                        <span>Year interval</span>
-                        <select id="year-select"></select>
-                    </label>
-
-                    <label class="control">
-                        <span>Country</span>
-                        <select id="country-select"></select>
-                    </label>
-
-                    <label class="control">
-                        <span>Region</span>
-                        <select id="region-select"></select>
-                    </label>
-
-                    <label class="control file-control">
-                        <span>Load export JSON</span>
-                        <input id="file-input" type="file" accept=".json,application/json">
-                    </label>
-                </div>
-            </section>
-
-            <section class="panel spotlight-panel">
-                <div class="section-heading">
-                    <div>
-                        <p class="section-kicker">Country View</p>
-                        <h2 id="country-title">No country selected</h2>
-                    </div>
-                    <div class="pill-row">
-                        <span id="country-code-pill" class="metric-pill">-</span>
-                        <span id="country-growth-pill" class="metric-pill">Growth -</span>
+                        <p class="section-kicker">Overview</p>
+                        <h2>Export Metadata</h2>
                     </div>
                 </div>
 
-                <div id="country-cards" class="stat-grid"></div>
-            </section>
-
-            <section class="panel spotlight-panel">
-                <div class="section-heading">
-                    <div>
-                        <p class="section-kicker">Region View</p>
-                        <h2 id="region-title">No region selected</h2>
-                    </div>
-                    <div class="pill-row">
-                        <span id="region-country-pill" class="metric-pill">-</span>
-                        <span id="region-confidence-pill" class="metric-pill">Confidence -</span>
-                    </div>
-                </div>
-
-                <div id="region-cards" class="stat-grid"></div>
-            </section>
-
-            <section class="panel notes-panel">
-                <div class="section-heading">
-                    <div>
-                        <p class="section-kicker">Region Context</p>
-                        <h2>Notes and Metadata</h2>
-                    </div>
-                </div>
-
-                <div class="notes-grid">
-                    <article class="note-card">
-                        <span class="note-label">Population note</span>
-                        <p id="region-note" class="note-body">
-                            Select a region to inspect its working-note context.
-                        </p>
-                    </article>
-
-                    <article class="note-card">
-                        <span class="note-label">Dataset source</span>
-                        <p id="data-source" class="note-body">
-                            No export loaded yet.
-                        </p>
+                <div id="meta-cards" class="card-grid">
+                    <article class="meta-card empty-card">
+                        <span class="meta-label">No data loaded</span>
+                        <strong class="meta-value">-</strong>
+                        <p class="meta-note">Run the simulation to generate <code>output/latest.json</code>.</p>
                     </article>
                 </div>
             </section>
 
-            <section class="panel comparison-panel">
+            <section class="panel">
                 <div class="section-heading">
                     <div>
-                        <p class="section-kicker">Country Breakdown</p>
-                        <h2>Region Comparison</h2>
+                        <p class="section-kicker">Country Summary</p>
+                        <h2>Country Year Values</h2>
                     </div>
                 </div>
 
@@ -133,18 +50,49 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>Year</th>
+                                <th>Country</th>
+                                <th>Population</th>
+                                <th>GDP</th>
+                                <th>GDP growth</th>
+                                <th>GDP per capita</th>
+                                <th>Unemployment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="country-table-body">
+                            <tr>
+                                <td colspan="7" class="table-empty">No country summary loaded yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-kicker">Region Summary</p>
+                        <h2>Region Year Values</h2>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Country</th>
                                 <th>Region</th>
                                 <th>Population</th>
                                 <th>GDP</th>
-                                <th>GDP per capita</th>
+                                <th>GDP growth</th>
                                 <th>Unemployment</th>
                                 <th>Attractiveness</th>
-                                <th>Housing overload</th>
                             </tr>
                         </thead>
-                        <tbody id="comparison-body">
+                        <tbody id="region-table-body">
                             <tr>
-                                <td colspan="7" class="table-empty">Load an export to compare regions.</td>
+                                <td colspan="8" class="table-empty">No region summary loaded yet.</td>
                             </tr>
                         </tbody>
                     </table>

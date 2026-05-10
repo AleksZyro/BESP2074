@@ -1,4 +1,4 @@
-const AUTO_EXPORT_PATH = "../output/latest.json";
+const EXPORT_PATH = "../output/latest.json";
 
 const integerFormatter = new Intl.NumberFormat("en-US");
 const decimalFormatter = new Intl.NumberFormat("en-US", {
@@ -11,105 +11,35 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 1,
 });
 
-const state = {
-    exportData: null,
-    sourceLabel: "No export loaded yet.",
-    yearKey: "",
-    countryCode: "",
-    regionName: "",
-};
-
 const elements = {
-    simulationWindow: document.getElementById("simulation-window"),
-    availableSteps: document.getElementById("available-steps"),
-    warningCount: document.getElementById("warning-count"),
-    dataStatus: document.getElementById("data-status"),
-    dataSource: document.getElementById("data-source"),
-    yearSelect: document.getElementById("year-select"),
-    countrySelect: document.getElementById("country-select"),
-    regionSelect: document.getElementById("region-select"),
-    fileInput: document.getElementById("file-input"),
-    countryTitle: document.getElementById("country-title"),
-    countryCodePill: document.getElementById("country-code-pill"),
-    countryGrowthPill: document.getElementById("country-growth-pill"),
-    countryCards: document.getElementById("country-cards"),
-    regionTitle: document.getElementById("region-title"),
-    regionCountryPill: document.getElementById("region-country-pill"),
-    regionConfidencePill: document.getElementById("region-confidence-pill"),
-    regionCards: document.getElementById("region-cards"),
-    regionNote: document.getElementById("region-note"),
-    comparisonBody: document.getElementById("comparison-body"),
+    loadStatus: document.getElementById("load-status"),
+    metaCards: document.getElementById("meta-cards"),
+    countryTableBody: document.getElementById("country-table-body"),
+    regionTableBody: document.getElementById("region-table-body"),
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    bindEvents();
-    renderEmptyDashboard();
-    void autoLoadExport();
+    renderEmptyState();
+    void loadDashboardData();
 });
 
-function bindEvents() {
-    elements.yearSelect.addEventListener("change", (event) => {
-        state.yearKey = event.target.value;
-        syncCountryAndRegionSelection();
-        renderDashboard();
-    });
-
-    elements.countrySelect.addEventListener("change", (event) => {
-        state.countryCode = event.target.value;
-        syncRegionSelection();
-        renderDashboard();
-    });
-
-    elements.regionSelect.addEventListener("change", (event) => {
-        state.regionName = event.target.value;
-        renderDashboard();
-    });
-
-    elements.fileInput.addEventListener("change", async (event) => {
-        const [file] = event.target.files ?? [];
-        if (!file) {
-            return;
-        }
-
-        try {
-            const contents = await file.text();
-            const exportData = JSON.parse(contents);
-            hydrateDashboard(exportData, `Loaded manually from ${file.name}.`);
-        } catch (error) {
-            renderStatus("The selected file could not be parsed as a BESP export JSON.");
-        }
-    });
-}
-
-async function autoLoadExport() {
+async function loadDashboardData() {
     try {
-        const response = await fetch(AUTO_EXPORT_PATH, { cache: "no-store" });
+        const response = await fetch(EXPORT_PATH, { cache: "no-store" });
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
 
         const exportData = await response.json();
-        hydrateDashboard(exportData, `Auto-loaded ${AUTO_EXPORT_PATH}.`);
+        if (!isValidExport(exportData)) {
+            throw new Error("Invalid BESP export shape");
+        }
+
+        renderDashboard(exportData);
     } catch (error) {
-        renderStatus(
-            "Auto-load did not succeed. Run `py main.py` first, or choose an export JSON manually."
-        );
-        elements.dataSource.textContent =
-            "No auto-loaded dataset yet. The dashboard stays usable through manual JSON loading.";
+        elements.loadStatus.textContent =
+            "Could not load output/latest.json. Run py main.py and serve the repository root before opening the dashboard.";
     }
-}
-
-function hydrateDashboard(exportData, sourceLabel) {
-    if (!isValidExport(exportData)) {
-        renderStatus("The loaded JSON does not match the expected BESP export shape.");
-        return;
-    }
-
-    state.exportData = exportData;
-    state.sourceLabel = sourceLabel;
-    syncYearSelection();
-    syncCountryAndRegionSelection();
-    renderDashboard();
 }
 
 function isValidExport(exportData) {
@@ -124,249 +54,130 @@ function isValidExport(exportData) {
     );
 }
 
-function getYearKeys() {
-    return Object.keys(state.exportData?.years ?? {}).sort((left, right) => {
-        return parseInt(left.slice(0, 4), 10) - parseInt(right.slice(0, 4), 10);
-    });
+function renderDashboard(exportData) {
+    const countryRows = [];
+    const regionRows = [];
+
+    for (const [yearKey, yearData] of Object.entries(exportData.years)) {
+        for (const country of yearData.countries ?? []) {
+            countryRows.push({ yearKey, ...country });
+        }
+
+        for (const region of yearData.regions ?? []) {
+            regionRows.push({ yearKey, ...region });
+        }
+    }
+
+    countryRows.sort(compareYearAndCountry);
+    regionRows.sort(compareYearCountryAndRegion);
+
+    renderMetaCards(exportData, countryRows.length, regionRows.length);
+    renderCountryTable(countryRows);
+    renderRegionTable(regionRows);
+    elements.loadStatus.textContent = `Loaded ${EXPORT_PATH} successfully.`;
 }
 
-function syncYearSelection() {
-    const yearKeys = getYearKeys();
-    if (!yearKeys.length) {
-        state.yearKey = "";
+function renderMetaCards(exportData, countryRowCount, regionRowCount) {
+    elements.metaCards.innerHTML = [
+        buildMetaCard("Start year", exportData.meta.start_year),
+        buildMetaCard("End year", exportData.meta.end_year),
+        buildMetaCard("Country year values", formatInteger(countryRowCount)),
+        buildMetaCard("Region year values", formatInteger(regionRowCount)),
+        buildMetaCard("Year buckets", formatInteger(Object.keys(exportData.years).length)),
+        buildMetaCard("Validation warnings", formatInteger(exportData.meta.warning_count ?? 0)),
+    ].join("");
+}
+
+function renderCountryTable(countryRows) {
+    if (!countryRows.length) {
+        elements.countryTableBody.innerHTML =
+            '<tr><td colspan="7" class="table-empty">No country year values found in the export.</td></tr>';
         return;
     }
 
-    if (!yearKeys.includes(state.yearKey)) {
-        state.yearKey = yearKeys[0];
-    }
-}
-
-function getSelectedYearData() {
-    return state.exportData?.years?.[state.yearKey] ?? { countries: [], regions: [] };
-}
-
-function syncCountryAndRegionSelection() {
-    const yearData = getSelectedYearData();
-    const countryCodes = yearData.countries
-        .map((country) => country.country_code)
-        .sort((left, right) => left.localeCompare(right));
-
-    if (!countryCodes.includes(state.countryCode)) {
-        state.countryCode = countryCodes[0] ?? "";
-    }
-
-    syncRegionSelection();
-}
-
-function syncRegionSelection() {
-    const regions = getSelectedYearData().regions
-        .filter((region) => region.country_code === state.countryCode)
-        .sort((left, right) => left.region_name.localeCompare(right.region_name));
-
-    const regionNames = regions.map((region) => region.region_name);
-    if (!regionNames.includes(state.regionName)) {
-        state.regionName = regionNames[0] ?? "";
-    }
-}
-
-function renderDashboard() {
-    if (!state.exportData) {
-        renderEmptyDashboard();
-        return;
-    }
-
-    const yearKeys = getYearKeys();
-    const yearData = getSelectedYearData();
-    const country = yearData.countries.find((entry) => entry.country_code === state.countryCode);
-    const regionList = yearData.regions
-        .filter((entry) => entry.country_code === state.countryCode)
-        .sort((left, right) => right.end_population - left.end_population);
-    const region = yearData.regions.find(
-        (entry) => entry.country_code === state.countryCode && entry.region_name === state.regionName
-    );
-
-    populateYearSelect(yearKeys);
-    populateCountrySelect(yearData.countries);
-    populateRegionSelect(regionList);
-
-    elements.simulationWindow.textContent =
-        `${state.exportData.meta.start_year} -> ${state.exportData.meta.end_year}`;
-    elements.availableSteps.textContent = integerFormatter.format(yearKeys.length);
-    elements.warningCount.textContent = integerFormatter.format(state.exportData.meta.warning_count);
-    elements.dataSource.textContent = state.sourceLabel;
-    renderStatus(`Showing ${state.yearKey} for ${country?.country_name ?? "no country"}${region ? ` / ${region.region_name}` : ""}.`);
-
-    renderCountryPanel(country);
-    renderRegionPanel(region);
-    renderComparisonTable(regionList, region?.region_name ?? "");
-}
-
-function populateYearSelect(yearKeys) {
-    elements.yearSelect.innerHTML = yearKeys
-        .map((yearKey) => `<option value="${escapeHtml(yearKey)}">${escapeHtml(yearKey)}</option>`)
-        .join("");
-    elements.yearSelect.value = state.yearKey;
-}
-
-function populateCountrySelect(countries) {
-    const sortedCountries = [...countries].sort((left, right) =>
-        left.country_name.localeCompare(right.country_name)
-    );
-
-    elements.countrySelect.innerHTML = sortedCountries
-        .map((country) => (
-            `<option value="${escapeHtml(country.country_code)}">`
-            + `${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})`
-            + "</option>"
-        ))
-        .join("");
-    elements.countrySelect.value = state.countryCode;
-}
-
-function populateRegionSelect(regions) {
-    elements.regionSelect.innerHTML = regions
-        .map((region) => `<option value="${escapeHtml(region.region_name)}">${escapeHtml(region.region_name)}</option>`)
-        .join("");
-    elements.regionSelect.value = state.regionName;
-}
-
-function renderCountryPanel(country) {
-    if (!country) {
-        elements.countryTitle.textContent = "No country selected";
-        elements.countryCodePill.textContent = "-";
-        elements.countryGrowthPill.textContent = "Growth -";
-        elements.countryCards.innerHTML = buildEmptyCards("No country data for the current year interval.");
-        return;
-    }
-
-    elements.countryTitle.textContent = `${country.country_name} (${country.start_year} -> ${country.end_year})`;
-    elements.countryCodePill.textContent = country.country_code;
-    elements.countryGrowthPill.textContent = `Growth ${formatPercent(country.gdp_growth_rate)}`;
-
-    const cards = [
-        buildStatCard("Population", formatInteger(country.end_population), signedDelta(country.end_population - country.start_population), toneFromSigned(country.end_population - country.start_population)),
-        buildStatCard("Natural change", formatSignedInteger(country.natural_change), "Births minus deaths", toneFromSigned(country.natural_change)),
-        buildStatCard("External migration", formatSignedInteger(country.net_external_migration), "Net cross-border migration", toneFromSigned(country.net_external_migration)),
-        buildStatCard("Internal migration", formatSignedInteger(country.internal_migration), "Should stay near zero at country level", toneFromSigned(-Math.abs(country.internal_migration))),
-        buildStatCard("GDP", `${formatDecimal(country.end_gdp_billion_eur)} bn EUR`, `From ${formatDecimal(country.start_gdp_billion_eur)} bn`, toneFromSigned(country.gdp_growth_rate)),
-        buildStatCard("GDP per capita", `${formatInteger(Math.round(country.gdp_per_capita_eur))} EUR`, "End-of-step value", "tone-neutral"),
-        buildStatCard("Avg unemployment", formatPercent(country.average_unemployment_rate), "Population-weighted", toneFromInversePercent(country.average_unemployment_rate)),
-        buildStatCard("Avg attractiveness", formatDecimal(country.average_regional_attractiveness), "Regional mean", toneFromThreshold(country.average_regional_attractiveness, 0.5)),
-        buildStatCard("Avg density", `${formatDecimal(country.average_population_density)} / km^2`, "Simple regional average", "tone-neutral"),
-        buildStatCard("Avg housing overload", formatDecimal(country.average_housing_overload), "Above 1.00 signals pressure", toneFromInverseThreshold(country.average_housing_overload, 1)),
-    ];
-
-    elements.countryCards.innerHTML = cards.join("");
-}
-
-function renderRegionPanel(region) {
-    if (!region) {
-        elements.regionTitle.textContent = "No region selected";
-        elements.regionCountryPill.textContent = "-";
-        elements.regionConfidencePill.textContent = "Confidence -";
-        elements.regionCards.innerHTML = buildEmptyCards("No region data for the current filter.");
-        elements.regionNote.textContent = "Select a region to inspect its working-note context.";
-        return;
-    }
-
-    elements.regionTitle.textContent = `${region.region_name} (${region.start_year} -> ${region.end_year})`;
-    elements.regionCountryPill.textContent = region.country_code;
-    elements.regionConfidencePill.textContent = `Confidence ${formatPercent(region.data_confidence)}`;
-    elements.regionNote.textContent = region.population_note || "No population note available.";
-
-    const cards = [
-        buildStatCard("Population", formatInteger(region.end_population), signedDelta(region.end_population - region.start_population), toneFromSigned(region.end_population - region.start_population)),
-        buildStatCard("Natural change", formatSignedInteger(region.natural_change), "Births minus deaths", toneFromSigned(region.natural_change)),
-        buildStatCard("External migration", formatSignedInteger(region.net_external_migration), "Cross-border movement", toneFromSigned(region.net_external_migration)),
-        buildStatCard("Internal migration", formatSignedInteger(region.internal_migration), "Within the same country", toneFromSigned(region.internal_migration)),
-        buildStatCard("GDP", `${formatDecimal(region.end_gdp_billion_eur)} bn EUR`, `Growth ${formatPercent(region.gdp_growth_rate)}`, toneFromSigned(region.gdp_growth_rate)),
-        buildStatCard("GDP per capita", `${formatInteger(Math.round(region.gdp_per_capita_eur))} EUR`, "End-of-step value", "tone-neutral"),
-        buildStatCard("Unemployment", formatPercent(region.unemployment_rate), "Lower is better", toneFromInversePercent(region.unemployment_rate)),
-        buildStatCard("Attractiveness", formatDecimal(region.regional_attractiveness), "Current regional score", toneFromThreshold(region.regional_attractiveness, 0.5)),
-        buildStatCard("Density", `${formatDecimal(region.population_density)} / km^2`, "Based on end population", "tone-neutral"),
-        buildStatCard("Housing overload", formatDecimal(region.housing_overload), "Above 1.00 signals strain", toneFromInverseThreshold(region.housing_overload, 1)),
-    ];
-
-    elements.regionCards.innerHTML = cards.join("");
-}
-
-function renderComparisonTable(regions, activeRegionName) {
-    if (!regions.length) {
-        elements.comparisonBody.innerHTML =
-            '<tr><td colspan="7" class="table-empty">No region data for the selected country and year.</td></tr>';
-        return;
-    }
-
-    elements.comparisonBody.innerHTML = regions
-        .map((region) => {
-            const rowClass = region.region_name === activeRegionName ? "row-active" : "";
-            return `
-                <tr class="${rowClass}">
-                    <td>${escapeHtml(region.region_name)}</td>
-                    <td>${formatInteger(region.end_population)}</td>
-                    <td>${formatDecimal(region.end_gdp_billion_eur)} bn</td>
-                    <td>${formatInteger(Math.round(region.gdp_per_capita_eur))} EUR</td>
-                    <td>${formatPercent(region.unemployment_rate)}</td>
-                    <td>${formatDecimal(region.regional_attractiveness)}</td>
-                    <td>${formatDecimal(region.housing_overload)}</td>
-                </tr>
-            `;
-        })
+    elements.countryTableBody.innerHTML = countryRows
+        .map((country) => `
+            <tr>
+                <td>${escapeHtml(country.yearKey)}</td>
+                <td>${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})</td>
+                <td>${formatInteger(country.end_population)}</td>
+                <td>${formatDecimal(country.end_gdp_billion_eur)} bn EUR</td>
+                <td>${formatPercent(country.gdp_growth_rate)}</td>
+                <td>${formatInteger(Math.round(country.gdp_per_capita_eur))} EUR</td>
+                <td>${formatPercent(country.average_unemployment_rate)}</td>
+            </tr>
+        `)
         .join("");
 }
 
-function renderEmptyDashboard() {
-    elements.simulationWindow.textContent = "-";
-    elements.availableSteps.textContent = "-";
-    elements.warningCount.textContent = "-";
-    elements.countryTitle.textContent = "No country selected";
-    elements.countryCodePill.textContent = "-";
-    elements.countryGrowthPill.textContent = "Growth -";
-    elements.regionTitle.textContent = "No region selected";
-    elements.regionCountryPill.textContent = "-";
-    elements.regionConfidencePill.textContent = "Confidence -";
-    elements.countryCards.innerHTML = buildEmptyCards("Load a BESP export to unlock country metrics.");
-    elements.regionCards.innerHTML = buildEmptyCards("Load a BESP export to unlock region metrics.");
-    elements.regionNote.textContent = "Select a region to inspect its working-note context.";
-    elements.comparisonBody.innerHTML =
-        '<tr><td colspan="7" class="table-empty">Load an export to compare regions.</td></tr>';
+function renderRegionTable(regionRows) {
+    if (!regionRows.length) {
+        elements.regionTableBody.innerHTML =
+            '<tr><td colspan="8" class="table-empty">No region year values found in the export.</td></tr>';
+        return;
+    }
+
+    elements.regionTableBody.innerHTML = regionRows
+        .map((region) => `
+            <tr>
+                <td>${escapeHtml(region.yearKey)}</td>
+                <td>${escapeHtml(region.country_code)}</td>
+                <td>${escapeHtml(region.region_name)}</td>
+                <td>${formatInteger(region.end_population)}</td>
+                <td>${formatDecimal(region.end_gdp_billion_eur)} bn EUR</td>
+                <td>${formatPercent(region.gdp_growth_rate)}</td>
+                <td>${formatPercent(region.unemployment_rate)}</td>
+                <td>${formatDecimal(region.regional_attractiveness)}</td>
+            </tr>
+        `)
+        .join("");
 }
 
-function buildStatCard(label, value, hint, toneClass) {
+function renderEmptyState() {
+    elements.metaCards.innerHTML = `
+        <article class="meta-card empty-card">
+            <span class="meta-label">No data loaded</span>
+            <strong class="meta-value">-</strong>
+            <p class="meta-note">The dashboard is waiting for <code>output/latest.json</code>.</p>
+        </article>
+    `;
+    elements.countryTableBody.innerHTML =
+        '<tr><td colspan="7" class="table-empty">No country summary loaded yet.</td></tr>';
+    elements.regionTableBody.innerHTML =
+        '<tr><td colspan="8" class="table-empty">No region summary loaded yet.</td></tr>';
+}
+
+function buildMetaCard(label, value) {
     return `
-        <article class="stat-card">
-            <span class="stat-label">${escapeHtml(label)}</span>
-            <h3 class="stat-value ${toneClass}">${escapeHtml(value)}</h3>
-            <p class="stat-hint">${escapeHtml(hint)}</p>
+        <article class="meta-card">
+            <span class="meta-label">${escapeHtml(label)}</span>
+            <strong class="meta-value">${escapeHtml(String(value))}</strong>
         </article>
     `;
 }
 
-function buildEmptyCards(message) {
-    return `
-        <article class="stat-card">
-            <span class="stat-label">Waiting for data</span>
-            <h3 class="stat-value tone-neutral">-</h3>
-            <p class="stat-hint">${escapeHtml(message)}</p>
-        </article>
-    `;
+function compareYearAndCountry(left, right) {
+    if (left.start_year !== right.start_year) {
+        return left.start_year - right.start_year;
+    }
+
+    return left.country_code.localeCompare(right.country_code);
 }
 
-function renderStatus(message) {
-    elements.dataStatus.textContent = message;
+function compareYearCountryAndRegion(left, right) {
+    if (left.start_year !== right.start_year) {
+        return left.start_year - right.start_year;
+    }
+
+    if (left.country_code !== right.country_code) {
+        return left.country_code.localeCompare(right.country_code);
+    }
+
+    return left.region_name.localeCompare(right.region_name);
 }
 
 function formatInteger(value) {
     return integerFormatter.format(value);
-}
-
-function formatSignedInteger(value) {
-    return `${value > 0 ? "+" : ""}${integerFormatter.format(value)}`;
-}
-
-function signedDelta(value) {
-    return `${value > 0 ? "+" : ""}${integerFormatter.format(value)} from start`;
 }
 
 function formatDecimal(value) {
@@ -375,30 +186,6 @@ function formatDecimal(value) {
 
 function formatPercent(value) {
     return percentFormatter.format(value);
-}
-
-function toneFromSigned(value) {
-    if (value > 0) {
-        return "tone-positive";
-    }
-
-    if (value < 0) {
-        return "tone-negative";
-    }
-
-    return "tone-neutral";
-}
-
-function toneFromThreshold(value, threshold) {
-    return value >= threshold ? "tone-positive" : "tone-negative";
-}
-
-function toneFromInverseThreshold(value, threshold) {
-    return value <= threshold ? "tone-positive" : "tone-negative";
-}
-
-function toneFromInversePercent(value) {
-    return value <= 0.1 ? "tone-positive" : value <= 0.18 ? "tone-neutral" : "tone-negative";
 }
 
 function escapeHtml(value) {
