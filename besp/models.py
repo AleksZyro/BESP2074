@@ -54,6 +54,9 @@ class Country:
 
 @dataclass
 class RegionYearResult:
+    start_year: int
+    end_year: int
+
     region_name: str
     country_code: str
 
