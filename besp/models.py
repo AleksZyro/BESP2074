@@ -13,10 +13,11 @@ class Region:
     infrastructure: float
     housing_capacity: int
     economic_attractiveness: float
+    metro_pull: float = 0.0
 
-    birth_rate_modifier: float
-    death_rate_modifier: float
-    net_migration_modifier: float
+    birth_rate_modifier: float = 1.0
+    death_rate_modifier: float = 1.0
+    net_migration_modifier: float = 1.0
 
     data_confidence: float = 1.0
     population_note: str = ""
@@ -63,11 +64,14 @@ class RegionYearResult:
     start_population: int
     births: int
     deaths: int
+    natural_change: int
     net_external_migration: int
     internal_migration: int
     end_population: int
 
+    area_km2: float
     population_density: float
     housing_overload: float
+    regional_attractiveness: float
     data_confidence: float
     population_note: str
