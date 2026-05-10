@@ -1,4 +1,4 @@
-from besp.models import Country, Region, RegionYearResult
+from besp.models import Country, CountryYearResult, Region, RegionYearResult
 
 ECONOMIC_WEIGHT = 0.50
 INFRASTRUCTURE_WEIGHT = 0.20
@@ -162,3 +162,64 @@ def simulate_period(
         results.extend(yearly_results)
 
     return results
+
+
+def aggregate_country_results(
+    region_results: list[RegionYearResult],
+    countries: list[Country],
+) -> list[CountryYearResult]:
+    country_names = {country.code: country.name for country in countries}
+    grouped_results: dict[tuple[int, int, str], list[RegionYearResult]] = {}
+
+    for result in region_results:
+        key = (result.start_year, result.end_year, result.country_code)
+        grouped_results.setdefault(key, []).append(result)
+
+    country_results: list[CountryYearResult] = []
+
+    for (start_year, end_year, country_code), entries in sorted(grouped_results.items()):
+        start_population = sum(entry.start_population for entry in entries)
+        end_population = sum(entry.end_population for entry in entries)
+        births = sum(entry.births for entry in entries)
+        deaths = sum(entry.deaths for entry in entries)
+        natural_change = sum(entry.natural_change for entry in entries)
+        net_external_migration = sum(entry.net_external_migration for entry in entries)
+        internal_migration = sum(entry.internal_migration for entry in entries)
+
+        region_count = len(entries)
+        average_population_density = (
+            sum(entry.population_density for entry in entries) / region_count
+            if region_count > 0
+            else 0.0
+        )
+        average_housing_overload = (
+            sum(entry.housing_overload for entry in entries) / region_count
+            if region_count > 0
+            else 0.0
+        )
+        average_regional_attractiveness = (
+            sum(entry.regional_attractiveness for entry in entries) / region_count
+            if region_count > 0
+            else 0.0
+        )
+
+        country_results.append(
+            CountryYearResult(
+                start_year=start_year,
+                end_year=end_year,
+                country_name=country_names.get(country_code, country_code),
+                country_code=country_code,
+                start_population=start_population,
+                end_population=end_population,
+                births=births,
+                deaths=deaths,
+                natural_change=natural_change,
+                net_external_migration=net_external_migration,
+                internal_migration=internal_migration,
+                average_population_density=average_population_density,
+                average_housing_overload=average_housing_overload,
+                average_regional_attractiveness=average_regional_attractiveness,
+            )
+        )
+
+    return country_results
