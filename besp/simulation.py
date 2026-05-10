@@ -1,8 +1,31 @@
 from besp.models import Country, Region, RegionYearResult
 
 
-def calculate_internal_migration(region: Region, country_average_attractiveness: float) -> int:
-    attractiveness_gap = region.economic_attractiveness - country_average_attractiveness
+def calculate_regional_attractiveness(region: Region) -> float:
+    positive_score = (
+        region.economic_attractiveness * 0.60
+        + region.infrastructure * 0.30
+        + region.urbanization * 0.10
+    )
+
+    overload = region.housing_overload
+
+    if overload <= 1.0:
+        housing_penalty = 0.0
+    else:
+        # Small penalty: overloaded regions become less attractive,
+        # but strong urban/economic centers can remain attractive.
+        housing_penalty = min((overload - 1.0) * 0.25, 0.15)
+
+    return positive_score - housing_penalty
+
+
+def calculate_internal_migration(
+    region: Region,
+    country_average_attractiveness: float,
+) -> int:
+    regional_attractiveness = calculate_regional_attractiveness(region)
+    attractiveness_gap = regional_attractiveness - country_average_attractiveness
 
     # Very small yearly movement to keep realistic inertia.
     migration_rate = attractiveness_gap * 0.002
@@ -18,7 +41,8 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
             continue
 
         average_attractiveness = sum(
-            region.economic_attractiveness for region in country.regions
+            calculate_regional_attractiveness(region)
+            for region in country.regions
         ) / len(country.regions)
 
         raw_internal_migration: dict[str, int] = {}
