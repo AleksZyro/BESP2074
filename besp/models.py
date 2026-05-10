@@ -75,3 +75,23 @@ class RegionYearResult:
     regional_attractiveness: float
     data_confidence: float
     population_note: str
+
+
+@dataclass
+class CountryYearResult:
+    start_year: int
+    end_year: int
+    country_name: str
+    country_code: str
+
+    start_population: int
+    end_population: int
+    births: int
+    deaths: int
+    natural_change: int
+    net_external_migration: int
+    internal_migration: int
+
+    average_population_density: float
+    average_housing_overload: float
+    average_regional_attractiveness: float
