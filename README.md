@@ -8,7 +8,7 @@ Current scope:
 - Loader functions
 - Multi-year annual simulation
 - JSON export for a lightweight dashboard
-- Terminal output plus Dashboard v1
+- Terminal output plus Dashboard 4.1 shell
 
 Current simulation behavior:
 - Births and deaths by country base rates and regional modifiers
@@ -24,13 +24,13 @@ Modeling principles:
 - Slow yearly changes
 - Standard library only
 
-Dashboard v1:
+Dashboard 4.1:
 - Lives in `dashboard/`
 - Loads `output/latest.json` automatically when served from the repository root
-- Supports manual JSON loading through a file picker when opened directly
-- Focuses on yearly country and region drilldowns only
+- Shows export metadata plus simple country and region summary tables
+- Does not add filters, maps, playback, or new simulation logic
 
 Quick start:
 1. Run `py main.py` to generate `output/latest.json`.
 2. Open `dashboard/index.html`.
-3. If the dashboard cannot auto-load the export, choose `output/latest.json` manually with the file picker.
+3. Serve the repository root so the dashboard can fetch `output/latest.json`.
