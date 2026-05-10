@@ -1,6 +1,9 @@
+from pathlib import Path
+
+from besp.exporter import build_simulation_export, save_simulation_export_json
 from besp.loader import load_world
 from besp.models import RegionYearResult
-from besp.simulation import simulate_period
+from besp.simulation import aggregate_country_results, simulate_period
 
 
 def print_year_results(
@@ -45,9 +48,22 @@ def main() -> None:
     end_year = 2030
 
     countries = load_world("data")
-    results = simulate_period(countries, start_year, end_year)
+    region_results = simulate_period(countries, start_year, end_year)
+    country_results = aggregate_country_results(region_results, countries)
 
-    print_year_results(start_year, end_year, results)
+    print_year_results(start_year, end_year, region_results)
+
+    export_data = build_simulation_export(
+        start_year=start_year,
+        end_year=end_year,
+        country_results=country_results,
+        region_results=region_results,
+    )
+    output_path = Path("output") / f"simulation_{start_year}_{end_year}.json"
+    save_simulation_export_json(export_data, output_path)
+
+    print()
+    print(f"Structured JSON export saved to: {output_path}")
 
 
 if __name__ == "__main__":
