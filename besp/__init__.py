@@ -1,0 +1,1 @@
+"""BESP - Balkan Economy Simulation Player."""
