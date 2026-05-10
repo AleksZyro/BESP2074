@@ -34,6 +34,7 @@ def calculate_internal_migration(
 
 
 def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearResult]:
+    end_year = start_year + 1
     results: list[RegionYearResult] = []
 
     for country in countries:
@@ -90,6 +91,8 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
 
             results.append(
                 RegionYearResult(
+                    start_year=start_year,
+                    end_year=end_year,
                     region_name=region.name,
                     country_code=region.country_code,
                     start_population=start_population,
@@ -104,5 +107,19 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
                     population_note=region.population_note,
                 )
             )
+
+    return results
+
+
+def simulate_period(
+    countries: list[Country],
+    start_year: int,
+    end_year: int,
+) -> list[RegionYearResult]:
+    results: list[RegionYearResult] = []
+
+    for year in range(start_year, end_year):
+        yearly_results = simulate_year(countries, year)
+        results.extend(yearly_results)
 
     return results
