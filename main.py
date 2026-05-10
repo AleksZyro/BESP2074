@@ -87,11 +87,15 @@ def main() -> None:
         region_results=region_results,
         warning_count=len(warnings),
     )
-    output_path = Path("output") / f"simulation_{start_year}_{end_year}.json"
+    output_dir = Path("output")
+    output_path = output_dir / f"simulation_{start_year}_{end_year}.json"
+    latest_output_path = output_dir / "latest.json"
     save_simulation_export_json(export_data, output_path)
+    save_simulation_export_json(export_data, latest_output_path)
 
     print()
     print(f"Structured JSON export saved to: {output_path}")
+    print(f"Stable dashboard export saved to: {latest_output_path}")
 
 
 if __name__ == "__main__":
