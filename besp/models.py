@@ -15,6 +15,9 @@ class Region:
     economic_attractiveness: float
     metro_pull: float = 0.0
 
+    gdp_billion_eur: float = 0.0
+    unemployment_rate: float = 0.0
+
     birth_rate_modifier: float = 1.0
     death_rate_modifier: float = 1.0
     net_migration_modifier: float = 1.0
@@ -69,6 +72,12 @@ class RegionYearResult:
     internal_migration: int
     end_population: int
 
+    start_gdp_billion_eur: float
+    end_gdp_billion_eur: float
+    gdp_growth_rate: float
+    gdp_per_capita_eur: float
+    unemployment_rate: float
+
     area_km2: float
     population_density: float
     housing_overload: float
@@ -91,6 +100,12 @@ class CountryYearResult:
     natural_change: int
     net_external_migration: int
     internal_migration: int
+
+    start_gdp_billion_eur: float
+    end_gdp_billion_eur: float
+    gdp_growth_rate: float
+    gdp_per_capita_eur: float
+    average_unemployment_rate: float
 
     average_population_density: float
     average_housing_overload: float
