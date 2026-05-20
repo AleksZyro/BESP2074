@@ -605,6 +605,10 @@ function renderCountryLayer(geoData) {
                     data-country-code="${escapeHtml(country.countryCode)}"
                     d="${escapeHtml(country.mergedPathD)}"
                     fill="${escapeHtml(fill)}"
+                    stroke="${escapeHtml(fill)}"
+                    stroke-width="1.35"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
                     fill-rule="nonzero"
                 ></path>
             `;
