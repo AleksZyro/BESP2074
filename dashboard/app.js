@@ -3,6 +3,11 @@ const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 22;
 const TARGET_COUNTRIES = new Set(["BIH", "MNE", "SRB"]);
+const COUNTRY_LABEL_OFFSETS = {
+    SRB: [0, -26],
+    BIH: [0, 0],
+    MNE: [0, 0],
+};
 const COUNTRY_GEOJSON_PATHS = [
     "./data/geoBoundaries-BIH-ADM0_simplified.geojson",
     "./data/geoBoundaries-MNE-ADM0_simplified.geojson",
@@ -12,6 +17,7 @@ const REGION_GEOJSON_PATHS = [
     "./data/geoBoundaries-BIH-ADM1_simplified.geojson",
     "./data/geoBoundaries-MNE-ADM1_simplified.geojson",
     "./data/geoBoundaries-SRB-ADM1_simplified.geojson",
+    "./data/geoBoundaries-XKX-ADM0_simplified.geojson",
 ];
 const BESP_REGION_KEYS = new Set([
     "BIH::federation of bosnia and herzegovina",
@@ -38,6 +44,7 @@ const REGION_NAME_ALIASES = {
     "central serbia": "central serbia",
     "south and east serbia": "south and east serbia",
     "kosovo and metohija": "kosovo and metohija",
+    kosovo: "kosovo and metohija",
     "kosovo & metohija": "kosovo and metohija",
     "coast": "coast",
     "inland": "inland",
@@ -45,10 +52,58 @@ const REGION_NAME_ALIASES = {
 const REGION_FEATURE_TO_BESP = {
     "BIH::federation of bosnia and herzegovina": "BIH::federation of bosnia and herzegovina",
     "BIH::republika srpska": "BIH::republika srpska",
-    "BIH::brcko": "BIH::brcko",
+    "BIH::brcko": "BIH::republika srpska",
     "SRB::belgrade": "SRB::belgrade",
     "SRB::autonomous province of vojvodina": "SRB::vojvodina",
     "SRB::vojvodina": "SRB::vojvodina",
+    "SRB::syrmia district": "SRB::vojvodina",
+    "SRB::south banat district": "SRB::vojvodina",
+    "SRB::north banat district": "SRB::vojvodina",
+    "SRB::north backa district": "SRB::vojvodina",
+    "SRB::central banat district": "SRB::vojvodina",
+    "SRB::west backa district": "SRB::vojvodina",
+    "SRB::south backa district": "SRB::vojvodina",
+    "SRB::bor district": "SRB::south and east serbia",
+    "SRB::pcinja district": "SRB::south and east serbia",
+    "SRB::branicevo district": "SRB::south and east serbia",
+    "SRB::zajecar district": "SRB::south and east serbia",
+    "SRB::pirot district": "SRB::south and east serbia",
+    "SRB::jablanica district": "SRB::south and east serbia",
+    "SRB::toplica district": "SRB::south and east serbia",
+    "SRB::nisava district": "SRB::south and east serbia",
+    "SRB::rasina district": "SRB::south and east serbia",
+    "SRB::pomoravlje district": "SRB::south and east serbia",
+    "SRB::kolubara district": "SRB::central serbia",
+    "SRB::macva district": "SRB::central serbia",
+    "SRB::podunavlje district": "SRB::south and east serbia",
+    "SRB::sumadija district": "SRB::central serbia",
+    "SRB::moravica district": "SRB::central serbia",
+    "SRB::zlatibor district": "SRB::central serbia",
+    "SRB::raska district": "SRB::central serbia",
+    "SRB::kosovo": "SRB::kosovo and metohija",
+    "MNE::herceg novi municipality": "MNE::coast",
+    "MNE::bar municipality": "MNE::coast",
+    "MNE::budva municipality": "MNE::coast",
+    "MNE::kotor municipality": "MNE::coast",
+    "MNE::tivat municipality": "MNE::coast",
+    "MNE::ulcinj municipality": "MNE::coast",
+    "MNE::plav municipality": "MNE::inland",
+    "MNE::rozaje municipality": "MNE::inland",
+    "MNE::andrijevica municipality": "MNE::inland",
+    "MNE::berane municipality": "MNE::inland",
+    "MNE::podgorica municipality": "MNE::inland",
+    "MNE::bijelo polje municipality": "MNE::inland",
+    "MNE::cetinje municipality": "MNE::inland",
+    "MNE::danilovgrad municipality": "MNE::inland",
+    "MNE::kolasin municipality": "MNE::inland",
+    "MNE::mojkovac municipality": "MNE::inland",
+    "MNE::niksic municipality": "MNE::inland",
+    "MNE::pljevlja municipality": "MNE::inland",
+    "MNE::pluzine municipality": "MNE::inland",
+    "MNE::savnik municipality": "MNE::inland",
+    "MNE::zabljak municipality": "MNE::inland",
+    "MNE::gusinje municipality": "MNE::inland",
+    "MNE::petnjica municipality": "MNE::inland",
 };
 
 const integerFormatter = new Intl.NumberFormat("en-US");
@@ -156,11 +211,13 @@ async function loadGeoBoundaryData() {
     const regionFeaturesRaw = regionCollections.flatMap((collection) => collection.features ?? []);
 
     const countryFeatures = countryFeaturesRaw
-        .map((feature) => normalizeGeoFeature(feature))
-        .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
+        .map((feature) => normalizeGeoFeature(feature, "country"))
+        .filter((feature) => feature
+            && TARGET_COUNTRIES.has(feature.countryCode)
+            && feature.rawCountryCode !== "XKX");
 
     const regionFeatures = regionFeaturesRaw
-        .map((feature) => normalizeGeoFeature(feature))
+        .map((feature) => normalizeGeoFeature(feature, "region"))
         .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
 
     const allGeometryFeatures = [...countryFeatures, ...regionFeatures];
@@ -183,20 +240,31 @@ async function loadGeoBoundaryData() {
     };
 }
 
-function normalizeGeoFeature(feature) {
+function normalizeGeoFeature(feature, layerType) {
     if (!feature || !feature.geometry || !feature.properties) {
         return null;
     }
 
     const properties = feature.properties;
-    const countryCode = normalizeCountryCode(properties.shapeGroup || properties.shapeISO);
-    const name = String(properties.shapeName ?? "").trim();
+    const rawCountryCode = normalizeCountryCode(properties.shapeGroup || properties.shapeISO);
+    let countryCode = rawCountryCode;
+    let name = String(properties.shapeName ?? "").trim();
+
+    // BESP models Kosovo as part of SRB scope. We keep that mapping in the frontend layer only.
+    if (rawCountryCode === "XKX") {
+        countryCode = "SRB";
+        if (layerType === "region") {
+            name = "Kosovo and Metohija";
+        }
+    }
+
     if (!countryCode || !name) {
         return null;
     }
 
     return {
         countryCode,
+        rawCountryCode,
         name,
         geometry: feature.geometry,
     };
@@ -241,7 +309,8 @@ function createProjection(features) {
 }
 
 function projectFeature(feature, projection, kind) {
-    const pathD = geometryToPath(feature.geometry, projection);
+    const includeHoles = kind !== "country";
+    const pathD = geometryToPath(feature.geometry, projection, includeHoles);
     if (!pathD) {
         return null;
     }
@@ -259,7 +328,7 @@ function projectFeature(feature, projection, kind) {
     };
 }
 
-function geometryToPath(geometry, projection) {
+function geometryToPath(geometry, projection, includeHoles = true) {
     const type = geometry?.type;
     const coordinates = geometry?.coordinates;
     if (!type || !coordinates) {
@@ -267,18 +336,19 @@ function geometryToPath(geometry, projection) {
     }
 
     if (type === "Polygon") {
-        return polygonToPath(coordinates, projection);
+        return polygonToPath(coordinates, projection, includeHoles);
     }
 
     if (type === "MultiPolygon") {
-        return coordinates.map((polygon) => polygonToPath(polygon, projection)).join(" ");
+        return coordinates.map((polygon) => polygonToPath(polygon, projection, includeHoles)).join(" ");
     }
 
     return "";
 }
 
-function polygonToPath(polygonCoordinates, projection) {
-    return polygonCoordinates
+function polygonToPath(polygonCoordinates, projection, includeHoles) {
+    const rings = includeHoles ? polygonCoordinates : polygonCoordinates.slice(0, 1);
+    return rings
         .map((ring) => {
             if (!Array.isArray(ring) || ring.length < 3) {
                 return "";
@@ -408,40 +478,67 @@ function renderCountryLayer(geoData) {
     const minGdpPerCapita = gdpValues.length ? Math.min(...gdpValues) : 0;
     const maxGdpPerCapita = gdpValues.length ? Math.max(...gdpValues) : 1;
 
-    const sortedFeatures = [...geoData.countryFeatures].sort((left, right) =>
-        left.countryCode.localeCompare(right.countryCode)
-    );
+    const groupedByCountry = new Map();
+    for (const feature of geoData.countryFeatures) {
+        const list = groupedByCountry.get(feature.countryCode) ?? [];
+        list.push(feature);
+        groupedByCountry.set(feature.countryCode, list);
+    }
 
-    elements.countryLayer.innerHTML = sortedFeatures
-        .map((feature) => {
-            const row = mapDataCache.countriesByCode.get(feature.countryCode) ?? null;
+    const groupedCountries = [...groupedByCountry.entries()]
+        .map(([countryCode, features]) => {
+            const mergedPathD = features.map((feature) => feature.pathD).join(" ");
+            const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
+            const centroid = labelFeature?.centroid ?? averageCentroid(features);
+            const displayName = labelFeature?.countryCode === "SRB"
+                ? "Serbia"
+                : (labelFeature?.name ?? countryCode);
+            return {
+                countryCode,
+                displayName,
+                mergedPathD,
+                centroid,
+            };
+        })
+        .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
+
+    elements.countryLayer.innerHTML = groupedCountries
+        .map((country) => {
+            const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
             const fill = mapCountryFill(row, minGdpPerCapita, maxGdpPerCapita);
             return `
                 <path
                     class="map-country-shape"
-                    data-country-code="${escapeHtml(feature.countryCode)}"
-                    d="${escapeHtml(feature.pathD)}"
+                    data-country-code="${escapeHtml(country.countryCode)}"
+                    d="${escapeHtml(country.mergedPathD)}"
                     fill="${escapeHtml(fill)}"
+                    stroke="${escapeHtml(fill)}"
+                    stroke-width="1.25"
+                    stroke-linejoin="round"
+                    fill-rule="nonzero"
                 ></path>
             `;
         })
         .join("");
 
-    elements.countryLabelLayer.innerHTML = sortedFeatures
-        .map((feature) => `
-            <text class="map-country-label" x="${feature.centroid[0].toFixed(1)}" y="${feature.centroid[1].toFixed(1)}">
-                ${escapeHtml(feature.countryCode)}
+    elements.countryLabelLayer.innerHTML = groupedCountries
+        .map((country) => {
+            const [offsetX, offsetY] = COUNTRY_LABEL_OFFSETS[country.countryCode] ?? [0, 0];
+            return `
+            <text class="map-country-label" x="${(country.centroid[0] + offsetX).toFixed(1)}" y="${(country.centroid[1] + offsetY).toFixed(1)}">
+                ${escapeHtml(country.countryCode)}
             </text>
-        `)
+        `;
+        })
         .join("");
 
-    elements.mapSummaryCards.innerHTML = sortedFeatures
-        .map((feature) => {
-            const row = mapDataCache.countriesByCode.get(feature.countryCode);
+    elements.mapSummaryCards.innerHTML = groupedCountries
+        .map((country) => {
+            const row = mapDataCache.countriesByCode.get(country.countryCode);
             if (!row) {
                 return `
                     <article class="meta-card">
-                        <span class="meta-label">${escapeHtml(feature.name)} (${escapeHtml(feature.countryCode)})</span>
+                        <span class="meta-label">${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
                         <strong class="meta-value">No data</strong>
                         <p class="meta-note">No matching country export row.</p>
                     </article>
@@ -450,7 +547,7 @@ function renderCountryLayer(geoData) {
 
             return `
                 <article class="meta-card">
-                    <span class="meta-label">${escapeHtml(feature.name)} (${escapeHtml(feature.countryCode)})</span>
+                    <span class="meta-label">${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
                     <strong class="meta-value">${formatInteger(row.end_population)}</strong>
                     <p class="meta-note">
                         ${escapeHtml(row.yearKey)} | GDP ${formatDecimal(row.end_gdp_billion_eur)} bn EUR
@@ -459,6 +556,21 @@ function renderCountryLayer(geoData) {
             `;
         })
         .join("");
+}
+
+function averageCentroid(features) {
+    if (!features.length) {
+        return [MAP_VIEWBOX_WIDTH / 2, MAP_VIEWBOX_HEIGHT / 2];
+    }
+
+    let x = 0;
+    let y = 0;
+    for (const feature of features) {
+        x += feature.centroid[0];
+        y += feature.centroid[1];
+    }
+
+    return [x / features.length, y / features.length];
 }
 
 function renderRegionLayer(geoData) {
@@ -497,14 +609,50 @@ function renderRegionLayer(geoData) {
         })
         .join("");
 
-    elements.regionLabelLayer.innerHTML = geoData.regionFeatures
-        .filter((feature) => Boolean(feature.bespRegionKey))
-        .map((feature) => `
-            <text class="map-region-label" x="${feature.centroid[0].toFixed(1)}" y="${feature.centroid[1].toFixed(1)}">
-                ${escapeHtml(shortRegionLabel(feature.name))}
+    const regionLabelGroups = buildRegionLabelGroups(geoData.regionFeatures);
+    elements.regionLabelLayer.innerHTML = regionLabelGroups
+        .map((group) => `
+            <text class="map-region-label" x="${group.centroid[0].toFixed(1)}" y="${group.centroid[1].toFixed(1)}">
+                ${escapeHtml(shortBespRegionLabel(group.displayName, group.bespRegionKey))}
             </text>
         `)
         .join("");
+}
+
+function buildRegionLabelGroups(regionFeatures) {
+    const groups = new Map();
+
+    for (const feature of regionFeatures) {
+        if (!feature.bespRegionKey) {
+            continue;
+        }
+        const list = groups.get(feature.bespRegionKey) ?? [];
+        list.push(feature);
+        groups.set(feature.bespRegionKey, list);
+    }
+
+    return [...groups.entries()]
+        .map(([bespRegionKey, features]) => {
+            const row = mapDataCache.regionsByKey.get(bespRegionKey);
+            const displayName = row?.region_name ?? regionNameFromBespKey(bespRegionKey);
+            const centroid = averageCentroid(features);
+            return {
+                bespRegionKey,
+                displayName,
+                centroid,
+            };
+        });
+}
+
+function regionNameFromBespKey(bespRegionKey) {
+    const [, rawRegionName] = String(bespRegionKey).split("::");
+    if (!rawRegionName) {
+        return String(bespRegionKey);
+    }
+    return rawRegionName
+        .split(" ")
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(" ");
 }
 
 function bindMapHoverEvents() {
@@ -808,16 +956,29 @@ function mapRegionFill(regionData, countryData, minUnemployment, maxUnemployment
     return "rgba(110, 126, 143, 0.3)";
 }
 
-function shortRegionLabel(regionName) {
+function shortBespRegionLabel(regionName, bespRegionKey) {
     const normalized = normalizeRegionName(regionName);
     const byNormalized = {
         "federation of bosnia and herzegovina": "FBiH",
         "republika srpska": "RS",
         brcko: "Brcko",
-        belgrade: "Belgrade",
+        belgrade: "Beograd",
         vojvodina: "Vojvodina",
+        "central serbia": "Central SRB",
+        "south and east serbia": "SE SRB",
+        "kosovo and metohija": "Kosovo",
+        coast: "Coast",
+        inland: "Inland",
     };
-    return byNormalized[normalized] ?? regionName;
+
+    if (byNormalized[normalized]) {
+        return byNormalized[normalized];
+    }
+
+    const fallbackFromKey = regionNameFromBespKey(bespRegionKey);
+    return fallbackFromKey.length > 24
+        ? fallbackFromKey.replace(" and ", " & ")
+        : fallbackFromKey;
 }
 
 function extractStartYear(row) {
