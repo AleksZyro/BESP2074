@@ -8,11 +8,19 @@ const COUNTRY_LABEL_OFFSETS = {
     BIH: [0, 0],
     MNE: [0, 0],
 };
+const VISUAL_REGION_LABEL_OFFSETS = {
+    "BIH::fbih": [26, 18],
+    "BIH::rs": [-30, -16],
+    "MNE::boka": [-26, 2],
+    "MNE::primorje": [8, 16],
+    "MNE::zeta": [26, 0],
+    "MNE::stara-crna-gora": [8, -14],
+    "MNE::brda": [16, -10],
+};
 const COUNTRY_GEOJSON_PATHS = [
     "./data/geoBoundaries-BIH-ADM0_simplified.geojson",
     "./data/geoBoundaries-MNE-ADM0_simplified.geojson",
     "./data/geoBoundaries-SRB-ADM0_simplified.geojson",
-    "./data/geoBoundaries-XKX-ADM0_simplified.geojson",
 ];
 const REGION_GEOJSON_PATHS = [
     "./data/geoBoundaries-BIH-ADM1_simplified.geojson",
@@ -591,33 +599,6 @@ function renderCountryLayer(geoData) {
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
             const fill = mapCountryFill(row, minGdpPerCapita, maxGdpPerCapita);
-            if (country.countryCode === "SRB") {
-                const srbFeature = country.features.find((feature) => feature.rawCountryCode === "SRB");
-                const xkxFeature = country.features.find((feature) => feature.rawCountryCode === "XKX");
-                return [
-                    srbFeature ? `
-                        <path
-                            class="map-country-shape"
-                            data-country-code="${escapeHtml(country.countryCode)}"
-                            d="${escapeHtml(srbFeature.pathD)}"
-                            fill="${escapeHtml(fill)}"
-                            fill-rule="nonzero"
-                        ></path>
-                    ` : "",
-                    xkxFeature ? `
-                        <path
-                            class="map-country-shape map-country-seam-fix"
-                            data-country-code="${escapeHtml(country.countryCode)}"
-                            d="${escapeHtml(xkxFeature.pathD)}"
-                            fill="${escapeHtml(fill)}"
-                            stroke="${escapeHtml(fill)}"
-                            stroke-width="1.1"
-                            stroke-linejoin="round"
-                            fill-rule="nonzero"
-                        ></path>
-                    ` : "",
-                ].join("");
-            }
             return `
                 <path
                     class="map-country-shape"
@@ -707,11 +688,14 @@ function renderRegionLayer(geoData) {
         .join("");
 
     elements.regionLabelLayer.innerHTML = groupedRegions
-        .map((group) => `
-            <text class="map-region-label" x="${group.centroid[0].toFixed(1)}" y="${group.centroid[1].toFixed(1)}">
+        .map((group) => {
+            const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
+            return `
+            <text class="map-region-label" x="${(group.centroid[0] + offsetX).toFixed(1)}" y="${(group.centroid[1] + offsetY).toFixed(1)}">
                 ${escapeHtml(group.label)}
             </text>
-        `)
+        `;
+        })
         .join("");
 }
 
