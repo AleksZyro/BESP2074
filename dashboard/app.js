@@ -1,4 +1,27 @@
 const EXPORT_PATH = "../output/latest.json";
+const COUNTRY_MAP_CONFIG = [
+    {
+        code: "BIH",
+        name: "Bosnia and Herzegovina",
+        points: "130,130 290,120 360,190 330,280 220,300 140,230",
+        labelX: 245,
+        labelY: 205,
+    },
+    {
+        code: "SRB",
+        name: "Serbia",
+        points: "330,145 520,130 620,200 610,350 495,430 355,400 315,280",
+        labelX: 470,
+        labelY: 260,
+    },
+    {
+        code: "MNE",
+        name: "Montenegro",
+        points: "245,305 335,300 372,352 320,420 225,385",
+        labelX: 300,
+        labelY: 360,
+    },
+];
 
 const integerFormatter = new Intl.NumberFormat("en-US");
 const decimalFormatter = new Intl.NumberFormat("en-US", {
@@ -14,6 +37,9 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
 const elements = {
     loadStatus: document.getElementById("load-status"),
     metaCards: document.getElementById("meta-cards"),
+    countryLayer: document.getElementById("country-layer"),
+    countryLabelLayer: document.getElementById("country-label-layer"),
+    mapSummaryCards: document.getElementById("map-summary-cards"),
     countryTableBody: document.getElementById("country-table-body"),
     regionTableBody: document.getElementById("region-table-body"),
 };
@@ -77,6 +103,7 @@ function renderDashboard(exportData) {
     regionRows.sort(compareYearCountryAndRegion);
 
     renderMetaCards(exportData, countryRows.length, regionRows.length);
+    renderCountryLayer(countryRows);
     renderCountryTable(countryRows);
     renderRegionTable(regionRows);
     elements.loadStatus.textContent =
@@ -139,7 +166,77 @@ function renderRegionTable(regionRows) {
         .join("");
 }
 
+function renderCountryLayer(countryRows) {
+    const latestByCountryCode = getLatestCountryRowsByCode(countryRows);
+    const mappedCountries = COUNTRY_MAP_CONFIG.map((shape) => ({
+        shape,
+        data: latestByCountryCode.get(shape.code) ?? null,
+    }));
+
+    const availableRows = mappedCountries
+        .map((entry) => entry.data)
+        .filter((entry) => entry !== null);
+    const gdpPerCapValues = availableRows.map((entry) => entry.gdp_per_capita_eur);
+    const minGdpPerCapita = gdpPerCapValues.length ? Math.min(...gdpPerCapValues) : 0;
+    const maxGdpPerCapita = gdpPerCapValues.length ? Math.max(...gdpPerCapValues) : 1;
+
+    elements.countryLayer.innerHTML = mappedCountries
+        .map(({ shape, data }) => {
+            const fill = mapCountryFill(data, minGdpPerCapita, maxGdpPerCapita);
+            return `
+                <polygon
+                    class="map-country-shape"
+                    data-country-code="${escapeHtml(shape.code)}"
+                    points="${escapeHtml(shape.points)}"
+                    fill="${escapeHtml(fill)}"
+                ></polygon>
+            `;
+        })
+        .join("");
+
+    elements.countryLabelLayer.innerHTML = mappedCountries
+        .map(({ shape }) => `
+            <text class="map-country-label" x="${shape.labelX}" y="${shape.labelY}">
+                ${escapeHtml(shape.code)}
+            </text>
+        `)
+        .join("");
+
+    elements.mapSummaryCards.innerHTML = mappedCountries
+        .map(({ shape, data }) => {
+            if (!data) {
+                return `
+                    <article class="meta-card">
+                        <span class="meta-label">${escapeHtml(shape.name)} (${escapeHtml(shape.code)})</span>
+                        <strong class="meta-value">No data</strong>
+                        <p class="meta-note">No country record found in current export.</p>
+                    </article>
+                `;
+            }
+
+            return `
+                <article class="meta-card">
+                    <span class="meta-label">${escapeHtml(shape.name)} (${escapeHtml(shape.code)})</span>
+                    <strong class="meta-value">${formatInteger(data.end_population)}</strong>
+                    <p class="meta-note">
+                        ${escapeHtml(data.yearKey)} | GDP ${formatDecimal(data.end_gdp_billion_eur)} bn EUR
+                    </p>
+                </article>
+            `;
+        })
+        .join("");
+}
+
 function renderEmptyState() {
+    elements.countryLayer.innerHTML = "";
+    elements.countryLabelLayer.innerHTML = "";
+    elements.mapSummaryCards.innerHTML = `
+        <article class="meta-card empty-card">
+            <span class="meta-label">No country layer data</span>
+            <strong class="meta-value">-</strong>
+            <p class="meta-note">Load export data to render the country map layer.</p>
+        </article>
+    `;
     elements.metaCards.innerHTML = `
         <article class="meta-card empty-card">
             <span class="meta-label">No data loaded</span>
@@ -184,6 +281,32 @@ function compareYearCountryAndRegion(left, right) {
     }
 
     return left.region_name.localeCompare(right.region_name);
+}
+
+function getLatestCountryRowsByCode(countryRows) {
+    const latestByCountryCode = new Map();
+
+    for (const row of countryRows) {
+        const existing = latestByCountryCode.get(row.country_code);
+        if (!existing || extractStartYear(row) > extractStartYear(existing)) {
+            latestByCountryCode.set(row.country_code, row);
+        }
+    }
+
+    return latestByCountryCode;
+}
+
+function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
+    if (!countryData) {
+        return "rgba(127, 150, 173, 0.45)";
+    }
+
+    const span = maxGdpPerCapita - minGdpPerCapita;
+    const ratio = span > 0 ? (countryData.gdp_per_capita_eur - minGdpPerCapita) / span : 0.5;
+    const red = Math.round(75 + ratio * 120);
+    const green = Math.round(113 + ratio * 90);
+    const blue = Math.round(145 + ratio * 35);
+    return `rgba(${red}, ${green}, ${blue}, 0.88)`;
 }
 
 function extractStartYear(row) {
