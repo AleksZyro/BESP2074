@@ -8,7 +8,7 @@ Current scope:
 - Loader functions
 - Multi-year annual simulation
 - JSON export for a lightweight dashboard
-- Terminal output plus Dashboard 4.1 shell
+- Terminal output plus dashboard with real geodata map layer
 
 Current simulation behavior:
 - Births and deaths by country base rates and regional modifiers
@@ -24,22 +24,31 @@ Modeling principles:
 - Slow yearly changes
 - Standard library only
 
-Dashboard 4.1:
+Dashboard 5.x (map v1):
 - Lives in `dashboard/`
 - Loads `output/latest.json` automatically when served from the repository root
 - Shows export metadata plus simple country and region summary tables
-- Does not add filters, maps, playback, or new simulation logic
+- Renders real geodata country boundaries (BIH, MNE, SRB) and ADM1 region boundaries
+- Renders Kosovo geodata in the SRB scope to match BESP region data (`Kosovo and Metohija`)
+- Country view renders SRB as one continuous block (Kosovo included in SRB scope, no separate country marker)
+- Region labels are grouped by BESP region keys to avoid district-label clutter
+- Bosnia map mapping currently assigns Brcko to RS rendering scope
+- Keeps hover details export-driven with country fallback where region mapping is not available
 
-Phase 4 status:
+Phase 5 map status:
 - Dashboard reads export data only (no duplicated simulation logic in JavaScript)
-- No map, no playback controls, no shocks, no backend/API changes
-- Scope remains a static export viewer as intended for Phase 4
+- No playback controls, no shocks, no backend/API changes
+- Map rendering is frontend-only and uses preloaded GeoJSON files
 
 Dashboard data flow:
 1. `py main.py` runs the yearly simulation.
 2. Python export pipeline writes `output/simulation_<start>_<end>.json` and `output/latest.json`.
 3. `dashboard/app.js` fetches `output/latest.json`.
-4. Dashboard renders metadata plus country and region summary tables.
+4. `dashboard/app.js` loads GeoJSON from `dashboard/data/`.
+5. Dashboard renders metadata, tables, and map hover information.
+
+Map data source:
+- Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for BIH, MNE, SRB, plus XKX (mapped into SRB scope for BESP consistency).
 
 Map testcase fixture:
 - Stable fixture: `dashboard/fixtures/map_fixture_latest.json`
