@@ -41,6 +41,11 @@ Dashboard data flow:
 3. `dashboard/app.js` fetches `output/latest.json`.
 4. Dashboard renders metadata plus country and region summary tables.
 
+Map testcase fixture:
+- Stable fixture: `dashboard/fixtures/map_fixture_latest.json`
+- Fixture validation script: `tools/verify_map_fixture.py`
+- Run check with `py tools/verify_map_fixture.py`
+
 Quick start:
 1. Run `py main.py` to generate `output/latest.json`.
 2. From the repository root, run `py -m http.server 8000`.
