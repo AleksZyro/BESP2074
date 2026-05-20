@@ -191,6 +191,10 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 1,
 });
 
+function clamp(value, minimum, maximum) {
+    return Math.max(minimum, Math.min(value, maximum));
+}
+
 const mapDataCache = {
     countriesByCode: new Map(),
     regionsByKey: new Map(),
