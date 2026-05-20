@@ -30,7 +30,18 @@ Dashboard 4.1:
 - Shows export metadata plus simple country and region summary tables
 - Does not add filters, maps, playback, or new simulation logic
 
+Phase 4 status:
+- Dashboard reads export data only (no duplicated simulation logic in JavaScript)
+- No map, no playback controls, no shocks, no backend/API changes
+- Scope remains a static export viewer as intended for Phase 4
+
+Dashboard data flow:
+1. `py main.py` runs the yearly simulation.
+2. Python export pipeline writes `output/simulation_<start>_<end>.json` and `output/latest.json`.
+3. `dashboard/app.js` fetches `output/latest.json`.
+4. Dashboard renders metadata plus country and region summary tables.
+
 Quick start:
 1. Run `py main.py` to generate `output/latest.json`.
-2. Open `dashboard/index.html`.
-3. Serve the repository root so the dashboard can fetch `output/latest.json`.
+2. From the repository root, run `py -m http.server 8000`.
+3. Open `http://localhost:8000/dashboard/index.html`.

@@ -37,8 +37,10 @@ async function loadDashboardData() {
 
         renderDashboard(exportData);
     } catch (error) {
+        const detail = error instanceof Error ? ` (${error.message})` : "";
         elements.loadStatus.textContent =
-            "Could not load output/latest.json. Run py main.py and serve the repository root before opening the dashboard.";
+            "Could not load output/latest.json. Run py main.py and serve the repository root before opening the dashboard."
+            + detail;
     }
 }
 
@@ -59,11 +61,14 @@ function renderDashboard(exportData) {
     const regionRows = [];
 
     for (const [yearKey, yearData] of Object.entries(exportData.years)) {
-        for (const country of yearData.countries ?? []) {
+        const countries = Array.isArray(yearData?.countries) ? yearData.countries : [];
+        const regions = Array.isArray(yearData?.regions) ? yearData.regions : [];
+
+        for (const country of countries) {
             countryRows.push({ yearKey, ...country });
         }
 
-        for (const region of yearData.regions ?? []) {
+        for (const region of regions) {
             regionRows.push({ yearKey, ...region });
         }
     }
@@ -74,7 +79,8 @@ function renderDashboard(exportData) {
     renderMetaCards(exportData, countryRows.length, regionRows.length);
     renderCountryTable(countryRows);
     renderRegionTable(regionRows);
-    elements.loadStatus.textContent = `Loaded ${EXPORT_PATH} successfully.`;
+    elements.loadStatus.textContent =
+        `Loaded ${EXPORT_PATH} successfully (${countryRows.length} country rows, ${regionRows.length} region rows).`;
 }
 
 function renderMetaCards(exportData, countryRowCount, regionRowCount) {
@@ -157,16 +163,20 @@ function buildMetaCard(label, value) {
 }
 
 function compareYearAndCountry(left, right) {
-    if (left.start_year !== right.start_year) {
-        return left.start_year - right.start_year;
+    const leftYear = extractStartYear(left);
+    const rightYear = extractStartYear(right);
+    if (leftYear !== rightYear) {
+        return leftYear - rightYear;
     }
 
     return left.country_code.localeCompare(right.country_code);
 }
 
 function compareYearCountryAndRegion(left, right) {
-    if (left.start_year !== right.start_year) {
-        return left.start_year - right.start_year;
+    const leftYear = extractStartYear(left);
+    const rightYear = extractStartYear(right);
+    if (leftYear !== rightYear) {
+        return leftYear - rightYear;
     }
 
     if (left.country_code !== right.country_code) {
@@ -174,6 +184,15 @@ function compareYearCountryAndRegion(left, right) {
     }
 
     return left.region_name.localeCompare(right.region_name);
+}
+
+function extractStartYear(row) {
+    if (typeof row.start_year === "number") {
+        return row.start_year;
+    }
+
+    const yearFromKey = Number.parseInt(String(row.yearKey).slice(0, 4), 10);
+    return Number.isFinite(yearFromKey) ? yearFromKey : 0;
 }
 
 function formatInteger(value) {
