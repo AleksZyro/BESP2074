@@ -590,9 +590,6 @@ function renderCountryLayer(geoData) {
                     data-country-code="${escapeHtml(country.countryCode)}"
                     d="${escapeHtml(country.mergedPathD)}"
                     fill="${escapeHtml(fill)}"
-                    stroke="${escapeHtml(fill)}"
-                    stroke-width="1.25"
-                    stroke-linejoin="round"
                     fill-rule="nonzero"
                 ></path>
             `;
@@ -758,12 +755,15 @@ function renderCountryHover(countryCode, countryData) {
 
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
+        const aggregateNote = normalizeRegionName(regionName) !== normalizeRegionName(regionData.region_name)
+            ? ` Aggregate data: ${regionData.region_name}.`
+            : "";
         elements.mapHoverTitle.textContent =
-            `${regionData.region_name} (${regionData.country_code}) - ${regionData.yearKey}`;
+            `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`;
         elements.mapHoverBody.textContent =
             `Population ${formatInteger(regionData.end_population)}, GDP ${formatDecimal(regionData.end_gdp_billion_eur)} bn EUR, `
             + `growth ${formatPercent(regionData.gdp_growth_rate)}, unemployment ${formatPercent(regionData.unemployment_rate)}, `
-            + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.`;
+            + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.${aggregateNote}`;
         return;
     }
 
