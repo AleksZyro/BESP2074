@@ -17,6 +17,9 @@ const VISUAL_REGION_LABEL_OFFSETS = {
     "MNE::stara-crna-gora": [8, -14],
     "MNE::brda": [-8, 10],
 };
+const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
+    "SRB::sz-srb": "Sumadija and Western Serbia",
+};
 const COUNTRY_GEOJSON_PATHS = [
     "./data/geoBoundaries-BIH-ADM0_simplified.geojson",
     "./data/geoBoundaries-MNE-ADM0_simplified.geojson",
@@ -597,6 +600,7 @@ function renderCountryLayer(geoData) {
                 mergedPathD,
                 centroid,
                 features,
+                syntheticCountryRegions,
             };
         })
         .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
@@ -605,6 +609,9 @@ function renderCountryLayer(geoData) {
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
             const fill = mapCountryFill(row, minGdpPerCapita, maxGdpPerCapita);
+            const kosovoSeamFix = country.countryCode === "SRB"
+                ? country.syntheticCountryRegions.find((group) => group.visualRegionKey === "SRB::kosovo-metohija")
+                : null;
             return `
                 <path
                     class="map-country-shape"
@@ -617,6 +624,19 @@ function renderCountryLayer(geoData) {
                     stroke-linecap="round"
                     fill-rule="nonzero"
                 ></path>
+                ${kosovoSeamFix ? `
+                <path
+                    class="map-country-shape"
+                    data-country-code="${escapeHtml(country.countryCode)}"
+                    d="${escapeHtml(kosovoSeamFix.pathD)}"
+                    fill="${escapeHtml(fill)}"
+                    stroke="${escapeHtml(fill)}"
+                    stroke-width="2.4"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                    fill-rule="nonzero"
+                ></path>
+                ` : ""}
             `;
         })
         .join("");
@@ -811,7 +831,7 @@ function buildVisualRegionDisplayData(group, areaShare) {
     return {
         ...source,
         region_name: group.label,
-        source_region_name: source.region_name,
+        source_region_name: VISUAL_REGION_SOURCE_NAME_OVERRIDES[group.visualRegionKey] ?? source.region_name,
         start_population: scaledStartPopulation,
         end_population: scaledPopulation,
         births: Math.round(source.births * share),
