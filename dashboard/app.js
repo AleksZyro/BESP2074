@@ -8,6 +8,15 @@ const COUNTRY_LABEL_OFFSETS = {
     BIH: [0, 0],
     MNE: [0, 0],
 };
+const VISUAL_REGION_LABEL_OFFSETS = {
+    "BIH::fbih": [26, 18],
+    "BIH::rs": [-30, -16],
+    "MNE::boka": [-26, 2],
+    "MNE::primorje": [8, 16],
+    "MNE::zeta": [26, 0],
+    "MNE::stara-crna-gora": [8, -14],
+    "MNE::brda": [16, -10],
+};
 const COUNTRY_GEOJSON_PATHS = [
     "./data/geoBoundaries-BIH-ADM0_simplified.geojson",
     "./data/geoBoundaries-MNE-ADM0_simplified.geojson",
@@ -105,6 +114,79 @@ const REGION_FEATURE_TO_BESP = {
     "MNE::gusinje municipality": "MNE::inland",
     "MNE::petnjica municipality": "MNE::inland",
 };
+const VISUAL_REGION_DEFINITIONS = {
+    "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
+    "BIH::rs": { label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c" },
+    "SRB::vojvodina": { label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
+    "SRB::belgrade": { label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
+    "SRB::sz-srb": { label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
+    "SRB::ji-srb": { label: "JI SRB", dataRegionKey: "SRB::south and east serbia", fill: "#cf857c" },
+    "SRB::kosovo-metohija": { label: "Kosovo i Metohija", dataRegionKey: "SRB::kosovo and metohija", fill: "#efb287" },
+    "MNE::boka": { label: "Boka", dataRegionKey: "MNE::coast", fill: "#78b8c8" },
+    "MNE::primorje": { label: "Primorje", dataRegionKey: "MNE::coast", fill: "#5aa6b7" },
+    "MNE::zeta": { label: "Zeta", dataRegionKey: "MNE::inland", fill: "#8fca78" },
+    "MNE::stara-crna-gora": { label: "Stara Crna Gora", dataRegionKey: "MNE::inland", fill: "#9f7fb7" },
+    "MNE::stara-hercegovina": { label: "Stara Hercegovina", dataRegionKey: "MNE::inland", fill: "#2c8f81" },
+    "MNE::brda": { label: "Brda", dataRegionKey: "MNE::inland", fill: "#5e98cf" },
+    "MNE::stara-raska": { label: "Stara Raska", dataRegionKey: "MNE::inland", fill: "#c6964d" },
+};
+const FEATURE_TO_VISUAL_REGION = {
+    "BIH::federation of bosnia and herzegovina": "BIH::fbih",
+    "BIH::republika srpska": "BIH::rs",
+    "BIH::brcko": "BIH::rs",
+    "SRB::autonomous province of vojvodina": "SRB::vojvodina",
+    "SRB::vojvodina": "SRB::vojvodina",
+    "SRB::syrmia district": "SRB::vojvodina",
+    "SRB::south banat district": "SRB::vojvodina",
+    "SRB::north banat district": "SRB::vojvodina",
+    "SRB::north backa district": "SRB::vojvodina",
+    "SRB::central banat district": "SRB::vojvodina",
+    "SRB::west backa district": "SRB::vojvodina",
+    "SRB::south backa district": "SRB::vojvodina",
+    "SRB::belgrade": "SRB::belgrade",
+    "SRB::kolubara district": "SRB::sz-srb",
+    "SRB::macva district": "SRB::sz-srb",
+    "SRB::sumadija district": "SRB::sz-srb",
+    "SRB::moravica district": "SRB::sz-srb",
+    "SRB::zlatibor district": "SRB::sz-srb",
+    "SRB::raska district": "SRB::sz-srb",
+    "SRB::bor district": "SRB::ji-srb",
+    "SRB::pcinja district": "SRB::ji-srb",
+    "SRB::branicevo district": "SRB::ji-srb",
+    "SRB::zajecar district": "SRB::ji-srb",
+    "SRB::pirot district": "SRB::ji-srb",
+    "SRB::jablanica district": "SRB::ji-srb",
+    "SRB::toplica district": "SRB::ji-srb",
+    "SRB::nisava district": "SRB::ji-srb",
+    "SRB::rasina district": "SRB::ji-srb",
+    "SRB::pomoravlje district": "SRB::ji-srb",
+    "SRB::podunavlje district": "SRB::ji-srb",
+    "SRB::kosovo": "SRB::kosovo-metohija",
+    "SRB::kosovo and metohija": "SRB::kosovo-metohija",
+    "MNE::herceg novi municipality": "MNE::boka",
+    "MNE::kotor municipality": "MNE::boka",
+    "MNE::tivat municipality": "MNE::boka",
+    "MNE::budva municipality": "MNE::primorje",
+    "MNE::bar municipality": "MNE::primorje",
+    "MNE::ulcinj municipality": "MNE::primorje",
+    "MNE::podgorica municipality": "MNE::zeta",
+    "MNE::danilovgrad municipality": "MNE::zeta",
+    "MNE::cetinje municipality": "MNE::stara-crna-gora",
+    "MNE::niksic municipality": "MNE::stara-hercegovina",
+    "MNE::pljevlja municipality": "MNE::stara-hercegovina",
+    "MNE::pluzine municipality": "MNE::stara-hercegovina",
+    "MNE::savnik municipality": "MNE::stara-hercegovina",
+    "MNE::zabljak municipality": "MNE::stara-hercegovina",
+    "MNE::kolasin municipality": "MNE::brda",
+    "MNE::mojkovac municipality": "MNE::brda",
+    "MNE::andrijevica municipality": "MNE::brda",
+    "MNE::berane municipality": "MNE::brda",
+    "MNE::bijelo polje municipality": "MNE::stara-raska",
+    "MNE::rozaje municipality": "MNE::stara-raska",
+    "MNE::plav municipality": "MNE::stara-raska",
+    "MNE::gusinje municipality": "MNE::stara-raska",
+    "MNE::petnjica municipality": "MNE::stara-raska",
+};
 
 const integerFormatter = new Intl.NumberFormat("en-US");
 const decimalFormatter = new Intl.NumberFormat("en-US", {
@@ -117,10 +199,15 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 1,
 });
 
+function clamp(value, minimum, maximum) {
+    return Math.max(minimum, Math.min(value, maximum));
+}
+
 const mapDataCache = {
     countriesByCode: new Map(),
     regionsByKey: new Map(),
     latestYearByCountryCode: new Map(),
+    visualRegionsByKey: new Map(),
 };
 let activeMapMode = "country";
 
@@ -212,9 +299,7 @@ async function loadGeoBoundaryData() {
 
     const countryFeatures = countryFeaturesRaw
         .map((feature) => normalizeGeoFeature(feature, "country"))
-        .filter((feature) => feature
-            && TARGET_COUNTRIES.has(feature.countryCode)
-            && feature.rawCountryCode !== "XKX");
+        .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
 
     const regionFeatures = regionFeaturesRaw
         .map((feature) => normalizeGeoFeature(feature, "region"))
@@ -316,15 +401,22 @@ function projectFeature(feature, projection, kind) {
     }
 
     const centroid = geometryCentroid(feature.geometry, projection);
+    const projectedArea = geometryProjectedArea(feature.geometry, projection, includeHoles);
     const key = buildRegionKey(feature.countryCode, feature.name);
     const bespRegionKey = kind === "region" ? resolveBespRegionKey(feature.countryCode, feature.name) : null;
+    const visualRegion = kind === "region" ? resolveVisualRegion(feature.countryCode, feature.name, bespRegionKey) : null;
 
     return {
         ...feature,
         key,
         bespRegionKey,
+        visualRegionKey: visualRegion?.visualRegionKey ?? null,
+        visualRegionLabel: visualRegion?.label ?? null,
+        visualRegionDataKey: visualRegion?.dataRegionKey ?? bespRegionKey,
+        visualRegionFill: visualRegion?.fill ?? null,
         pathD,
         centroid,
+        projectedArea,
     };
 }
 
@@ -498,6 +590,7 @@ function renderCountryLayer(geoData) {
                 displayName,
                 mergedPathD,
                 centroid,
+                features,
             };
         })
         .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
@@ -513,8 +606,9 @@ function renderCountryLayer(geoData) {
                     d="${escapeHtml(country.mergedPathD)}"
                     fill="${escapeHtml(fill)}"
                     stroke="${escapeHtml(fill)}"
-                    stroke-width="1.25"
+                    stroke-width="1.35"
                     stroke-linejoin="round"
+                    stroke-linecap="round"
                     fill-rule="nonzero"
                 ></path>
             `;
@@ -580,79 +674,150 @@ function renderRegionLayer(geoData) {
         return;
     }
 
-    const availableRegionRows = [...mapDataCache.regionsByKey.values()];
-    const unempValues = availableRegionRows.map((entry) => entry.unemployment_rate);
-    const minUnemployment = unempValues.length ? Math.min(...unempValues) : 0;
-    const maxUnemployment = unempValues.length ? Math.max(...unempValues) : 1;
+    const groupedRegions = buildVisualRegionGroups(geoData.regionFeatures);
+    mapDataCache.visualRegionsByKey = new Map(groupedRegions.map((group) => [group.visualRegionKey, group]));
 
-    const countryRows = mapDataCache.countriesByCode;
-
-    elements.regionLayer.innerHTML = geoData.regionFeatures
-        .map((feature) => {
-            const mappedRegionRow = feature.bespRegionKey
-                ? mapDataCache.regionsByKey.get(feature.bespRegionKey)
-                : null;
-            const countryRow = countryRows.get(feature.countryCode) ?? null;
-            const fill = mapRegionFill(mappedRegionRow, countryRow, minUnemployment, maxUnemployment);
-
-            return `
-                <path
-                    class="map-region-shape"
-                    data-country-code="${escapeHtml(feature.countryCode)}"
-                    data-region-name="${escapeHtml(feature.name)}"
-                    data-region-key="${escapeHtml(feature.key)}"
-                    data-besp-region-key="${escapeHtml(feature.bespRegionKey ?? "")}"
-                    d="${escapeHtml(feature.pathD)}"
-                    fill="${escapeHtml(fill)}"
-                ></path>
-            `;
-        })
+    elements.regionLayer.innerHTML = groupedRegions
+        .map((group) => `
+            <path
+                class="map-region-shape"
+                data-country-code="${escapeHtml(group.countryCode)}"
+                data-region-name="${escapeHtml(group.label)}"
+                data-visual-region-key="${escapeHtml(group.visualRegionKey)}"
+                data-data-region-key="${escapeHtml(group.dataRegionKey ?? "")}"
+                d="${escapeHtml(group.pathD)}"
+                fill="${escapeHtml(group.fill)}"
+            ></path>
+        `)
         .join("");
 
-    const regionLabelGroups = buildRegionLabelGroups(geoData.regionFeatures);
-    elements.regionLabelLayer.innerHTML = regionLabelGroups
-        .map((group) => `
-            <text class="map-region-label" x="${group.centroid[0].toFixed(1)}" y="${group.centroid[1].toFixed(1)}">
-                ${escapeHtml(shortBespRegionLabel(group.displayName, group.bespRegionKey))}
+    elements.regionLabelLayer.innerHTML = groupedRegions
+        .map((group) => {
+            const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
+            return `
+            <text class="map-region-label" x="${(group.centroid[0] + offsetX).toFixed(1)}" y="${(group.centroid[1] + offsetY).toFixed(1)}">
+                ${escapeHtml(group.label)}
             </text>
-        `)
+        `;
+        })
         .join("");
 }
 
-function buildRegionLabelGroups(regionFeatures) {
+function geometryProjectedArea(geometry, projection, includeHoles = true) {
+    const type = geometry?.type;
+    const coordinates = geometry?.coordinates;
+    if (!type || !coordinates) {
+        return 0;
+    }
+
+    if (type === "Polygon") {
+        return polygonProjectedArea(coordinates, projection, includeHoles);
+    }
+
+    if (type === "MultiPolygon") {
+        return coordinates.reduce(
+            (sum, polygon) => sum + polygonProjectedArea(polygon, projection, includeHoles),
+            0
+        );
+    }
+
+    return 0;
+}
+
+function polygonProjectedArea(polygonCoordinates, projection, includeHoles) {
+    const rings = includeHoles ? polygonCoordinates : polygonCoordinates.slice(0, 1);
+    return rings.reduce((sum, ring, index) => {
+        if (!Array.isArray(ring) || ring.length < 3) {
+            return sum;
+        }
+        const projectedRing = ring.map((coord) => projection(coord[0], coord[1]));
+        const ringArea = Math.abs(shoelaceArea(projectedRing));
+        return sum + (index === 0 ? ringArea : (includeHoles ? -ringArea : 0));
+    }, 0);
+}
+
+function shoelaceArea(points) {
+    let total = 0;
+    for (let index = 0; index < points.length; index += 1) {
+        const [x1, y1] = points[index];
+        const [x2, y2] = points[(index + 1) % points.length];
+        total += (x1 * y2) - (x2 * y1);
+    }
+    return total / 2;
+}
+
+function buildVisualRegionGroups(regionFeatures) {
     const groups = new Map();
 
     for (const feature of regionFeatures) {
-        if (!feature.bespRegionKey) {
+        if (!feature.visualRegionKey) {
             continue;
         }
-        const list = groups.get(feature.bespRegionKey) ?? [];
+        const list = groups.get(feature.visualRegionKey) ?? [];
         list.push(feature);
-        groups.set(feature.bespRegionKey, list);
+        groups.set(feature.visualRegionKey, list);
     }
 
-    return [...groups.entries()]
-        .map(([bespRegionKey, features]) => {
-            const row = mapDataCache.regionsByKey.get(bespRegionKey);
-            const displayName = row?.region_name ?? regionNameFromBespKey(bespRegionKey);
-            const centroid = averageCentroid(features);
-            return {
-                bespRegionKey,
-                displayName,
-                centroid,
-            };
-        });
+    const groupedVisualRegions = [...groups.entries()].map(([visualRegionKey, features]) => {
+        const template = VISUAL_REGION_DEFINITIONS[visualRegionKey];
+        const mergedPathD = features.map((feature) => feature.pathD).join(" ");
+        return {
+            visualRegionKey,
+            label: template?.label ?? visualRegionKey,
+            dataRegionKey: template?.dataRegionKey ?? features[0]?.visualRegionDataKey ?? null,
+            countryCode: features[0]?.countryCode ?? "",
+            fill: template?.fill ?? "rgba(126, 143, 161, 0.5)",
+            centroid: averageCentroid(features),
+            projectedArea: features.reduce((sum, feature) => sum + (feature.projectedArea ?? 0), 0),
+            pathD: mergedPathD,
+        };
+    });
+
+    const areaTotalsByDataKey = new Map();
+    for (const group of groupedVisualRegions) {
+        const total = areaTotalsByDataKey.get(group.dataRegionKey) ?? 0;
+        areaTotalsByDataKey.set(group.dataRegionKey, total + group.projectedArea);
+    }
+
+    return groupedVisualRegions.map((group) => {
+        const totalArea = areaTotalsByDataKey.get(group.dataRegionKey) ?? 0;
+        const areaShare = totalArea > 0 ? group.projectedArea / totalArea : 1;
+        return {
+            ...group,
+            areaShare,
+            displayData: buildVisualRegionDisplayData(group, areaShare),
+        };
+    });
 }
 
-function regionNameFromBespKey(bespRegionKey) {
-    const [, rawRegionName] = String(bespRegionKey).split("::");
-    if (!rawRegionName) {
-        return String(bespRegionKey);
+function buildVisualRegionDisplayData(group, areaShare) {
+    const source = group.dataRegionKey ? mapDataCache.regionsByKey.get(group.dataRegionKey) : null;
+    if (!source) {
+        return null;
     }
-    return rawRegionName
-        .split(" ")
-        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(" ");
+
+    const share = clamp(areaShare, 0.08, 1.0);
+    const scaledPopulation = Math.max(1, Math.round(source.end_population * share));
+    const scaledStartPopulation = Math.max(1, Math.round(source.start_population * share));
+    const scaledEndGdp = source.end_gdp_billion_eur * share;
+    const scaledStartGdp = source.start_gdp_billion_eur * share;
+
+    return {
+        ...source,
+        region_name: group.label,
+        source_region_name: source.region_name,
+        start_population: scaledStartPopulation,
+        end_population: scaledPopulation,
+        births: Math.round(source.births * share),
+        deaths: Math.round(source.deaths * share),
+        natural_change: Math.round(source.natural_change * share),
+        net_external_migration: Math.round(source.net_external_migration * share),
+        internal_migration: Math.round(source.internal_migration * share),
+        start_gdp_billion_eur: scaledStartGdp,
+        end_gdp_billion_eur: scaledEndGdp,
+        gdp_per_capita_eur: scaledPopulation > 0 ? (scaledEndGdp * 1_000_000_000) / scaledPopulation : 0,
+        is_visual_split: normalizeRegionName(group.label) !== normalizeRegionName(source.region_name),
+    };
 }
 
 function bindMapHoverEvents() {
@@ -673,8 +838,9 @@ function bindMapHoverEvents() {
         node.addEventListener("mouseenter", () => {
             const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
             const regionName = String(node.getAttribute("data-region-name") ?? "");
-            const mappedRegionKey = String(node.getAttribute("data-besp-region-key") ?? "");
-            const regionData = mappedRegionKey ? mapDataCache.regionsByKey.get(mappedRegionKey) : null;
+            const visualRegionKey = String(node.getAttribute("data-visual-region-key") ?? "");
+            const visualRegion = visualRegionKey ? mapDataCache.visualRegionsByKey.get(visualRegionKey) : null;
+            const regionData = visualRegion?.displayData ?? null;
             const countryData = mapDataCache.countriesByCode.get(countryCode) ?? null;
             node.classList.add("map-hover-target");
             renderRegionHover(countryCode, regionName, regionData ?? null, countryData);
@@ -702,12 +868,15 @@ function renderCountryHover(countryCode, countryData) {
 
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
+        const aggregateNote = regionData.is_visual_split && regionData.source_region_name
+            ? ` Split from aggregate: ${regionData.source_region_name}.`
+            : "";
         elements.mapHoverTitle.textContent =
-            `${regionData.region_name} (${regionData.country_code}) - ${regionData.yearKey}`;
+            `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`;
         elements.mapHoverBody.textContent =
             `Population ${formatInteger(regionData.end_population)}, GDP ${formatDecimal(regionData.end_gdp_billion_eur)} bn EUR, `
             + `growth ${formatPercent(regionData.gdp_growth_rate)}, unemployment ${formatPercent(regionData.unemployment_rate)}, `
-            + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.`;
+            + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.${aggregateNote}`;
         return;
     }
 
@@ -797,6 +966,7 @@ function renderEmptyState() {
     mapDataCache.countriesByCode = new Map();
     mapDataCache.regionsByKey = new Map();
     mapDataCache.latestYearByCountryCode = new Map();
+    mapDataCache.visualRegionsByKey = new Map();
     setMapMode("country");
     resetMapHoverDetails();
     elements.metaCards.innerHTML = `
@@ -924,6 +1094,34 @@ function resolveBespRegionKey(countryCode, featureRegionName) {
     }
 
     return null;
+}
+
+function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
+    const featureKey = buildRegionKey(countryCode, featureRegionName);
+    const visualRegionKey = FEATURE_TO_VISUAL_REGION[featureKey] ?? null;
+    if (!visualRegionKey) {
+        return null;
+    }
+
+    const definition = VISUAL_REGION_DEFINITIONS[visualRegionKey];
+    return {
+        visualRegionKey,
+        label: definition?.label ?? featureRegionName,
+        dataRegionKey: definition?.dataRegionKey ?? bespRegionKey,
+        fill: definition?.fill ?? "rgba(126, 143, 161, 0.38)",
+    };
+}
+
+function regionNameFromBespKey(bespRegionKey) {
+    const [, rawRegionName] = String(bespRegionKey).split("::");
+    if (!rawRegionName) {
+        return String(bespRegionKey);
+    }
+
+    return rawRegionName
+        .split(" ")
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(" ");
 }
 
 function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
