@@ -22,6 +22,19 @@ const COUNTRY_MAP_CONFIG = [
         labelY: 360,
     },
 ];
+const REGION_MAP_CONFIG = [
+    { name: "Belgrade", countryCode: "SRB", points: "438,205 486,198 510,222 496,255 450,260 425,236", labelX: 470, labelY: 232 },
+    { name: "Vojvodina", countryCode: "SRB", points: "360,150 500,140 560,180 542,230 500,220 440,200 376,205 342,175", labelX: 455, labelY: 175 },
+    { name: "Central Serbia", countryCode: "SRB", points: "385,225 500,224 554,262 540,322 450,338 392,305 370,255", labelX: 462, labelY: 282 },
+    { name: "South and East Serbia", countryCode: "SRB", points: "452,338 540,322 604,350 592,420 496,430 450,390", labelX: 528, labelY: 374 },
+    { name: "Kosovo and Metohija", countryCode: "SRB", points: "385,307 450,338 450,390 392,396 352,350", labelX: 410, labelY: 356 },
+    { name: "Coast", countryCode: "MNE", points: "235,322 286,312 312,334 298,365 252,370 228,350", labelX: 272, labelY: 346 },
+    { name: "Inland", countryCode: "MNE", points: "298,365 338,358 362,390 328,420 255,387", labelX: 315, labelY: 392 },
+    { name: "Federation of Bosnia and Herzegovina", countryCode: "BIH", points: "152,174 286,165 330,198 292,250 212,255 160,220", labelX: 235, labelY: 212 },
+    { name: "Republika Srpska", countryCode: "BIH", points: "210,255 292,250 340,208 340,278 286,300 222,296 180,260", labelX: 266, labelY: 272 },
+    { name: "Brcko", countryCode: "BIH", points: "282,236 304,234 314,248 298,263 278,257", labelX: 296, labelY: 251 },
+];
+let activeMapMode = "country";
 
 const integerFormatter = new Intl.NumberFormat("en-US");
 const decimalFormatter = new Intl.NumberFormat("en-US", {
@@ -37,17 +50,47 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
 const elements = {
     loadStatus: document.getElementById("load-status"),
     metaCards: document.getElementById("meta-cards"),
+    mapModeCountryButton: document.getElementById("map-mode-country"),
+    mapModeRegionButton: document.getElementById("map-mode-region"),
     countryLayer: document.getElementById("country-layer"),
     countryLabelLayer: document.getElementById("country-label-layer"),
+    regionLayer: document.getElementById("region-layer"),
+    regionLabelLayer: document.getElementById("region-label-layer"),
     mapSummaryCards: document.getElementById("map-summary-cards"),
     countryTableBody: document.getElementById("country-table-body"),
     regionTableBody: document.getElementById("region-table-body"),
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+    bindMapModeEvents();
     renderEmptyState();
     void loadDashboardData();
 });
+
+function bindMapModeEvents() {
+    elements.mapModeCountryButton.addEventListener("click", () => {
+        setMapMode("country");
+    });
+    elements.mapModeRegionButton.addEventListener("click", () => {
+        setMapMode("region");
+    });
+}
+
+function setMapMode(mode) {
+    activeMapMode = mode === "region" ? "region" : "country";
+    const countryActive = activeMapMode === "country";
+    elements.mapModeCountryButton.classList.toggle("map-mode-button-active", countryActive);
+    elements.mapModeRegionButton.classList.toggle("map-mode-button-active", !countryActive);
+    applyMapModeVisibility();
+}
+
+function applyMapModeVisibility() {
+    const showCountries = activeMapMode === "country";
+    elements.countryLayer.classList.toggle("map-hidden", !showCountries);
+    elements.countryLabelLayer.classList.toggle("map-hidden", !showCountries);
+    elements.regionLayer.classList.toggle("map-hidden", showCountries);
+    elements.regionLabelLayer.classList.toggle("map-hidden", showCountries);
+}
 
 async function loadDashboardData() {
     try {
@@ -104,8 +147,10 @@ function renderDashboard(exportData) {
 
     renderMetaCards(exportData, countryRows.length, regionRows.length);
     renderCountryLayer(countryRows);
+    renderRegionLayer(regionRows);
     renderCountryTable(countryRows);
     renderRegionTable(regionRows);
+    applyMapModeVisibility();
     elements.loadStatus.textContent =
         `Loaded ${EXPORT_PATH} successfully (${countryRows.length} country rows, ${regionRows.length} region rows).`;
 }
@@ -227,9 +272,49 @@ function renderCountryLayer(countryRows) {
         .join("");
 }
 
+function renderRegionLayer(regionRows) {
+    const latestByRegionKey = getLatestRegionRowsByKey(regionRows);
+    const mappedRegions = REGION_MAP_CONFIG.map((shape) => ({
+        shape,
+        data: latestByRegionKey.get(buildRegionKey(shape.countryCode, shape.name)) ?? null,
+    }));
+
+    const availableRows = mappedRegions
+        .map((entry) => entry.data)
+        .filter((entry) => entry !== null);
+    const unemploymentValues = availableRows.map((entry) => entry.unemployment_rate);
+    const minUnemployment = unemploymentValues.length ? Math.min(...unemploymentValues) : 0;
+    const maxUnemployment = unemploymentValues.length ? Math.max(...unemploymentValues) : 1;
+
+    elements.regionLayer.innerHTML = mappedRegions
+        .map(({ shape, data }) => {
+            const fill = mapRegionFill(data, minUnemployment, maxUnemployment);
+            return `
+                <polygon
+                    class="map-region-shape"
+                    data-region-name="${escapeHtml(shape.name)}"
+                    data-country-code="${escapeHtml(shape.countryCode)}"
+                    points="${escapeHtml(shape.points)}"
+                    fill="${escapeHtml(fill)}"
+                ></polygon>
+            `;
+        })
+        .join("");
+
+    elements.regionLabelLayer.innerHTML = mappedRegions
+        .map(({ shape }) => `
+            <text class="map-region-label" x="${shape.labelX}" y="${shape.labelY}">
+                ${escapeHtml(shortRegionLabel(shape.name))}
+            </text>
+        `)
+        .join("");
+}
+
 function renderEmptyState() {
     elements.countryLayer.innerHTML = "";
     elements.countryLabelLayer.innerHTML = "";
+    elements.regionLayer.innerHTML = "";
+    elements.regionLabelLayer.innerHTML = "";
     elements.mapSummaryCards.innerHTML = `
         <article class="meta-card empty-card">
             <span class="meta-label">No country layer data</span>
@@ -237,6 +322,7 @@ function renderEmptyState() {
             <p class="meta-note">Load export data to render the country map layer.</p>
         </article>
     `;
+    setMapMode("country");
     elements.metaCards.innerHTML = `
         <article class="meta-card empty-card">
             <span class="meta-label">No data loaded</span>
@@ -296,6 +382,24 @@ function getLatestCountryRowsByCode(countryRows) {
     return latestByCountryCode;
 }
 
+function getLatestRegionRowsByKey(regionRows) {
+    const latestByRegionKey = new Map();
+
+    for (const row of regionRows) {
+        const regionKey = buildRegionKey(row.country_code, row.region_name);
+        const existing = latestByRegionKey.get(regionKey);
+        if (!existing || extractStartYear(row) > extractStartYear(existing)) {
+            latestByRegionKey.set(regionKey, row);
+        }
+    }
+
+    return latestByRegionKey;
+}
+
+function buildRegionKey(countryCode, regionName) {
+    return `${countryCode}::${regionName}`;
+}
+
 function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
     if (!countryData) {
         return "rgba(127, 150, 173, 0.45)";
@@ -307,6 +411,29 @@ function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
     const green = Math.round(113 + ratio * 90);
     const blue = Math.round(145 + ratio * 35);
     return `rgba(${red}, ${green}, ${blue}, 0.88)`;
+}
+
+function mapRegionFill(regionData, minUnemployment, maxUnemployment) {
+    if (!regionData) {
+        return "rgba(123, 143, 166, 0.42)";
+    }
+
+    const span = maxUnemployment - minUnemployment;
+    const ratio = span > 0 ? (regionData.unemployment_rate - minUnemployment) / span : 0.5;
+    const red = Math.round(84 + ratio * 135);
+    const green = Math.round(168 - ratio * 58);
+    const blue = Math.round(139 - ratio * 36);
+    return `rgba(${red}, ${green}, ${blue}, 0.9)`;
+}
+
+function shortRegionLabel(regionName) {
+    const replacements = {
+        "Federation of Bosnia and Herzegovina": "FBiH",
+        "Republika Srpska": "RS",
+        "South and East Serbia": "SE Serbia",
+        "Kosovo and Metohija": "K&M",
+    };
+    return replacements[regionName] ?? regionName;
 }
 
 function extractStartYear(row) {

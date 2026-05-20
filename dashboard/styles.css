@@ -109,6 +109,29 @@ th {
     margin-bottom: 18px;
 }
 
+.map-mode-controls {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.map-mode-button {
+    border: 1px solid rgba(173, 198, 224, 0.34);
+    border-radius: 999px;
+    background: rgba(28, 50, 73, 0.72);
+    color: var(--muted);
+    padding: 8px 14px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.map-mode-button-active {
+    border-color: rgba(220, 184, 107, 0.55);
+    background: rgba(220, 184, 107, 0.16);
+    color: var(--text);
+}
+
 .card-grid {
     display: grid;
     gap: 16px;
@@ -175,6 +198,12 @@ td {
     vector-effect: non-scaling-stroke;
 }
 
+.map-region-shape {
+    stroke: rgba(8, 14, 24, 0.7);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
 .map-country-label {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     font-size: 15px;
@@ -182,6 +211,19 @@ td {
     fill: #f4f8fc;
     text-anchor: middle;
     pointer-events: none;
+}
+
+.map-region-label {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    fill: #eef4fa;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.map-hidden {
+    display: none;
 }
 
 .map-summary-cards {
