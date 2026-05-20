@@ -1,57 +1,54 @@
 const EXPORT_PATH = "../output/latest.json";
-const COUNTRY_MAP_CONFIG = [
-    {
-        code: "BIH",
-        name: "Bosnia and Herzegovina",
-        points: "130,130 290,120 360,190 330,280 220,300 140,230",
-        labelX: 245,
-        labelY: 205,
-    },
-    {
-        code: "SRB",
-        name: "Serbia",
-        points: "330,145 520,130 620,200 610,350 495,430 355,400 315,280",
-        labelX: 470,
-        labelY: 260,
-    },
-    {
-        code: "MNE",
-        name: "Montenegro",
-        points: "245,305 335,300 372,352 320,420 225,385",
-        labelX: 300,
-        labelY: 360,
-    },
+const MAP_VIEWBOX_WIDTH = 780;
+const MAP_VIEWBOX_HEIGHT = 520;
+const MAP_PADDING = 22;
+const TARGET_COUNTRIES = new Set(["BIH", "MNE", "SRB"]);
+const COUNTRY_GEOJSON_PATHS = [
+    "./data/geoBoundaries-BIH-ADM0_simplified.geojson",
+    "./data/geoBoundaries-MNE-ADM0_simplified.geojson",
+    "./data/geoBoundaries-SRB-ADM0_simplified.geojson",
 ];
-const REGION_MAP_CONFIG = [
-    { name: "Belgrade", countryCode: "SRB", points: "438,205 486,198 510,222 496,255 450,260 425,236", labelX: 470, labelY: 232 },
-    { name: "Vojvodina", countryCode: "SRB", points: "360,150 500,140 560,180 542,230 500,220 440,200 376,205 342,175", labelX: 455, labelY: 175 },
-    { name: "Central Serbia", countryCode: "SRB", points: "385,225 500,224 554,262 540,322 450,338 392,305 370,255", labelX: 462, labelY: 282 },
-    { name: "South and East Serbia", countryCode: "SRB", points: "452,338 540,322 604,350 592,420 496,430 450,390", labelX: 528, labelY: 374 },
-    { name: "Kosovo and Metohija", countryCode: "SRB", points: "385,307 450,338 450,390 392,396 352,350", labelX: 410, labelY: 356 },
-    { name: "Coast", countryCode: "MNE", points: "235,322 286,312 312,334 298,365 252,370 228,350", labelX: 272, labelY: 346 },
-    { name: "Inland", countryCode: "MNE", points: "298,365 338,358 362,390 328,420 255,387", labelX: 315, labelY: 392 },
-    { name: "Federation of Bosnia and Herzegovina", countryCode: "BIH", points: "152,174 286,165 330,198 292,250 212,255 160,220", labelX: 235, labelY: 212 },
-    { name: "Republika Srpska", countryCode: "BIH", points: "210,255 292,250 340,208 340,278 286,300 222,296 180,260", labelX: 266, labelY: 272 },
-    { name: "Brcko", countryCode: "BIH", points: "282,236 304,234 314,248 298,263 278,257", labelX: 296, labelY: 251 },
+const REGION_GEOJSON_PATHS = [
+    "./data/geoBoundaries-BIH-ADM1_simplified.geojson",
+    "./data/geoBoundaries-MNE-ADM1_simplified.geojson",
+    "./data/geoBoundaries-SRB-ADM1_simplified.geojson",
 ];
-let activeMapMode = "country";
-const mapDataCache = {
-    countriesByCode: new Map(),
-    regionsByKey: new Map(),
-};
+const BESP_REGION_KEYS = new Set([
+    "BIH::federation of bosnia and herzegovina",
+    "BIH::republika srpska",
+    "BIH::brcko",
+    "MNE::coast",
+    "MNE::inland",
+    "SRB::belgrade",
+    "SRB::vojvodina",
+    "SRB::central serbia",
+    "SRB::south and east serbia",
+    "SRB::kosovo and metohija",
+]);
 const REGION_NAME_ALIASES = {
     "federation of bosnia and herzegovina": "federation of bosnia and herzegovina",
     "federation of bosnia-herzegovina": "federation of bosnia and herzegovina",
     "republika srpska": "republika srpska",
     "brcko": "brcko",
+    "brcko district": "brcko",
+    "belgrade": "belgrade",
+    "belgrade district": "belgrade",
+    "autonomous province of vojvodina": "vojvodina",
+    "vojvodina": "vojvodina",
+    "central serbia": "central serbia",
     "south and east serbia": "south and east serbia",
     "kosovo and metohija": "kosovo and metohija",
     "kosovo & metohija": "kosovo and metohija",
-    "central serbia": "central serbia",
-    "vojvodina": "vojvodina",
-    "belgrade": "belgrade",
     "coast": "coast",
     "inland": "inland",
+};
+const REGION_FEATURE_TO_BESP = {
+    "BIH::federation of bosnia and herzegovina": "BIH::federation of bosnia and herzegovina",
+    "BIH::republika srpska": "BIH::republika srpska",
+    "BIH::brcko": "BIH::brcko",
+    "SRB::belgrade": "SRB::belgrade",
+    "SRB::autonomous province of vojvodina": "SRB::vojvodina",
+    "SRB::vojvodina": "SRB::vojvodina",
 };
 
 const integerFormatter = new Intl.NumberFormat("en-US");
@@ -64,6 +61,13 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
 });
+
+const mapDataCache = {
+    countriesByCode: new Map(),
+    regionsByKey: new Map(),
+    latestYearByCountryCode: new Map(),
+};
+let activeMapMode = "country";
 
 const elements = {
     loadStatus: document.getElementById("load-status"),
@@ -88,12 +92,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function bindMapModeEvents() {
-    elements.mapModeCountryButton.addEventListener("click", () => {
-        setMapMode("country");
-    });
-    elements.mapModeRegionButton.addEventListener("click", () => {
-        setMapMode("region");
-    });
+    elements.mapModeCountryButton.addEventListener("click", () => setMapMode("country"));
+    elements.mapModeRegionButton.addEventListener("click", () => setMapMode("region"));
 }
 
 function setMapMode(mode) {
@@ -115,23 +115,217 @@ function applyMapModeVisibility() {
 
 async function loadDashboardData() {
     try {
-        const response = await fetch(EXPORT_PATH, { cache: "no-store" });
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const exportData = await response.json();
+        const exportData = await fetchJson(EXPORT_PATH);
         if (!isValidExport(exportData)) {
             throw new Error("Invalid BESP export shape");
         }
 
-        renderDashboard(exportData);
+        let geoData = null;
+        let geoWarning = "";
+        try {
+            geoData = await loadGeoBoundaryData();
+        } catch (error) {
+            geoWarning = error instanceof Error ? error.message : "GeoJSON load failed";
+        }
+
+        renderDashboard(exportData, geoData, geoWarning);
     } catch (error) {
         const detail = error instanceof Error ? ` (${error.message})` : "";
         elements.loadStatus.textContent =
             "Could not load output/latest.json. Run py main.py and serve the repository root before opening the dashboard."
             + detail;
     }
+}
+
+async function fetchJson(path) {
+    const response = await fetch(path, { cache: "no-store" });
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status} for ${path}`);
+    }
+
+    return response.json();
+}
+
+async function loadGeoBoundaryData() {
+    const [countryCollections, regionCollections] = await Promise.all([
+        Promise.all(COUNTRY_GEOJSON_PATHS.map((path) => fetchJson(path))),
+        Promise.all(REGION_GEOJSON_PATHS.map((path) => fetchJson(path))),
+    ]);
+
+    const countryFeaturesRaw = countryCollections.flatMap((collection) => collection.features ?? []);
+    const regionFeaturesRaw = regionCollections.flatMap((collection) => collection.features ?? []);
+
+    const countryFeatures = countryFeaturesRaw
+        .map((feature) => normalizeGeoFeature(feature))
+        .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
+
+    const regionFeatures = regionFeaturesRaw
+        .map((feature) => normalizeGeoFeature(feature))
+        .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
+
+    const allGeometryFeatures = [...countryFeatures, ...regionFeatures];
+    if (!allGeometryFeatures.length) {
+        throw new Error("No usable GeoJSON features found");
+    }
+
+    const projection = createProjection(allGeometryFeatures);
+
+    const projectedCountryFeatures = countryFeatures
+        .map((feature) => projectFeature(feature, projection, "country"))
+        .filter((feature) => feature !== null);
+    const projectedRegionFeatures = regionFeatures
+        .map((feature) => projectFeature(feature, projection, "region"))
+        .filter((feature) => feature !== null);
+
+    return {
+        countryFeatures: projectedCountryFeatures,
+        regionFeatures: projectedRegionFeatures,
+    };
+}
+
+function normalizeGeoFeature(feature) {
+    if (!feature || !feature.geometry || !feature.properties) {
+        return null;
+    }
+
+    const properties = feature.properties;
+    const countryCode = normalizeCountryCode(properties.shapeGroup || properties.shapeISO);
+    const name = String(properties.shapeName ?? "").trim();
+    if (!countryCode || !name) {
+        return null;
+    }
+
+    return {
+        countryCode,
+        name,
+        geometry: feature.geometry,
+    };
+}
+
+function createProjection(features) {
+    let minLon = Number.POSITIVE_INFINITY;
+    let maxLon = Number.NEGATIVE_INFINITY;
+    let minLat = Number.POSITIVE_INFINITY;
+    let maxLat = Number.NEGATIVE_INFINITY;
+
+    for (const feature of features) {
+        const points = extractCoordinates(feature.geometry);
+        for (const [lon, lat] of points) {
+            if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+                continue;
+            }
+            minLon = Math.min(minLon, lon);
+            maxLon = Math.max(maxLon, lon);
+            minLat = Math.min(minLat, lat);
+            maxLat = Math.max(maxLat, lat);
+        }
+    }
+
+    if (!Number.isFinite(minLon) || !Number.isFinite(maxLon) || !Number.isFinite(minLat) || !Number.isFinite(maxLat)) {
+        throw new Error("Could not compute map bounds");
+    }
+
+    const lonSpan = Math.max(maxLon - minLon, 1e-9);
+    const latSpan = Math.max(maxLat - minLat, 1e-9);
+    const usableWidth = MAP_VIEWBOX_WIDTH - MAP_PADDING * 2;
+    const usableHeight = MAP_VIEWBOX_HEIGHT - MAP_PADDING * 2;
+    const scale = Math.min(usableWidth / lonSpan, usableHeight / latSpan);
+    const offsetX = (MAP_VIEWBOX_WIDTH - lonSpan * scale) / 2;
+    const offsetY = (MAP_VIEWBOX_HEIGHT - latSpan * scale) / 2;
+
+    return (lon, lat) => {
+        const x = offsetX + (lon - minLon) * scale;
+        const y = offsetY + (maxLat - lat) * scale;
+        return [x, y];
+    };
+}
+
+function projectFeature(feature, projection, kind) {
+    const pathD = geometryToPath(feature.geometry, projection);
+    if (!pathD) {
+        return null;
+    }
+
+    const centroid = geometryCentroid(feature.geometry, projection);
+    const key = buildRegionKey(feature.countryCode, feature.name);
+    const bespRegionKey = kind === "region" ? resolveBespRegionKey(feature.countryCode, feature.name) : null;
+
+    return {
+        ...feature,
+        key,
+        bespRegionKey,
+        pathD,
+        centroid,
+    };
+}
+
+function geometryToPath(geometry, projection) {
+    const type = geometry?.type;
+    const coordinates = geometry?.coordinates;
+    if (!type || !coordinates) {
+        return "";
+    }
+
+    if (type === "Polygon") {
+        return polygonToPath(coordinates, projection);
+    }
+
+    if (type === "MultiPolygon") {
+        return coordinates.map((polygon) => polygonToPath(polygon, projection)).join(" ");
+    }
+
+    return "";
+}
+
+function polygonToPath(polygonCoordinates, projection) {
+    return polygonCoordinates
+        .map((ring) => {
+            if (!Array.isArray(ring) || ring.length < 3) {
+                return "";
+            }
+            const points = ring
+                .map((coord) => projection(coord[0], coord[1]))
+                .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
+            return `M ${points.join(" L ")} Z`;
+        })
+        .filter((segment) => segment)
+        .join(" ");
+}
+
+function geometryCentroid(geometry, projection) {
+    const points = extractCoordinates(geometry);
+    if (!points.length) {
+        return [MAP_VIEWBOX_WIDTH / 2, MAP_VIEWBOX_HEIGHT / 2];
+    }
+
+    let lonSum = 0;
+    let latSum = 0;
+    for (const [lon, lat] of points) {
+        lonSum += lon;
+        latSum += lat;
+    }
+
+    const avgLon = lonSum / points.length;
+    const avgLat = latSum / points.length;
+    return projection(avgLon, avgLat);
+}
+
+function extractCoordinates(geometry) {
+    const type = geometry?.type;
+    const coordinates = geometry?.coordinates;
+    if (!type || !coordinates) {
+        return [];
+    }
+
+    if (type === "Polygon") {
+        return coordinates.flat();
+    }
+
+    if (type === "MultiPolygon") {
+        return coordinates.flat(2);
+    }
+
+    return [];
 }
 
 function isValidExport(exportData) {
@@ -146,7 +340,7 @@ function isValidExport(exportData) {
     );
 }
 
-function renderDashboard(exportData) {
+function renderDashboard(exportData, geoData, geoWarning) {
     const countryRows = [];
     const regionRows = [];
 
@@ -166,16 +360,22 @@ function renderDashboard(exportData) {
     countryRows.sort(compareYearAndCountry);
     regionRows.sort(compareYearCountryAndRegion);
 
+    mapDataCache.countriesByCode = getLatestCountryRowsByCode(countryRows);
+    mapDataCache.regionsByKey = getLatestRegionRowsByKey(regionRows);
+    mapDataCache.latestYearByCountryCode = getLatestYearByCountryCode(countryRows);
+
     renderMetaCards(exportData, countryRows.length, regionRows.length);
-    renderCountryLayer(countryRows);
-    renderRegionLayer(regionRows);
+    renderCountryLayer(geoData);
+    renderRegionLayer(geoData);
     bindMapHoverEvents();
     renderCountryTable(countryRows);
     renderRegionTable(regionRows);
     applyMapModeVisibility();
     resetMapHoverDetails();
+
+    const geoSuffix = geoWarning ? ` | Map fallback: ${geoWarning}` : "";
     elements.loadStatus.textContent =
-        `Loaded ${EXPORT_PATH} successfully (${countryRows.length} country rows, ${regionRows.length} region rows).`;
+        `Loaded ${EXPORT_PATH} successfully (${countryRows.length} country rows, ${regionRows.length} region rows).${geoSuffix}`;
 }
 
 function renderMetaCards(exportData, countryRowCount, regionRowCount) {
@@ -187,6 +387,206 @@ function renderMetaCards(exportData, countryRowCount, regionRowCount) {
         buildMetaCard("Year buckets", formatInteger(Object.keys(exportData.years).length)),
         buildMetaCard("Validation warnings", formatInteger(exportData.meta.warning_count ?? 0)),
     ].join("");
+}
+
+function renderCountryLayer(geoData) {
+    if (!geoData?.countryFeatures?.length) {
+        elements.countryLayer.innerHTML = "";
+        elements.countryLabelLayer.innerHTML = "";
+        elements.mapSummaryCards.innerHTML = `
+            <article class="meta-card empty-card">
+                <span class="meta-label">No country layer data</span>
+                <strong class="meta-value">-</strong>
+                <p class="meta-note">Country GeoJSON could not be loaded.</p>
+            </article>
+        `;
+        return;
+    }
+
+    const availableCountryRows = [...mapDataCache.countriesByCode.values()];
+    const gdpValues = availableCountryRows.map((entry) => entry.gdp_per_capita_eur);
+    const minGdpPerCapita = gdpValues.length ? Math.min(...gdpValues) : 0;
+    const maxGdpPerCapita = gdpValues.length ? Math.max(...gdpValues) : 1;
+
+    const sortedFeatures = [...geoData.countryFeatures].sort((left, right) =>
+        left.countryCode.localeCompare(right.countryCode)
+    );
+
+    elements.countryLayer.innerHTML = sortedFeatures
+        .map((feature) => {
+            const row = mapDataCache.countriesByCode.get(feature.countryCode) ?? null;
+            const fill = mapCountryFill(row, minGdpPerCapita, maxGdpPerCapita);
+            return `
+                <path
+                    class="map-country-shape"
+                    data-country-code="${escapeHtml(feature.countryCode)}"
+                    d="${escapeHtml(feature.pathD)}"
+                    fill="${escapeHtml(fill)}"
+                ></path>
+            `;
+        })
+        .join("");
+
+    elements.countryLabelLayer.innerHTML = sortedFeatures
+        .map((feature) => `
+            <text class="map-country-label" x="${feature.centroid[0].toFixed(1)}" y="${feature.centroid[1].toFixed(1)}">
+                ${escapeHtml(feature.countryCode)}
+            </text>
+        `)
+        .join("");
+
+    elements.mapSummaryCards.innerHTML = sortedFeatures
+        .map((feature) => {
+            const row = mapDataCache.countriesByCode.get(feature.countryCode);
+            if (!row) {
+                return `
+                    <article class="meta-card">
+                        <span class="meta-label">${escapeHtml(feature.name)} (${escapeHtml(feature.countryCode)})</span>
+                        <strong class="meta-value">No data</strong>
+                        <p class="meta-note">No matching country export row.</p>
+                    </article>
+                `;
+            }
+
+            return `
+                <article class="meta-card">
+                    <span class="meta-label">${escapeHtml(feature.name)} (${escapeHtml(feature.countryCode)})</span>
+                    <strong class="meta-value">${formatInteger(row.end_population)}</strong>
+                    <p class="meta-note">
+                        ${escapeHtml(row.yearKey)} | GDP ${formatDecimal(row.end_gdp_billion_eur)} bn EUR
+                    </p>
+                </article>
+            `;
+        })
+        .join("");
+}
+
+function renderRegionLayer(geoData) {
+    if (!geoData?.regionFeatures?.length) {
+        elements.regionLayer.innerHTML = "";
+        elements.regionLabelLayer.innerHTML = "";
+        return;
+    }
+
+    const availableRegionRows = [...mapDataCache.regionsByKey.values()];
+    const unempValues = availableRegionRows.map((entry) => entry.unemployment_rate);
+    const minUnemployment = unempValues.length ? Math.min(...unempValues) : 0;
+    const maxUnemployment = unempValues.length ? Math.max(...unempValues) : 1;
+
+    const countryRows = mapDataCache.countriesByCode;
+
+    elements.regionLayer.innerHTML = geoData.regionFeatures
+        .map((feature) => {
+            const mappedRegionRow = feature.bespRegionKey
+                ? mapDataCache.regionsByKey.get(feature.bespRegionKey)
+                : null;
+            const countryRow = countryRows.get(feature.countryCode) ?? null;
+            const fill = mapRegionFill(mappedRegionRow, countryRow, minUnemployment, maxUnemployment);
+
+            return `
+                <path
+                    class="map-region-shape"
+                    data-country-code="${escapeHtml(feature.countryCode)}"
+                    data-region-name="${escapeHtml(feature.name)}"
+                    data-region-key="${escapeHtml(feature.key)}"
+                    data-besp-region-key="${escapeHtml(feature.bespRegionKey ?? "")}"
+                    d="${escapeHtml(feature.pathD)}"
+                    fill="${escapeHtml(fill)}"
+                ></path>
+            `;
+        })
+        .join("");
+
+    elements.regionLabelLayer.innerHTML = geoData.regionFeatures
+        .filter((feature) => Boolean(feature.bespRegionKey))
+        .map((feature) => `
+            <text class="map-region-label" x="${feature.centroid[0].toFixed(1)}" y="${feature.centroid[1].toFixed(1)}">
+                ${escapeHtml(shortRegionLabel(feature.name))}
+            </text>
+        `)
+        .join("");
+}
+
+function bindMapHoverEvents() {
+    for (const node of elements.countryLayer.querySelectorAll(".map-country-shape")) {
+        node.addEventListener("mouseenter", () => {
+            const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
+            const countryData = mapDataCache.countriesByCode.get(countryCode);
+            node.classList.add("map-hover-target");
+            renderCountryHover(countryCode, countryData ?? null);
+        });
+        node.addEventListener("mouseleave", () => {
+            node.classList.remove("map-hover-target");
+            resetMapHoverDetails();
+        });
+    }
+
+    for (const node of elements.regionLayer.querySelectorAll(".map-region-shape")) {
+        node.addEventListener("mouseenter", () => {
+            const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
+            const regionName = String(node.getAttribute("data-region-name") ?? "");
+            const mappedRegionKey = String(node.getAttribute("data-besp-region-key") ?? "");
+            const regionData = mappedRegionKey ? mapDataCache.regionsByKey.get(mappedRegionKey) : null;
+            const countryData = mapDataCache.countriesByCode.get(countryCode) ?? null;
+            node.classList.add("map-hover-target");
+            renderRegionHover(countryCode, regionName, regionData ?? null, countryData);
+        });
+        node.addEventListener("mouseleave", () => {
+            node.classList.remove("map-hover-target");
+            resetMapHoverDetails();
+        });
+    }
+}
+
+function renderCountryHover(countryCode, countryData) {
+    if (!countryData) {
+        elements.mapHoverTitle.textContent = `${countryCode} (no export row)`;
+        elements.mapHoverBody.textContent = "No country-year row matched for this country boundary.";
+        return;
+    }
+
+    elements.mapHoverTitle.textContent =
+        `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`;
+    elements.mapHoverBody.textContent =
+        `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, `
+        + `growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}.`;
+}
+
+function renderRegionHover(countryCode, regionName, regionData, countryData) {
+    if (regionData) {
+        elements.mapHoverTitle.textContent =
+            `${regionData.region_name} (${regionData.country_code}) - ${regionData.yearKey}`;
+        elements.mapHoverBody.textContent =
+            `Population ${formatInteger(regionData.end_population)}, GDP ${formatDecimal(regionData.end_gdp_billion_eur)} bn EUR, `
+            + `growth ${formatPercent(regionData.gdp_growth_rate)}, unemployment ${formatPercent(regionData.unemployment_rate)}, `
+            + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.`;
+        return;
+    }
+
+    if (countryData) {
+        elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
+        elements.mapHoverBody.textContent =
+            "No direct BESP region mapping for this geoboundary. "
+            + `Fallback country context: ${countryData.country_name}, ${countryData.yearKey}, `
+            + `population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR.`;
+        return;
+    }
+
+    elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
+    elements.mapHoverBody.textContent = "No matching export row for region or country fallback.";
+}
+
+function resetMapHoverDetails() {
+    if (activeMapMode === "country") {
+        elements.mapHoverTitle.textContent = "Country hover active";
+        elements.mapHoverBody.textContent =
+            "Move over a country area to inspect the latest country-year values from the export.";
+        return;
+    }
+
+    elements.mapHoverTitle.textContent = "Region hover active";
+    elements.mapHoverBody.textContent =
+        "Move over a region area to inspect region-year values when available; otherwise a country fallback is shown.";
 }
 
 function renderCountryTable(countryRows) {
@@ -234,180 +634,6 @@ function renderRegionTable(regionRows) {
         .join("");
 }
 
-function renderCountryLayer(countryRows) {
-    const latestByCountryCode = getLatestCountryRowsByCode(countryRows);
-    mapDataCache.countriesByCode = latestByCountryCode;
-    const mappedCountries = COUNTRY_MAP_CONFIG.map((shape) => ({
-        shape,
-        data: latestByCountryCode.get(shape.code) ?? null,
-    }));
-
-    const availableRows = mappedCountries
-        .map((entry) => entry.data)
-        .filter((entry) => entry !== null);
-    const gdpPerCapValues = availableRows.map((entry) => entry.gdp_per_capita_eur);
-    const minGdpPerCapita = gdpPerCapValues.length ? Math.min(...gdpPerCapValues) : 0;
-    const maxGdpPerCapita = gdpPerCapValues.length ? Math.max(...gdpPerCapValues) : 1;
-
-    elements.countryLayer.innerHTML = mappedCountries
-        .map(({ shape, data }) => {
-            const fill = mapCountryFill(data, minGdpPerCapita, maxGdpPerCapita);
-            return `
-                <polygon
-                    class="map-country-shape"
-                    data-country-code="${escapeHtml(shape.code)}"
-                    points="${escapeHtml(shape.points)}"
-                    fill="${escapeHtml(fill)}"
-                ></polygon>
-            `;
-        })
-        .join("");
-
-    elements.countryLabelLayer.innerHTML = mappedCountries
-        .map(({ shape }) => `
-            <text class="map-country-label" x="${shape.labelX}" y="${shape.labelY}">
-                ${escapeHtml(shape.code)}
-            </text>
-        `)
-        .join("");
-
-    elements.mapSummaryCards.innerHTML = mappedCountries
-        .map(({ shape, data }) => {
-            if (!data) {
-                return `
-                    <article class="meta-card">
-                        <span class="meta-label">${escapeHtml(shape.name)} (${escapeHtml(shape.code)})</span>
-                        <strong class="meta-value">No data</strong>
-                        <p class="meta-note">No country record found in current export.</p>
-                    </article>
-                `;
-            }
-
-            return `
-                <article class="meta-card">
-                    <span class="meta-label">${escapeHtml(shape.name)} (${escapeHtml(shape.code)})</span>
-                    <strong class="meta-value">${formatInteger(data.end_population)}</strong>
-                    <p class="meta-note">
-                        ${escapeHtml(data.yearKey)} | GDP ${formatDecimal(data.end_gdp_billion_eur)} bn EUR
-                    </p>
-                </article>
-            `;
-        })
-        .join("");
-}
-
-function renderRegionLayer(regionRows) {
-    const latestByRegionKey = getLatestRegionRowsByKey(regionRows);
-    mapDataCache.regionsByKey = latestByRegionKey;
-    const mappedRegions = REGION_MAP_CONFIG.map((shape) => ({
-        shape,
-        data: latestByRegionKey.get(buildRegionKey(shape.countryCode, shape.name)) ?? null,
-    }));
-
-    const availableRows = mappedRegions
-        .map((entry) => entry.data)
-        .filter((entry) => entry !== null);
-    const unemploymentValues = availableRows.map((entry) => entry.unemployment_rate);
-    const minUnemployment = unemploymentValues.length ? Math.min(...unemploymentValues) : 0;
-    const maxUnemployment = unemploymentValues.length ? Math.max(...unemploymentValues) : 1;
-
-    elements.regionLayer.innerHTML = mappedRegions
-        .map(({ shape, data }) => {
-            const fill = mapRegionFill(data, minUnemployment, maxUnemployment);
-            return `
-                <polygon
-                    class="map-region-shape"
-                    data-region-name="${escapeHtml(shape.name)}"
-                    data-country-code="${escapeHtml(shape.countryCode)}"
-                    points="${escapeHtml(shape.points)}"
-                    fill="${escapeHtml(fill)}"
-                ></polygon>
-            `;
-        })
-        .join("");
-
-    elements.regionLabelLayer.innerHTML = mappedRegions
-        .map(({ shape }) => `
-            <text class="map-region-label" x="${shape.labelX}" y="${shape.labelY}">
-                ${escapeHtml(shortRegionLabel(shape.name))}
-            </text>
-        `)
-        .join("");
-}
-
-function bindMapHoverEvents() {
-    for (const node of elements.countryLayer.querySelectorAll(".map-country-shape")) {
-        node.addEventListener("mouseenter", () => {
-            const countryCode = node.getAttribute("data-country-code") ?? "";
-            const countryData = mapDataCache.countriesByCode.get(countryCode);
-            node.classList.add("map-hover-target");
-            renderCountryHover(countryCode, countryData ?? null);
-        });
-
-        node.addEventListener("mouseleave", () => {
-            node.classList.remove("map-hover-target");
-            resetMapHoverDetails();
-        });
-    }
-
-    for (const node of elements.regionLayer.querySelectorAll(".map-region-shape")) {
-        node.addEventListener("mouseenter", () => {
-            const countryCode = node.getAttribute("data-country-code") ?? "";
-            const regionName = node.getAttribute("data-region-name") ?? "";
-            const regionData = mapDataCache.regionsByKey.get(buildRegionKey(countryCode, regionName));
-            node.classList.add("map-hover-target");
-            renderRegionHover(countryCode, regionName, regionData ?? null);
-        });
-
-        node.addEventListener("mouseleave", () => {
-            node.classList.remove("map-hover-target");
-            resetMapHoverDetails();
-        });
-    }
-}
-
-function renderCountryHover(countryCode, countryData) {
-    if (!countryData) {
-        elements.mapHoverTitle.textContent = `${countryCode} (no data)`;
-        elements.mapHoverBody.textContent = "No country record found in the current export.";
-        return;
-    }
-
-    elements.mapHoverTitle.textContent =
-        `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`;
-    elements.mapHoverBody.textContent =
-        `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, `
-        + `growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}.`;
-}
-
-function renderRegionHover(countryCode, regionName, regionData) {
-    if (!regionData) {
-        elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
-        elements.mapHoverBody.textContent = "No region record found in the current export.";
-        return;
-    }
-
-    elements.mapHoverTitle.textContent =
-        `${regionData.region_name} (${regionData.country_code}) - ${regionData.yearKey}`;
-    elements.mapHoverBody.textContent =
-        `Population ${formatInteger(regionData.end_population)}, GDP ${formatDecimal(regionData.end_gdp_billion_eur)} bn EUR, `
-        + `growth ${formatPercent(regionData.gdp_growth_rate)}, unemployment ${formatPercent(regionData.unemployment_rate)}, `
-        + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.`;
-}
-
-function resetMapHoverDetails() {
-    if (activeMapMode === "country") {
-        elements.mapHoverTitle.textContent = "Country hover active";
-        elements.mapHoverBody.textContent =
-            "Move over a country area to inspect the latest country-year values from the export.";
-        return;
-    }
-
-    elements.mapHoverTitle.textContent = "Region hover active";
-    elements.mapHoverBody.textContent =
-        "Move over a region area to inspect the latest region-year values from the export.";
-}
-
 function renderEmptyState() {
     elements.countryLayer.innerHTML = "";
     elements.countryLabelLayer.innerHTML = "";
@@ -422,6 +648,7 @@ function renderEmptyState() {
     `;
     mapDataCache.countriesByCode = new Map();
     mapDataCache.regionsByKey = new Map();
+    mapDataCache.latestYearByCountryCode = new Map();
     setMapMode("country");
     resetMapHoverDetails();
     elements.metaCards.innerHTML = `
@@ -486,6 +713,21 @@ function getLatestCountryRowsByCode(countryRows) {
     return latestByCountryCode;
 }
 
+function getLatestYearByCountryCode(countryRows) {
+    const latestYears = new Map();
+
+    for (const row of countryRows) {
+        const code = normalizeCountryCode(row.country_code);
+        const year = extractStartYear(row);
+        const existing = latestYears.get(code);
+        if (existing === undefined || year > existing) {
+            latestYears.set(code, year);
+        }
+    }
+
+    return latestYears;
+}
+
 function getLatestRegionRowsByKey(regionRows) {
     const latestByRegionKey = new Map();
 
@@ -510,10 +752,30 @@ function normalizeCountryCode(countryCode) {
 
 function normalizeRegionName(regionName) {
     const compact = String(regionName ?? "")
+        .normalize("NFKD")
+        .replaceAll(/[\u0300-\u036f]/g, "")
         .trim()
         .toLowerCase()
+        .replaceAll("&", " and ")
+        .replaceAll(/[^a-z0-9 ]+/g, " ")
         .replaceAll(/\s+/g, " ");
     return REGION_NAME_ALIASES[compact] ?? compact;
+}
+
+function resolveBespRegionKey(countryCode, featureRegionName) {
+    const normalizedCountryCode = normalizeCountryCode(countryCode);
+    const normalizedName = normalizeRegionName(featureRegionName);
+    const directKey = `${normalizedCountryCode}::${normalizedName}`;
+
+    if (REGION_FEATURE_TO_BESP[directKey]) {
+        return REGION_FEATURE_TO_BESP[directKey];
+    }
+
+    if (BESP_REGION_KEYS.has(directKey)) {
+        return directKey;
+    }
+
+    return null;
 }
 
 function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
@@ -529,27 +791,33 @@ function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
     return `rgba(${red}, ${green}, ${blue}, 0.88)`;
 }
 
-function mapRegionFill(regionData, minUnemployment, maxUnemployment) {
-    if (!regionData) {
-        return "rgba(123, 143, 166, 0.42)";
+function mapRegionFill(regionData, countryData, minUnemployment, maxUnemployment) {
+    if (regionData) {
+        const span = maxUnemployment - minUnemployment;
+        const ratio = span > 0 ? (regionData.unemployment_rate - minUnemployment) / span : 0.5;
+        const red = Math.round(84 + ratio * 135);
+        const green = Math.round(168 - ratio * 58);
+        const blue = Math.round(139 - ratio * 36);
+        return `rgba(${red}, ${green}, ${blue}, 0.9)`;
     }
 
-    const span = maxUnemployment - minUnemployment;
-    const ratio = span > 0 ? (regionData.unemployment_rate - minUnemployment) / span : 0.5;
-    const red = Math.round(84 + ratio * 135);
-    const green = Math.round(168 - ratio * 58);
-    const blue = Math.round(139 - ratio * 36);
-    return `rgba(${red}, ${green}, ${blue}, 0.9)`;
+    if (countryData) {
+        return "rgba(126, 143, 161, 0.38)";
+    }
+
+    return "rgba(110, 126, 143, 0.3)";
 }
 
 function shortRegionLabel(regionName) {
-    const replacements = {
-        "Federation of Bosnia and Herzegovina": "FBiH",
-        "Republika Srpska": "RS",
-        "South and East Serbia": "SE Serbia",
-        "Kosovo and Metohija": "K&M",
+    const normalized = normalizeRegionName(regionName);
+    const byNormalized = {
+        "federation of bosnia and herzegovina": "FBiH",
+        "republika srpska": "RS",
+        brcko: "Brcko",
+        belgrade: "Belgrade",
+        vojvodina: "Vojvodina",
     };
-    return replacements[regionName] ?? regionName;
+    return byNormalized[normalized] ?? regionName;
 }
 
 function extractStartYear(row) {
