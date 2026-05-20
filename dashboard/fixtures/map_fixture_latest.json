@@ -1,0 +1,158 @@
+{
+  "meta": {
+    "start_year": 2020,
+    "end_year": 2030,
+    "warning_count": 0
+  },
+  "years": {
+    "2029-2030": {
+      "countries": [
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_name": "Bosnia and Herzegovina",
+          "country_code": "BIH",
+          "end_population": 3244274,
+          "end_gdp_billion_eur": 22.92,
+          "gdp_growth_rate": 0.0031,
+          "gdp_per_capita_eur": 7063.0,
+          "average_unemployment_rate": 0.152
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_name": "Montenegro",
+          "country_code": "MNE",
+          "end_population": 610264,
+          "end_gdp_billion_eur": 4.8,
+          "gdp_growth_rate": 0.0094,
+          "gdp_per_capita_eur": 7865.0,
+          "average_unemployment_rate": 0.121
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_name": "Serbia",
+          "country_code": "SRB",
+          "end_population": 8208891,
+          "end_gdp_billion_eur": 83.76,
+          "gdp_growth_rate": 0.0111,
+          "gdp_per_capita_eur": 10204.0,
+          "average_unemployment_rate": 0.138
+        }
+      ],
+      "regions": [
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "SRB",
+          "region_name": "Belgrade",
+          "end_population": 1712900,
+          "end_gdp_billion_eur": 30.2,
+          "gdp_growth_rate": 0.0256,
+          "unemployment_rate": 0.04,
+          "regional_attractiveness": 0.818
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "SRB",
+          "region_name": "Vojvodina",
+          "end_population": 1714554,
+          "end_gdp_billion_eur": 18.99,
+          "gdp_growth_rate": 0.0105,
+          "unemployment_rate": 0.05,
+          "regional_attractiveness": 0.522
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "SRB",
+          "region_name": "Central Serbia",
+          "end_population": 2405380,
+          "end_gdp_billion_eur": 20.06,
+          "gdp_growth_rate": 0.0012,
+          "unemployment_rate": 0.157,
+          "regional_attractiveness": 0.315
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "SRB",
+          "region_name": "South and East Serbia",
+          "end_population": 1242491,
+          "end_gdp_billion_eur": 8.25,
+          "gdp_growth_rate": -0.0046,
+          "unemployment_rate": 0.235,
+          "regional_attractiveness": 0.211
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "SRB",
+          "region_name": "Kosovo and Metohija",
+          "end_population": 1133566,
+          "end_gdp_billion_eur": 6.26,
+          "gdp_growth_rate": -0.0024,
+          "unemployment_rate": 0.273,
+          "regional_attractiveness": 0.285
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "MNE",
+          "region_name": "Coast",
+          "end_population": 189703,
+          "end_gdp_billion_eur": 2.65,
+          "gdp_growth_rate": 0.0149,
+          "unemployment_rate": 0.045,
+          "regional_attractiveness": 0.68
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "MNE",
+          "region_name": "Inland",
+          "end_population": 420561,
+          "end_gdp_billion_eur": 2.15,
+          "gdp_growth_rate": 0.0027,
+          "unemployment_rate": 0.155,
+          "regional_attractiveness": 0.436
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "BIH",
+          "region_name": "Federation of Bosnia and Herzegovina",
+          "end_population": 2080186,
+          "end_gdp_billion_eur": 14.86,
+          "gdp_growth_rate": 0.0048,
+          "unemployment_rate": 0.143,
+          "regional_attractiveness": 0.498
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "BIH",
+          "region_name": "Republika Srpska",
+          "end_population": 1086990,
+          "end_gdp_billion_eur": 7.39,
+          "gdp_growth_rate": -0.0003,
+          "unemployment_rate": 0.17,
+          "regional_attractiveness": 0.312
+        },
+        {
+          "start_year": 2029,
+          "end_year": 2030,
+          "country_code": "BIH",
+          "region_name": "Brcko",
+          "end_population": 77098,
+          "end_gdp_billion_eur": 0.67,
+          "gdp_growth_rate": 0.0033,
+          "unemployment_rate": 0.141,
+          "regional_attractiveness": 0.432
+        }
+      ]
+    }
+  }
+}

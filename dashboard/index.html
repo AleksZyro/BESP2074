@@ -24,6 +24,50 @@
             <section class="panel">
                 <div class="section-heading">
                     <div>
+                        <p class="section-kicker">Phase 5.1 Map</p>
+                        <h2>Balkan Country Layer</h2>
+                    </div>
+                    <div class="map-mode-controls" role="group" aria-label="Map layer mode">
+                        <button id="map-mode-country" class="map-mode-button map-mode-button-active" type="button">
+                            Countries
+                        </button>
+                        <button id="map-mode-region" class="map-mode-button" type="button">
+                            Regions
+                        </button>
+                    </div>
+                </div>
+
+                <div class="map-layout">
+                    <div class="map-canvas-wrap">
+                        <svg id="country-map" viewBox="0 0 780 520" aria-label="Balkan country map">
+                            <g id="country-layer"></g>
+                            <g id="country-label-layer"></g>
+                            <g id="region-layer"></g>
+                            <g id="region-label-layer"></g>
+                        </svg>
+                    </div>
+                    <div class="map-side-panel">
+                        <article class="meta-card">
+                            <span class="meta-label">Hover details</span>
+                            <strong id="map-hover-title" class="meta-value">No map target</strong>
+                            <p id="map-hover-body" class="meta-note">
+                                Move over a country or region area to inspect map-linked export values.
+                            </p>
+                        </article>
+                        <div id="map-summary-cards" class="map-summary-cards">
+                            <article class="meta-card empty-card">
+                                <span class="meta-label">No country layer data</span>
+                                <strong class="meta-value">-</strong>
+                                <p class="meta-note">Load export data to render the country map layer.</p>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="section-heading">
+                    <div>
                         <p class="section-kicker">Overview</p>
                         <h2>Export Metadata</h2>
                     </div>
