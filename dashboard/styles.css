@@ -232,6 +232,11 @@ td {
     grid-template-columns: 1fr;
 }
 
+.map-side-panel {
+    display: grid;
+    gap: 12px;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -258,6 +263,17 @@ tbody tr:nth-child(even) {
 .table-empty {
     color: var(--muted);
     text-align: left;
+}
+
+.map-country-shape,
+.map-region-shape {
+    transition: filter 160ms ease, transform 160ms ease;
+}
+
+.map-country-shape:hover,
+.map-region-shape:hover,
+.map-hover-target {
+    filter: brightness(1.16);
 }
 
 @media (max-width: 820px) {

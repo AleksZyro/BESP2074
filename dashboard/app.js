@@ -35,6 +35,10 @@ const REGION_MAP_CONFIG = [
     { name: "Brcko", countryCode: "BIH", points: "282,236 304,234 314,248 298,263 278,257", labelX: 296, labelY: 251 },
 ];
 let activeMapMode = "country";
+const mapDataCache = {
+    countriesByCode: new Map(),
+    regionsByKey: new Map(),
+};
 
 const integerFormatter = new Intl.NumberFormat("en-US");
 const decimalFormatter = new Intl.NumberFormat("en-US", {
@@ -52,6 +56,8 @@ const elements = {
     metaCards: document.getElementById("meta-cards"),
     mapModeCountryButton: document.getElementById("map-mode-country"),
     mapModeRegionButton: document.getElementById("map-mode-region"),
+    mapHoverTitle: document.getElementById("map-hover-title"),
+    mapHoverBody: document.getElementById("map-hover-body"),
     countryLayer: document.getElementById("country-layer"),
     countryLabelLayer: document.getElementById("country-label-layer"),
     regionLayer: document.getElementById("region-layer"),
@@ -82,6 +88,7 @@ function setMapMode(mode) {
     elements.mapModeCountryButton.classList.toggle("map-mode-button-active", countryActive);
     elements.mapModeRegionButton.classList.toggle("map-mode-button-active", !countryActive);
     applyMapModeVisibility();
+    resetMapHoverDetails();
 }
 
 function applyMapModeVisibility() {
@@ -148,9 +155,11 @@ function renderDashboard(exportData) {
     renderMetaCards(exportData, countryRows.length, regionRows.length);
     renderCountryLayer(countryRows);
     renderRegionLayer(regionRows);
+    bindMapHoverEvents();
     renderCountryTable(countryRows);
     renderRegionTable(regionRows);
     applyMapModeVisibility();
+    resetMapHoverDetails();
     elements.loadStatus.textContent =
         `Loaded ${EXPORT_PATH} successfully (${countryRows.length} country rows, ${regionRows.length} region rows).`;
 }
@@ -213,6 +222,7 @@ function renderRegionTable(regionRows) {
 
 function renderCountryLayer(countryRows) {
     const latestByCountryCode = getLatestCountryRowsByCode(countryRows);
+    mapDataCache.countriesByCode = latestByCountryCode;
     const mappedCountries = COUNTRY_MAP_CONFIG.map((shape) => ({
         shape,
         data: latestByCountryCode.get(shape.code) ?? null,
@@ -274,6 +284,7 @@ function renderCountryLayer(countryRows) {
 
 function renderRegionLayer(regionRows) {
     const latestByRegionKey = getLatestRegionRowsByKey(regionRows);
+    mapDataCache.regionsByKey = latestByRegionKey;
     const mappedRegions = REGION_MAP_CONFIG.map((shape) => ({
         shape,
         data: latestByRegionKey.get(buildRegionKey(shape.countryCode, shape.name)) ?? null,
@@ -310,6 +321,79 @@ function renderRegionLayer(regionRows) {
         .join("");
 }
 
+function bindMapHoverEvents() {
+    for (const node of elements.countryLayer.querySelectorAll(".map-country-shape")) {
+        node.addEventListener("mouseenter", () => {
+            const countryCode = node.getAttribute("data-country-code") ?? "";
+            const countryData = mapDataCache.countriesByCode.get(countryCode);
+            node.classList.add("map-hover-target");
+            renderCountryHover(countryCode, countryData ?? null);
+        });
+
+        node.addEventListener("mouseleave", () => {
+            node.classList.remove("map-hover-target");
+            resetMapHoverDetails();
+        });
+    }
+
+    for (const node of elements.regionLayer.querySelectorAll(".map-region-shape")) {
+        node.addEventListener("mouseenter", () => {
+            const countryCode = node.getAttribute("data-country-code") ?? "";
+            const regionName = node.getAttribute("data-region-name") ?? "";
+            const regionData = mapDataCache.regionsByKey.get(buildRegionKey(countryCode, regionName));
+            node.classList.add("map-hover-target");
+            renderRegionHover(countryCode, regionName, regionData ?? null);
+        });
+
+        node.addEventListener("mouseleave", () => {
+            node.classList.remove("map-hover-target");
+            resetMapHoverDetails();
+        });
+    }
+}
+
+function renderCountryHover(countryCode, countryData) {
+    if (!countryData) {
+        elements.mapHoverTitle.textContent = `${countryCode} (no data)`;
+        elements.mapHoverBody.textContent = "No country record found in the current export.";
+        return;
+    }
+
+    elements.mapHoverTitle.textContent =
+        `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`;
+    elements.mapHoverBody.textContent =
+        `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, `
+        + `growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}.`;
+}
+
+function renderRegionHover(countryCode, regionName, regionData) {
+    if (!regionData) {
+        elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
+        elements.mapHoverBody.textContent = "No region record found in the current export.";
+        return;
+    }
+
+    elements.mapHoverTitle.textContent =
+        `${regionData.region_name} (${regionData.country_code}) - ${regionData.yearKey}`;
+    elements.mapHoverBody.textContent =
+        `Population ${formatInteger(regionData.end_population)}, GDP ${formatDecimal(regionData.end_gdp_billion_eur)} bn EUR, `
+        + `growth ${formatPercent(regionData.gdp_growth_rate)}, unemployment ${formatPercent(regionData.unemployment_rate)}, `
+        + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.`;
+}
+
+function resetMapHoverDetails() {
+    if (activeMapMode === "country") {
+        elements.mapHoverTitle.textContent = "Country hover active";
+        elements.mapHoverBody.textContent =
+            "Move over a country area to inspect the latest country-year values from the export.";
+        return;
+    }
+
+    elements.mapHoverTitle.textContent = "Region hover active";
+    elements.mapHoverBody.textContent =
+        "Move over a region area to inspect the latest region-year values from the export.";
+}
+
 function renderEmptyState() {
     elements.countryLayer.innerHTML = "";
     elements.countryLabelLayer.innerHTML = "";
@@ -322,7 +406,10 @@ function renderEmptyState() {
             <p class="meta-note">Load export data to render the country map layer.</p>
         </article>
     `;
+    mapDataCache.countriesByCode = new Map();
+    mapDataCache.regionsByKey = new Map();
     setMapMode("country");
+    resetMapHoverDetails();
     elements.metaCards.innerHTML = `
         <article class="meta-card empty-card">
             <span class="meta-label">No data loaded</span>
