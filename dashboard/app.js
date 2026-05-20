@@ -635,6 +635,7 @@ function renderCountryLayer(geoData) {
                     stroke-linejoin="round"
                     stroke-linecap="round"
                     fill-rule="nonzero"
+                    pointer-events="none"
                 ></path>
                 ` : ""}
             `;
