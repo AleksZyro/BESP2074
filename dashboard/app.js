@@ -389,6 +389,7 @@ function projectFeature(feature, projection, kind) {
     }
 
     const centroid = geometryCentroid(feature.geometry, projection);
+    const projectedArea = geometryProjectedArea(feature.geometry, projection, includeHoles);
     const key = buildRegionKey(feature.countryCode, feature.name);
     const bespRegionKey = kind === "region" ? resolveBespRegionKey(feature.countryCode, feature.name) : null;
     const visualRegion = kind === "region" ? resolveVisualRegion(feature.countryCode, feature.name, bespRegionKey) : null;
@@ -403,6 +404,7 @@ function projectFeature(feature, projection, kind) {
         visualRegionFill: visualRegion?.fill ?? null,
         pathD,
         centroid,
+        projectedArea,
     };
 }
 
@@ -576,6 +578,7 @@ function renderCountryLayer(geoData) {
                 displayName,
                 mergedPathD,
                 centroid,
+                features,
             };
         })
         .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
@@ -584,6 +587,33 @@ function renderCountryLayer(geoData) {
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
             const fill = mapCountryFill(row, minGdpPerCapita, maxGdpPerCapita);
+            if (country.countryCode === "SRB") {
+                const srbFeature = country.features.find((feature) => feature.rawCountryCode === "SRB");
+                const xkxFeature = country.features.find((feature) => feature.rawCountryCode === "XKX");
+                return [
+                    srbFeature ? `
+                        <path
+                            class="map-country-shape"
+                            data-country-code="${escapeHtml(country.countryCode)}"
+                            d="${escapeHtml(srbFeature.pathD)}"
+                            fill="${escapeHtml(fill)}"
+                            fill-rule="nonzero"
+                        ></path>
+                    ` : "",
+                    xkxFeature ? `
+                        <path
+                            class="map-country-shape map-country-seam-fix"
+                            data-country-code="${escapeHtml(country.countryCode)}"
+                            d="${escapeHtml(xkxFeature.pathD)}"
+                            fill="${escapeHtml(fill)}"
+                            stroke="${escapeHtml(fill)}"
+                            stroke-width="1.1"
+                            stroke-linejoin="round"
+                            fill-rule="nonzero"
+                        ></path>
+                    ` : "",
+                ].join("");
+            }
             return `
                 <path
                     class="map-country-shape"
@@ -681,6 +711,49 @@ function renderRegionLayer(geoData) {
         .join("");
 }
 
+function geometryProjectedArea(geometry, projection, includeHoles = true) {
+    const type = geometry?.type;
+    const coordinates = geometry?.coordinates;
+    if (!type || !coordinates) {
+        return 0;
+    }
+
+    if (type === "Polygon") {
+        return polygonProjectedArea(coordinates, projection, includeHoles);
+    }
+
+    if (type === "MultiPolygon") {
+        return coordinates.reduce(
+            (sum, polygon) => sum + polygonProjectedArea(polygon, projection, includeHoles),
+            0
+        );
+    }
+
+    return 0;
+}
+
+function polygonProjectedArea(polygonCoordinates, projection, includeHoles) {
+    const rings = includeHoles ? polygonCoordinates : polygonCoordinates.slice(0, 1);
+    return rings.reduce((sum, ring, index) => {
+        if (!Array.isArray(ring) || ring.length < 3) {
+            return sum;
+        }
+        const projectedRing = ring.map((coord) => projection(coord[0], coord[1]));
+        const ringArea = Math.abs(shoelaceArea(projectedRing));
+        return sum + (index === 0 ? ringArea : (includeHoles ? -ringArea : 0));
+    }, 0);
+}
+
+function shoelaceArea(points) {
+    let total = 0;
+    for (let index = 0; index < points.length; index += 1) {
+        const [x1, y1] = points[index];
+        const [x2, y2] = points[(index + 1) % points.length];
+        total += (x1 * y2) - (x2 * y1);
+    }
+    return total / 2;
+}
+
 function buildVisualRegionGroups(regionFeatures) {
     const groups = new Map();
 
@@ -693,7 +766,7 @@ function buildVisualRegionGroups(regionFeatures) {
         groups.set(feature.visualRegionKey, list);
     }
 
-    return [...groups.entries()].map(([visualRegionKey, features]) => {
+    const groupedVisualRegions = [...groups.entries()].map(([visualRegionKey, features]) => {
         const template = VISUAL_REGION_DEFINITIONS[visualRegionKey];
         const mergedPathD = features.map((feature) => feature.pathD).join(" ");
         return {
@@ -703,9 +776,56 @@ function buildVisualRegionGroups(regionFeatures) {
             countryCode: features[0]?.countryCode ?? "",
             fill: template?.fill ?? "rgba(126, 143, 161, 0.5)",
             centroid: averageCentroid(features),
+            projectedArea: features.reduce((sum, feature) => sum + (feature.projectedArea ?? 0), 0),
             pathD: mergedPathD,
         };
     });
+
+    const areaTotalsByDataKey = new Map();
+    for (const group of groupedVisualRegions) {
+        const total = areaTotalsByDataKey.get(group.dataRegionKey) ?? 0;
+        areaTotalsByDataKey.set(group.dataRegionKey, total + group.projectedArea);
+    }
+
+    return groupedVisualRegions.map((group) => {
+        const totalArea = areaTotalsByDataKey.get(group.dataRegionKey) ?? 0;
+        const areaShare = totalArea > 0 ? group.projectedArea / totalArea : 1;
+        return {
+            ...group,
+            areaShare,
+            displayData: buildVisualRegionDisplayData(group, areaShare),
+        };
+    });
+}
+
+function buildVisualRegionDisplayData(group, areaShare) {
+    const source = group.dataRegionKey ? mapDataCache.regionsByKey.get(group.dataRegionKey) : null;
+    if (!source) {
+        return null;
+    }
+
+    const share = clamp(areaShare, 0.08, 1.0);
+    const scaledPopulation = Math.max(1, Math.round(source.end_population * share));
+    const scaledStartPopulation = Math.max(1, Math.round(source.start_population * share));
+    const scaledEndGdp = source.end_gdp_billion_eur * share;
+    const scaledStartGdp = source.start_gdp_billion_eur * share;
+
+    return {
+        ...source,
+        region_name: group.label,
+        source_region_name: source.region_name,
+        start_population: scaledStartPopulation,
+        end_population: scaledPopulation,
+        births: Math.round(source.births * share),
+        deaths: Math.round(source.deaths * share),
+        natural_change: Math.round(source.natural_change * share),
+        net_external_migration: Math.round(source.net_external_migration * share),
+        internal_migration: Math.round(source.internal_migration * share),
+        start_gdp_billion_eur: scaledStartGdp,
+        end_gdp_billion_eur: scaledEndGdp,
+        gdp_per_capita_eur: scaledPopulation > 0 ? (scaledEndGdp * 1_000_000_000) / scaledPopulation : 0,
+        is_visual_split: normalizeRegionName(group.label) !== normalizeRegionName(source.region_name),
+    };
 }
 
 function bindMapHoverEvents() {
@@ -726,8 +846,9 @@ function bindMapHoverEvents() {
         node.addEventListener("mouseenter", () => {
             const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
             const regionName = String(node.getAttribute("data-region-name") ?? "");
-            const mappedRegionKey = String(node.getAttribute("data-data-region-key") ?? "");
-            const regionData = mappedRegionKey ? mapDataCache.regionsByKey.get(mappedRegionKey) : null;
+            const visualRegionKey = String(node.getAttribute("data-visual-region-key") ?? "");
+            const visualRegion = visualRegionKey ? mapDataCache.visualRegionsByKey.get(visualRegionKey) : null;
+            const regionData = visualRegion?.displayData ?? null;
             const countryData = mapDataCache.countriesByCode.get(countryCode) ?? null;
             node.classList.add("map-hover-target");
             renderRegionHover(countryCode, regionName, regionData ?? null, countryData);
@@ -755,8 +876,8 @@ function renderCountryHover(countryCode, countryData) {
 
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
-        const aggregateNote = normalizeRegionName(regionName) !== normalizeRegionName(regionData.region_name)
-            ? ` Aggregate data: ${regionData.region_name}.`
+        const aggregateNote = regionData.is_visual_split && regionData.source_region_name
+            ? ` Split from aggregate: ${regionData.source_region_name}.`
             : "";
         elements.mapHoverTitle.textContent =
             `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`;
