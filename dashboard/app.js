@@ -15,7 +15,7 @@ const VISUAL_REGION_LABEL_OFFSETS = {
     "MNE::primorje": [8, 16],
     "MNE::zeta": [26, 0],
     "MNE::stara-crna-gora": [8, -14],
-    "MNE::brda": [16, -10],
+    "MNE::brda": [-8, 10],
 };
 const COUNTRY_GEOJSON_PATHS = [
     "./data/geoBoundaries-BIH-ADM0_simplified.geojson",
@@ -576,12 +576,18 @@ function renderCountryLayer(geoData) {
         list.push(feature);
         groupedByCountry.set(feature.countryCode, list);
     }
+    const groupedVisualRegions = buildVisualRegionGroups(geoData.regionFeatures ?? []);
 
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
-            const mergedPathD = features.map((feature) => feature.pathD).join(" ");
+            const syntheticCountryRegions = groupedVisualRegions.filter((group) => group.countryCode === countryCode);
+            const mergedPathD = countryCode === "SRB" && syntheticCountryRegions.length
+                ? syntheticCountryRegions.map((group) => group.pathD).join(" ")
+                : features.map((feature) => feature.pathD).join(" ");
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
-            const centroid = labelFeature?.centroid ?? averageCentroid(features);
+            const centroid = countryCode === "SRB" && syntheticCountryRegions.length
+                ? averageCentroid(syntheticCountryRegions)
+                : (labelFeature?.centroid ?? averageCentroid(features));
             const displayName = labelFeature?.countryCode === "SRB"
                 ? "Serbia"
                 : (labelFeature?.name ?? countryCode);
