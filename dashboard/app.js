@@ -629,7 +629,7 @@ function renderCountryLayer(geoData) {
                     class="map-country-shape"
                     data-country-code="${escapeHtml(country.countryCode)}"
                     d="${escapeHtml(kosovoSeamFix.pathD)}"
-                    fill="${escapeHtml(fill)}"
+                    fill="none"
                     stroke="${escapeHtml(fill)}"
                     stroke-width="2.4"
                     stroke-linejoin="round"
