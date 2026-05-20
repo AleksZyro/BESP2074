@@ -39,6 +39,20 @@ const mapDataCache = {
     countriesByCode: new Map(),
     regionsByKey: new Map(),
 };
+const REGION_NAME_ALIASES = {
+    "federation of bosnia and herzegovina": "federation of bosnia and herzegovina",
+    "federation of bosnia-herzegovina": "federation of bosnia and herzegovina",
+    "republika srpska": "republika srpska",
+    "brcko": "brcko",
+    "south and east serbia": "south and east serbia",
+    "kosovo and metohija": "kosovo and metohija",
+    "kosovo & metohija": "kosovo and metohija",
+    "central serbia": "central serbia",
+    "vojvodina": "vojvodina",
+    "belgrade": "belgrade",
+    "coast": "coast",
+    "inland": "inland",
+};
 
 const integerFormatter = new Intl.NumberFormat("en-US");
 const decimalFormatter = new Intl.NumberFormat("en-US", {
@@ -439,7 +453,7 @@ function compareYearAndCountry(left, right) {
         return leftYear - rightYear;
     }
 
-    return left.country_code.localeCompare(right.country_code);
+    return normalizeCountryCode(left.country_code).localeCompare(normalizeCountryCode(right.country_code));
 }
 
 function compareYearCountryAndRegion(left, right) {
@@ -449,20 +463,23 @@ function compareYearCountryAndRegion(left, right) {
         return leftYear - rightYear;
     }
 
-    if (left.country_code !== right.country_code) {
-        return left.country_code.localeCompare(right.country_code);
+    const leftCountryCode = normalizeCountryCode(left.country_code);
+    const rightCountryCode = normalizeCountryCode(right.country_code);
+    if (leftCountryCode !== rightCountryCode) {
+        return leftCountryCode.localeCompare(rightCountryCode);
     }
 
-    return left.region_name.localeCompare(right.region_name);
+    return normalizeRegionName(left.region_name).localeCompare(normalizeRegionName(right.region_name));
 }
 
 function getLatestCountryRowsByCode(countryRows) {
     const latestByCountryCode = new Map();
 
     for (const row of countryRows) {
-        const existing = latestByCountryCode.get(row.country_code);
+        const countryCode = normalizeCountryCode(row.country_code);
+        const existing = latestByCountryCode.get(countryCode);
         if (!existing || extractStartYear(row) > extractStartYear(existing)) {
-            latestByCountryCode.set(row.country_code, row);
+            latestByCountryCode.set(countryCode, row);
         }
     }
 
@@ -484,7 +501,19 @@ function getLatestRegionRowsByKey(regionRows) {
 }
 
 function buildRegionKey(countryCode, regionName) {
-    return `${countryCode}::${regionName}`;
+    return `${normalizeCountryCode(countryCode)}::${normalizeRegionName(regionName)}`;
+}
+
+function normalizeCountryCode(countryCode) {
+    return String(countryCode ?? "").trim().toUpperCase();
+}
+
+function normalizeRegionName(regionName) {
+    const compact = String(regionName ?? "")
+        .trim()
+        .toLowerCase()
+        .replaceAll(/\s+/g, " ");
+    return REGION_NAME_ALIASES[compact] ?? compact;
 }
 
 function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
