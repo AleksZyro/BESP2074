@@ -49,10 +49,6 @@ th {
 }
 
 .hero {
-    display: flex;
-    gap: 20px;
-    justify-content: space-between;
-    align-items: flex-start;
     padding: 28px;
     border-radius: 24px;
 }
@@ -83,17 +79,6 @@ th {
     line-height: 1.65;
 }
 
-.status-banner {
-    min-width: min(100%, 330px);
-    margin: 0;
-    padding: 14px 16px;
-    border: 1px solid rgba(220, 184, 107, 0.18);
-    border-radius: 14px;
-    background: rgba(220, 184, 107, 0.08);
-    color: var(--muted);
-    line-height: 1.5;
-}
-
 .dashboard-grid {
     display: grid;
     gap: 22px;
@@ -106,7 +91,88 @@ th {
 }
 
 .section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
     margin-bottom: 18px;
+}
+
+.section-actions {
+    display: grid;
+    gap: 10px;
+    justify-items: end;
+}
+
+.timeline-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.timeline-button,
+.speed-button,
+.timeline-select {
+    border: 1px solid rgba(173, 198, 224, 0.34);
+    border-radius: 999px;
+    background: rgba(28, 50, 73, 0.72);
+    color: var(--muted);
+    padding: 8px 14px;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.timeline-button,
+.speed-button {
+    cursor: pointer;
+}
+
+.timeline-button:disabled,
+.speed-button:disabled,
+.timeline-select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.timeline-button-primary,
+.speed-button-active {
+    border-color: rgba(220, 184, 107, 0.55);
+    background: rgba(220, 184, 107, 0.16);
+    color: var(--text);
+}
+
+.timeline-select-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.timeline-select {
+    min-width: 130px;
+    appearance: none;
+}
+
+.speed-controls {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.year-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 8px 14px;
+    border: 1px solid rgba(118, 183, 214, 0.28);
+    border-radius: 999px;
+    background: rgba(118, 183, 214, 0.10);
+    color: var(--text);
+    font-size: 0.86rem;
+    font-weight: 600;
 }
 
 .map-mode-controls {
@@ -165,6 +231,11 @@ td {
 .meta-note {
     margin: 8px 0 0;
     line-height: 1.5;
+}
+
+.flag-chip {
+    margin-right: 8px;
+    font-size: 1rem;
 }
 
 .table-wrap {
@@ -281,17 +352,18 @@ tbody tr:nth-child(even) {
 }
 
 @media (max-width: 820px) {
-    .hero {
+    .section-heading {
         flex-direction: column;
-    }
-
-    .status-banner {
-        min-width: 0;
-        width: 100%;
     }
 
     .map-layout {
         grid-template-columns: 1fr;
+    }
+
+    .section-actions,
+    .timeline-controls {
+        justify-items: stretch;
+        justify-content: flex-start;
     }
 }
 

@@ -123,7 +123,7 @@ Current implementation note:
 - The map does not yet make the dashboard timeline-driven
 
 ### Phase 5.6 - Timeline & Controlled Variation
-Status: planned next bridge phase
+Status: in progress
 
 Purpose:
 - Bridge the gap between static map/dashboard display and later system expansion
@@ -152,10 +152,10 @@ Explicitly not in scope:
 - No unbounded extreme values
 
 Current reason for this phase:
-- The dashboard currently loads precomputed JSON correctly
-- The dashboard currently shows the latest available year by default
-- The dashboard currently has no timeline controls
-- Variation is not yet documented or implemented as a separate controlled system layer
+- The dashboard already loads precomputed JSON correctly
+- Timeline controls are now the correct bridge between static display and later systems
+- Controlled variation is now introduced as a bounded deterministic layer instead of literal randomness
+- A fuller shock / policy layer still remains outside this phase
 
 Phase numbering note:
 - The earlier idea of a separate standalone "controls phase" is now absorbed into Phase 5.6
@@ -195,6 +195,7 @@ Possible future systems:
 - Python simulation currently runs from `2020` to `2030`
 - The export pipeline writes both `output/simulation_2020_2030.json` and `output/latest.json`
 - The dashboard currently reads `output/latest.json`
-- The dashboard currently defaults to the latest available year data in cards / map hover logic
-- Time progression is not yet controllable in the dashboard
+- The dashboard now defaults to the earliest available year data
+- Time progression is now controllable in the dashboard using precomputed export years
 - The frontend does not re-simulate anything live
+- Controlled yearly variation now exists in the Python core as a bounded deterministic layer

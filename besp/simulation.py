@@ -1,3 +1,6 @@
+import hashlib
+import math
+
 from besp.models import Country, CountryYearResult, Region, RegionYearResult
 
 # -----------------------------------------------------------------------------
@@ -28,9 +31,35 @@ MAX_GDP_GROWTH = 0.08
 MIN_UNEMPLOYMENT_RATE = 0.04
 MAX_UNEMPLOYMENT_RATE = 0.35
 
+# -----------------------------------------------------------------------------
+# Controlled yearly variation
+# -----------------------------------------------------------------------------
+CONTROLLED_BIRTH_VARIATION = 0.012
+CONTROLLED_DEATH_VARIATION = 0.008
+CONTROLLED_MIGRATION_VARIATION = 0.10
+CONTROLLED_GDP_GROWTH_VARIATION = 0.004
+CONTROLLED_UNEMPLOYMENT_VARIATION = 0.0012
+
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(value, maximum))
+
+
+def calculate_controlled_variation_signal(
+    start_year: int,
+    country_code: str,
+    region_name: str,
+    channel: str,
+) -> float:
+    year_index = start_year - 2020
+    seed = f"{country_code}|{region_name}|{channel}".encode("utf-8")
+    digest = hashlib.sha1(seed).digest()
+    phase = (int.from_bytes(digest[:4], "big") / 0xFFFFFFFF) * math.tau
+
+    primary_wave = math.sin(year_index * 0.82 + phase)
+    secondary_wave = math.sin(year_index * 0.37 + phase * 1.8)
+
+    return clamp((primary_wave * 0.7) + (secondary_wave * 0.3), -1.0, 1.0)
 
 
 def calculate_housing_penalty(region: Region) -> float:
@@ -157,9 +186,50 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
             start_population = region.population
             start_gdp_billion_eur = region.gdp_billion_eur
 
-            birth_rate = country.base_birth_rate * region.birth_rate_modifier
-            death_rate = country.base_death_rate * region.death_rate_modifier
-            external_migration_rate = calculate_external_migration_rate(country, region)
+            birth_variation = calculate_controlled_variation_signal(
+                start_year,
+                country.code,
+                region.name,
+                "birth",
+            )
+            death_variation = calculate_controlled_variation_signal(
+                start_year,
+                country.code,
+                region.name,
+                "death",
+            )
+            migration_variation = calculate_controlled_variation_signal(
+                start_year,
+                country.code,
+                region.name,
+                "migration",
+            )
+            growth_variation = calculate_controlled_variation_signal(
+                start_year,
+                country.code,
+                region.name,
+                "growth",
+            )
+            unemployment_variation = calculate_controlled_variation_signal(
+                start_year,
+                country.code,
+                region.name,
+                "unemployment",
+            )
+
+            birth_rate = (
+                country.base_birth_rate
+                * region.birth_rate_modifier
+                * (1.0 + birth_variation * CONTROLLED_BIRTH_VARIATION)
+            )
+            death_rate = (
+                country.base_death_rate
+                * region.death_rate_modifier
+                * (1.0 + death_variation * CONTROLLED_DEATH_VARIATION)
+            )
+            external_migration_rate = calculate_external_migration_rate(country, region) * (
+                1.0 + migration_variation * CONTROLLED_MIGRATION_VARIATION
+            )
 
             births = round(start_population * birth_rate)
             deaths = round(start_population * death_rate)
@@ -176,15 +246,25 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
             region.population = max(end_population, 0)
 
             regional_attractiveness = calculate_regional_attractiveness(region)
-            gdp_growth_rate = calculate_regional_gdp_growth_rate(region)
+            gdp_growth_rate = clamp(
+                calculate_regional_gdp_growth_rate(region)
+                + growth_variation * CONTROLLED_GDP_GROWTH_VARIATION,
+                MIN_GDP_GROWTH,
+                MAX_GDP_GROWTH,
+            )
             region.gdp_billion_eur = max(
                 start_gdp_billion_eur * (1.0 + gdp_growth_rate),
                 0.01,
             )
-            region.unemployment_rate = calculate_updated_unemployment_rate(
+            unemployment_rate = calculate_updated_unemployment_rate(
                 region.unemployment_rate,
                 gdp_growth_rate,
                 regional_attractiveness,
+            )
+            region.unemployment_rate = clamp(
+                unemployment_rate + unemployment_variation * CONTROLLED_UNEMPLOYMENT_VARIATION,
+                MIN_UNEMPLOYMENT_RATE,
+                MAX_UNEMPLOYMENT_RATE,
             )
 
             gdp_per_capita_eur = 0.0
