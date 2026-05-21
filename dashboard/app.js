@@ -1,4 +1,7 @@
 const EXPORT_PATH = "../output/latest.json";
+const RUN_STATUS_PATH = "/api/run-status";
+const RUN_SCENARIOS_PATH = "/api/scenarios";
+const RUN_TRIGGER_PATH = "/api/run";
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 22;
@@ -226,6 +229,10 @@ const dashboardState = {
     playbackSpeed: 1,
     playbackTimer: null,
     isReloading: false,
+    isGeneratingRun: false,
+    runServiceAvailable: false,
+    runStatusPollTimer: null,
+    availableScenarios: [],
     countryRowCount: 0,
     regionRowCount: 0,
 };
@@ -239,6 +246,8 @@ const elements = {
     yearStepForwardButton: document.getElementById("year-step-forward"),
     playbackToggleButton: document.getElementById("playback-toggle"),
     reloadExportButton: document.getElementById("reload-export"),
+    generateRunButton: document.getElementById("generate-run"),
+    runScenarioSelect: document.getElementById("run-scenario-select"),
     yearSelect: document.getElementById("year-select"),
     currentYearPill: document.getElementById("current-year-pill"),
     exportStatus: document.getElementById("export-status"),
@@ -258,12 +267,22 @@ document.addEventListener("DOMContentLoaded", () => {
     bindMapModeEvents();
     bindPlaybackControls();
     renderEmptyState();
-    void loadDashboardData();
+    void initializeDashboard();
 });
 
 function bindMapModeEvents() {
     elements.mapModeCountryButton.addEventListener("click", () => setMapMode("country"));
     elements.mapModeRegionButton.addEventListener("click", () => setMapMode("region"));
+}
+
+async function initializeDashboard() {
+    await refreshRunServiceState({ includeScenarios: true });
+    await loadDashboardData();
+}
+
+async function reloadDashboardAndServiceState() {
+    await refreshRunServiceState({ includeScenarios: true });
+    await loadDashboardData({ reason: "reload" });
 }
 
 function bindPlaybackControls() {
@@ -277,7 +296,10 @@ function bindPlaybackControls() {
         }
     });
     elements.reloadExportButton.addEventListener("click", () => {
-        void loadDashboardData({ reason: "reload" });
+        void reloadDashboardAndServiceState();
+    });
+    elements.generateRunButton.addEventListener("click", () => {
+        void triggerGenerateRun();
     });
     elements.yearSelect.addEventListener("change", () => {
         const nextIndex = dashboardState.yearKeys.indexOf(elements.yearSelect.value);
@@ -389,6 +411,7 @@ function restartPlaybackTimer() {
 function updatePlaybackControls() {
     const hasYears = dashboardState.yearKeys.length > 0;
     const activeYearKey = getActiveYearKey();
+    const runControlsDisabled = dashboardState.isGeneratingRun || !dashboardState.runServiceAvailable;
     elements.yearSelect.value = activeYearKey;
     elements.yearSelect.disabled = !hasYears || dashboardState.isReloading;
     elements.yearStepBackButton.disabled =
@@ -401,11 +424,161 @@ function updatePlaybackControls() {
     elements.reloadExportButton.disabled = dashboardState.isReloading;
     elements.currentYearPill.textContent = activeYearKey || "No year loaded";
     elements.reloadExportButton.textContent = dashboardState.isReloading ? "Reloading..." : "Reload Export";
+    elements.generateRunButton.disabled = runControlsDisabled;
+    elements.generateRunButton.textContent = dashboardState.isGeneratingRun ? "Generating..." : "Generate Run";
+    elements.runScenarioSelect.disabled = runControlsDisabled;
     elements.playbackToggleButton.textContent = dashboardState.playbackTimer ? "Pause" : "Play";
     for (const button of elements.speedButtons) {
         const speed = Number.parseInt(button.dataset.speed ?? "1", 10);
         button.classList.toggle("speed-button-active", speed === dashboardState.playbackSpeed);
         button.disabled = dashboardState.isReloading || !hasYears;
+    }
+}
+
+async function refreshRunServiceState({ includeScenarios = false } = {}) {
+    try {
+        const requests = [fetchJson(RUN_STATUS_PATH)];
+        if (includeScenarios || !dashboardState.availableScenarios.length) {
+            requests.push(fetchJson(RUN_SCENARIOS_PATH));
+        }
+
+        const [runStatus, scenarios] = await Promise.all(requests);
+        dashboardState.runServiceAvailable = true;
+        applyRunStatus(runStatus);
+
+        if (Array.isArray(scenarios)) {
+            dashboardState.availableScenarios = scenarios;
+            renderScenarioOptions(scenarios);
+        }
+    } catch {
+        dashboardState.runServiceAvailable = false;
+        dashboardState.isGeneratingRun = false;
+        stopRunStatusPolling();
+        renderScenarioOptions([]);
+        setExportStatus(
+            "Local run service unavailable. Start the local run service or use py main.py and Reload Export.",
+            "muted"
+        );
+    } finally {
+        updatePlaybackControls();
+    }
+}
+
+function renderScenarioOptions(scenarios) {
+    const safeScenarios = Array.isArray(scenarios) ? scenarios : [];
+    elements.runScenarioSelect.innerHTML = safeScenarios
+        .map((scenario) => `
+            <option value="${escapeHtml(scenario.code)}">${escapeHtml(scenario.name)}</option>
+        `)
+        .join("");
+
+    if (!safeScenarios.length) {
+        elements.runScenarioSelect.innerHTML = '<option value="">Service offline</option>';
+    }
+}
+
+function applyRunStatus(runStatus) {
+    const state = String(runStatus?.state ?? "idle");
+    dashboardState.isGeneratingRun = state === "running";
+
+    if (state === "running") {
+        const scenarioLabel = runStatus?.scenario_name || runStatus?.scenario_code || "simulation";
+        setExportStatus(`Generating a fresh ${scenarioLabel} run ...`, "loading");
+        startRunStatusPolling();
+        return;
+    }
+
+    stopRunStatusPolling();
+    if (state === "failed") {
+        const detail = runStatus?.message ? ` ${runStatus.message}` : "";
+        setExportStatus(`Local run failed.${detail}`.trim(), "error");
+        return;
+    }
+
+    if (state === "success") {
+        const scenarioLabel = runStatus?.scenario_name || runStatus?.scenario_code || "simulation";
+        const seedLabel = runStatus?.variation_seed ? ` Seed ${runStatus.variation_seed}.` : "";
+        setExportStatus(`Latest ${scenarioLabel} run is ready.${seedLabel}`.trim(), "success");
+        return;
+    }
+
+    setExportStatus(
+        dashboardState.runServiceAvailable
+            ? "Use Generate Run for a fresh local simulation, Reload Export for the newest JSON, and Play for timeline playback."
+            : "Local run service unavailable. Start the local run service or use py main.py and Reload Export.",
+        "muted"
+    );
+}
+
+async function triggerGenerateRun() {
+    if (!dashboardState.runServiceAvailable || dashboardState.isGeneratingRun) {
+        return;
+    }
+
+    dashboardState.isGeneratingRun = true;
+    updatePlaybackControls();
+    setExportStatus("Starting a fresh local simulation run ...", "loading");
+
+    try {
+        const response = await fetch(RUN_TRIGGER_PATH, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            cache: "no-store",
+            body: JSON.stringify({
+                scenario: elements.runScenarioSelect.value || "baseline",
+            }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+            throw new Error(payload?.message || `HTTP ${response.status}`);
+        }
+
+        applyRunStatus(payload);
+    } catch (error) {
+        dashboardState.isGeneratingRun = false;
+        const detail = error instanceof Error ? error.message : "Unknown run start error.";
+        setExportStatus(`Could not start local run. ${detail}`, "error");
+        updatePlaybackControls();
+    }
+}
+
+function startRunStatusPolling() {
+    if (dashboardState.runStatusPollTimer) {
+        return;
+    }
+
+    dashboardState.runStatusPollTimer = window.setInterval(async () => {
+        try {
+            const runStatus = await fetchJson(RUN_STATUS_PATH);
+            applyRunStatus(runStatus);
+            updatePlaybackControls();
+
+            if (runStatus?.state === "success") {
+                await loadDashboardData({ reason: "reload" });
+                const refreshedStatus = await fetchJson(RUN_STATUS_PATH);
+                applyRunStatus(refreshedStatus);
+                updatePlaybackControls();
+            }
+        } catch {
+            stopRunStatusPolling();
+            dashboardState.isGeneratingRun = false;
+            dashboardState.runServiceAvailable = false;
+            setExportStatus(
+                "Lost connection to the local run service. Restart it, then try Generate Run again.",
+                "error"
+            );
+            updatePlaybackControls();
+        }
+    }, 1250);
+}
+
+function stopRunStatusPolling() {
+    if (dashboardState.runStatusPollTimer) {
+        window.clearInterval(dashboardState.runStatusPollTimer);
+        dashboardState.runStatusPollTimer = null;
     }
 }
 
@@ -439,8 +612,8 @@ async function loadDashboardData({ reason = "initial" } = {}) {
         renderDashboard(exportData, geoData, geoWarning);
         setExportStatus(
             isReload
-                ? "Export reloaded. Play replays the loaded years only."
-                : "Export loaded. Play replays the loaded years only.",
+                ? "Export reloaded. Generate Run creates a fresh local simulation; Play replays the loaded years."
+                : "Export loaded. Generate Run creates a fresh local simulation; Play replays the loaded years.",
             "success"
         );
     } catch (error) {
@@ -1217,6 +1390,7 @@ function renderRegionTable(regionRows) {
 
 function renderEmptyState() {
     stopPlayback();
+    stopRunStatusPolling();
     elements.countryLayer.innerHTML = "";
     elements.countryLabelLayer.innerHTML = "";
     elements.regionLayer.innerHTML = "";
@@ -1239,6 +1413,7 @@ function renderEmptyState() {
     dashboardState.countryRowCount = 0;
     dashboardState.regionRowCount = 0;
     dashboardState.isReloading = false;
+    dashboardState.isGeneratingRun = false;
     elements.yearSelect.innerHTML = "";
     elements.currentYearPill.textContent = "No year loaded";
     updatePlaybackControls();
@@ -1256,7 +1431,7 @@ function renderEmptyState() {
     elements.regionTableBody.innerHTML =
         '<tr><td colspan="8" class="table-empty">No region summary loaded yet.</td></tr>';
     setExportStatus(
-        "Run py main.py outside the dashboard, then use Reload Export.",
+        "Start the local run service, then use Generate Run or Reload Export.",
         "muted"
     );
 }

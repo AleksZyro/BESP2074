@@ -112,6 +112,14 @@ th {
     justify-content: flex-end;
 }
 
+.run-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
 .timeline-button,
 .speed-button,
 .timeline-select {
@@ -394,7 +402,8 @@ tbody tr:nth-child(even) {
     }
 
     .section-actions,
-    .timeline-controls {
+    .timeline-controls,
+    .run-controls {
         justify-items: stretch;
         justify-content: flex-start;
     }

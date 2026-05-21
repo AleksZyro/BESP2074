@@ -45,6 +45,7 @@ Examples:
 - `5.7 core: add bounded seeded yearly variation`
 - `5.7 docs: document scenario-driven variation inputs`
 - `5.8 dashboard: add export reload flow`
+- `5.8.2 bridge: add local run service and generate-run dashboard flow`
 
 ### 5. Allowed commit types
 - `core`
@@ -187,7 +188,7 @@ Current implementation note:
 - This phase is the bridge between a single fixed path and later explicit shock / policy systems
 
 ### Phase 5.8 - Export Reload & Presentation Clarity
-Status: active
+Status: implemented, but superseded by 5.8.2 for local fresh-run workflow
 
 Purpose:
 - Keep the dashboard publicly presentable without making the browser responsible for starting Python
@@ -210,6 +211,34 @@ Current implementation note:
 - Users still generate new runs outside the dashboard with `py main.py`
 - The dashboard then reloads the newest JSON export and replays only those precomputed years
 - This keeps the architecture suitable for later public presentation and hosting
+
+### Phase 5.8.2 - Local Run Service & Generate Run
+Status: active
+
+Purpose:
+- Correct the limited 5.8 reload-only solution without jumping to Phase 6
+- Let the dashboard trigger a fresh local simulation run without direct browser-to-shell execution
+- Keep `Play` strictly as timeline playback while introducing a separate `Generate Run` action
+
+Contains:
+- Small local Python standard-library run service
+- `Generate Run` action in the dashboard
+- Scenario selection for local runs
+- Automatic reload of `output/latest.json` after a successful local run
+- Clear status states for idle / running / success / failed
+
+Explicitly not in scope:
+- No large backend rewrite
+- No Flask / FastAPI / Node backend
+- No new map features
+- No shocks
+- No politics / state layer
+
+Current implementation note:
+- The dashboard talks to the local run service over lightweight HTTP endpoints
+- The service is responsible for launching `main.py`
+- Frontend JavaScript does not execute shell commands directly
+- `Reload Export` remains available, but `Generate Run` now covers the local fresh-run workflow cleanly
 
 Phase numbering note:
 - The earlier idea of a separate standalone "controls phase" is now absorbed into Phase 5.6
@@ -243,8 +272,9 @@ Possible future systems:
 2. Phase 5.6 timeline and controlled variation
 3. Phase 5.7 scenario-driven variation inputs
 4. Phase 5.8 export reload and dashboard clarity
-5. Phase 7 shock system
-6. Phase 8 politics / state
+5. Phase 5.8.2 local run service and generate-run flow
+6. Phase 7 shock system
+7. Phase 8 politics / state
 
 ## Current Actual State
 
@@ -254,6 +284,7 @@ Possible future systems:
 - The dashboard now defaults to the earliest available year data
 - Time progression is now controllable in the dashboard using precomputed export years
 - The dashboard reloads `output/latest.json` on demand but does not start new simulations itself
+- The dashboard can now ask a small local run service to generate a fresh run and then reload the new export automatically
 - The frontend does not re-simulate anything live
 - Controlled yearly variation now exists in the Python core as a bounded deterministic layer
 - Scenario and seed inputs now allow multiple plausible paths without unbounded randomness

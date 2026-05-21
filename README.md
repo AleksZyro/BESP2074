@@ -19,6 +19,7 @@ Project status:
 - Phase 5.6 in progress: timeline and controlled variation bridge phase
 - Phase 5.7 in progress: scenario-driven variation inputs
 - Phase 5.8 in progress: export reload and dashboard clarity
+- Phase 5.8.2 in progress: local run service and generate-run dashboard flow
 
 Current scope:
 - Countries and regions as dataclasses
@@ -60,6 +61,7 @@ Current dashboard limitations:
 - No backend/API state sync; controls only play back precomputed export years
 - Controlled variation is still lightweight and not yet a full shock or policy layer
 - `Reload Export` reloads the latest JSON only; it does not start Python from the browser
+- `Generate Run` uses a local run service to start a fresh simulation without turning browser JavaScript into a shell launcher
 
 Phase 5 map status:
 - Dashboard reads export data only (no duplicated simulation logic in JavaScript)
@@ -96,6 +98,12 @@ Phase 5.8 - Export Reload:
 - New simulation runs are still created outside the dashboard with `py main.py`
 - No browser-to-Python execution or backend bridge is introduced in this phase
 
+Phase 5.8.2 - Local Run Service:
+- `Generate Run` starts a fresh local simulation through a small Python standard-library service
+- `Reload Export` remains available for explicitly reloading the newest JSON output
+- `Play` still only replays the years of the currently loaded export
+- The dashboard talks to the local run service instead of directly executing shell/Python from frontend code
+
 Phase 5.6 / 5.7 do not include:
 - No shock system
 - No inflation system v1
@@ -109,7 +117,8 @@ Dashboard data flow:
 2. Python export pipeline writes `output/simulation_<start>_<end>.json` and `output/latest.json`.
 3. `dashboard/app.js` fetches `output/latest.json`.
 4. `dashboard/app.js` loads GeoJSON from `dashboard/data/`.
-5. Dashboard renders metadata, tables, timeline playback, reload state, and map hover information.
+5. The local run service can optionally trigger a fresh simulation run and keep status for the dashboard.
+6. Dashboard renders metadata, tables, timeline playback, reload state, run status, and map hover information.
 
 Scenario examples:
 - `py main.py --scenario baseline`
@@ -136,9 +145,10 @@ Map testcase fixture:
 
 Quick start:
 1. Run `py main.py` to generate `output/latest.json`.
-2. From the repository root, run `py -m http.server 8000`.
-3. Open `http://localhost:8000/dashboard/index.html`.
-4. Use `Reload Export` after generating a fresh run; use `Play` only to replay the loaded years.
+2. From the repository root, run `py tools/local_run_service.py --port 8011`.
+3. Open `http://localhost:8011/dashboard/index.html`.
+4. Use `Generate Run` for a new local simulation or `Reload Export` to re-read the newest JSON.
+5. Use `Play` only to replay the loaded years.
 
 Documentation:
 - See `PROJECT_PHASES.md` for the cleaned-up roadmap, workflow rules, and the new Phase 5.6 bridge phase.

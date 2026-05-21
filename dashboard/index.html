@@ -27,10 +27,19 @@
                         <h2>Balkan Country Layer</h2>
                     </div>
                     <div class="section-actions">
+                        <div class="run-controls" role="group" aria-label="Simulation run controls">
+                            <label class="timeline-select-wrap" for="run-scenario-select">
+                                <span>Scenario</span>
+                                <select id="run-scenario-select" class="timeline-select"></select>
+                            </label>
+                            <button id="generate-run" class="timeline-button timeline-button-primary" type="button">
+                                Generate Run
+                            </button>
+                            <button id="reload-export" class="timeline-button" type="button">Reload Export</button>
+                        </div>
                         <div class="timeline-controls" role="group" aria-label="Timeline controls">
                             <button id="year-step-back" class="timeline-button" type="button">Prev</button>
                             <button id="playback-toggle" class="timeline-button timeline-button-primary" type="button">Play</button>
-                            <button id="reload-export" class="timeline-button" type="button">Reload Export</button>
                             <button id="year-step-forward" class="timeline-button" type="button">Next</button>
                             <label class="timeline-select-wrap" for="year-select">
                                 <span>Year</span>
@@ -45,8 +54,8 @@
                             <span id="current-year-pill" class="year-pill">Waiting for data</span>
                         </div>
                         <p class="timeline-note">
-                            Run <code>py main.py</code> outside the dashboard, then use <strong>Reload Export</strong>.
-                            <strong>Play</strong> only replays the already exported years.
+                            <strong>Generate Run</strong> starts a fresh local simulation through the run service.
+                            <strong>Reload Export</strong> reloads the latest JSON. <strong>Play</strong> only replays the loaded years.
                         </p>
                         <p id="export-status" class="export-status" aria-live="polite">
                             Waiting for export data.
