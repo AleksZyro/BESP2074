@@ -129,6 +129,13 @@ th {
     cursor: pointer;
 }
 
+.timeline-button:disabled,
+.speed-button:disabled,
+.timeline-select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
 .timeline-button-primary,
 .speed-button-active {
     border-color: rgba(220, 184, 107, 0.55);
