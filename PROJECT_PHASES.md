@@ -182,6 +182,7 @@ Explicitly not in scope:
 Current implementation note:
 - Identical scenario + identical seed still produce identical results on purpose
 - Different scenarios and/or seeds can now create different but bounded and reproducible outcomes
+- Runs without an explicit seed now generate a fresh seed automatically, so repeated simulations create new plausible paths by default
 - This phase is the bridge between a single fixed path and later explicit shock / policy systems
 
 Phase numbering note:
@@ -227,4 +228,5 @@ Possible future systems:
 - Time progression is now controllable in the dashboard using precomputed export years
 - The frontend does not re-simulate anything live
 - Controlled yearly variation now exists in the Python core as a bounded deterministic layer
-- Scenario and seed inputs now allow multiple plausible deterministic paths without unbounded randomness
+- Scenario and seed inputs now allow multiple plausible paths without unbounded randomness
+- If the same seed is reused, the same path can still be reproduced on purpose

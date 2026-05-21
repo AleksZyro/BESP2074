@@ -1,5 +1,4 @@
-import hashlib
-import math
+import random
 
 from besp.models import Country, CountryYearResult, Region, RegionYearResult, SimulationScenario
 
@@ -52,15 +51,17 @@ def calculate_controlled_variation_signal(
     channel: str,
     variation_seed: str,
 ) -> float:
-    year_index = start_year - 2020
-    seed = f"{variation_seed}|{country_code}|{region_name}|{channel}".encode("utf-8")
-    digest = hashlib.sha1(seed).digest()
-    phase = (int.from_bytes(digest[:4], "big") / 0xFFFFFFFF) * math.tau
+    current_rng = random.Random(
+        f"{variation_seed}|{start_year}|{country_code}|{region_name}|{channel}|current"
+    )
+    previous_rng = random.Random(
+        f"{variation_seed}|{start_year - 1}|{country_code}|{region_name}|{channel}|previous"
+    )
 
-    primary_wave = math.sin(year_index * 0.82 + phase)
-    secondary_wave = math.sin(year_index * 0.37 + phase * 1.8)
+    current_draw = current_rng.triangular(-1.0, 1.0, 0.0)
+    previous_draw = previous_rng.triangular(-1.0, 1.0, 0.0)
 
-    return clamp((primary_wave * 0.7) + (secondary_wave * 0.3), -1.0, 1.0)
+    return clamp((current_draw * 0.72) + (previous_draw * 0.28), -1.0, 1.0)
 
 
 def calculate_housing_penalty(region: Region) -> float:

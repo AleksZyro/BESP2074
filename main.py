@@ -1,4 +1,5 @@
 import argparse
+import secrets
 from pathlib import Path
 
 from besp.exporter import build_simulation_export, save_simulation_export_json
@@ -79,8 +80,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--seed",
-        default="baseline-2020",
-        help="Deterministic variation seed used for bounded yearly variation.",
+        default=None,
+        help="Optional deterministic variation seed. If omitted, a fresh seed is generated for each run.",
     )
     parser.add_argument(
         "--list-scenarios",
@@ -112,6 +113,13 @@ def resolve_scenario(
     )
 
 
+def resolve_variation_seed(seed: str | None) -> str:
+    if seed:
+        return seed
+
+    return f"auto-{secrets.token_hex(6)}"
+
+
 def main() -> None:
     args = parse_args()
     start_year = 2020
@@ -123,19 +131,20 @@ def main() -> None:
         return
 
     scenario = resolve_scenario(scenarios, args.scenario)
+    variation_seed = resolve_variation_seed(args.seed)
     countries = load_world("data")
     region_results = simulate_period(
         countries,
         start_year,
         end_year,
         scenario=scenario,
-        variation_seed=args.seed,
+        variation_seed=variation_seed,
     )
     country_results = aggregate_country_results(region_results, countries)
     warnings = validate_simulation_results(country_results, region_results)
 
     print(f"Scenario: {scenario.code} ({scenario.name})")
-    print(f"Variation seed: {args.seed}")
+    print(f"Variation seed: {variation_seed}")
 
     print_country_year_results(country_results)
     print_region_year_results(start_year, end_year, region_results)
@@ -148,7 +157,7 @@ def main() -> None:
         region_results=region_results,
         warning_count=len(warnings),
         scenario=scenario,
-        variation_seed=args.seed,
+        variation_seed=variation_seed,
     )
     output_dir = Path("output")
     output_path = output_dir / f"simulation_{start_year}_{end_year}.json"
