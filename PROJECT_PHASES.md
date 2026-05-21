@@ -44,6 +44,7 @@ Examples:
 - `5.6 controls: add year selection and export playback`
 - `5.7 core: add bounded seeded yearly variation`
 - `5.7 docs: document scenario-driven variation inputs`
+- `5.8 dashboard: add export reload flow`
 
 ### 5. Allowed commit types
 - `core`
@@ -185,6 +186,31 @@ Current implementation note:
 - Runs without an explicit seed now generate a fresh seed automatically, so repeated simulations create new plausible paths by default
 - This phase is the bridge between a single fixed path and later explicit shock / policy systems
 
+### Phase 5.8 - Export Reload & Presentation Clarity
+Status: active
+
+Purpose:
+- Keep the dashboard publicly presentable without making the browser responsible for starting Python
+- Make it obvious that `Play` only replays exported years
+- Make it easy to reload a newly generated `output/latest.json` without stale dashboard state
+
+Contains:
+- Explicit `Reload Export` action in the dashboard
+- Clean playback/reload guidance in the UI
+- Reset to earliest available year after reload
+- State-safe refresh of metadata, cards, map, hover, and tables
+
+Explicitly not in scope:
+- No browser-to-Python execution
+- No backend/API bridge
+- No new simulation engine behavior
+- No new map layer work
+
+Current implementation note:
+- Users still generate new runs outside the dashboard with `py main.py`
+- The dashboard then reloads the newest JSON export and replays only those precomputed years
+- This keeps the architecture suitable for later public presentation and hosting
+
 Phase numbering note:
 - The earlier idea of a separate standalone "controls phase" is now absorbed into Phase 5.6
 - This keeps timeline playback and controlled variation together instead of splitting one coherent block across multiple phases
@@ -216,8 +242,9 @@ Possible future systems:
 1. Phase 5 documentation and map baseline completed
 2. Phase 5.6 timeline and controlled variation
 3. Phase 5.7 scenario-driven variation inputs
-4. Phase 7 shock system
-5. Phase 8 politics / state
+4. Phase 5.8 export reload and dashboard clarity
+5. Phase 7 shock system
+6. Phase 8 politics / state
 
 ## Current Actual State
 
@@ -226,6 +253,7 @@ Possible future systems:
 - The dashboard currently reads `output/latest.json`
 - The dashboard now defaults to the earliest available year data
 - Time progression is now controllable in the dashboard using precomputed export years
+- The dashboard reloads `output/latest.json` on demand but does not start new simulations itself
 - The frontend does not re-simulate anything live
 - Controlled yearly variation now exists in the Python core as a bounded deterministic layer
 - Scenario and seed inputs now allow multiple plausible paths without unbounded randomness

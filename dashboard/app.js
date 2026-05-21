@@ -225,6 +225,7 @@ const dashboardState = {
     currentYearIndex: 0,
     playbackSpeed: 1,
     playbackTimer: null,
+    isReloading: false,
     countryRowCount: 0,
     regionRowCount: 0,
 };
@@ -237,8 +238,10 @@ const elements = {
     yearStepBackButton: document.getElementById("year-step-back"),
     yearStepForwardButton: document.getElementById("year-step-forward"),
     playbackToggleButton: document.getElementById("playback-toggle"),
+    reloadExportButton: document.getElementById("reload-export"),
     yearSelect: document.getElementById("year-select"),
     currentYearPill: document.getElementById("current-year-pill"),
+    exportStatus: document.getElementById("export-status"),
     speedButtons: Array.from(document.querySelectorAll(".speed-button")),
     mapHoverTitle: document.getElementById("map-hover-title"),
     mapHoverBody: document.getElementById("map-hover-body"),
@@ -272,6 +275,9 @@ function bindPlaybackControls() {
         } else {
             startPlayback();
         }
+    });
+    elements.reloadExportButton.addEventListener("click", () => {
+        void loadDashboardData({ reason: "reload" });
     });
     elements.yearSelect.addEventListener("change", () => {
         const nextIndex = dashboardState.yearKeys.indexOf(elements.yearSelect.value);
@@ -384,42 +390,73 @@ function updatePlaybackControls() {
     const hasYears = dashboardState.yearKeys.length > 0;
     const activeYearKey = getActiveYearKey();
     elements.yearSelect.value = activeYearKey;
-    elements.yearSelect.disabled = !hasYears;
-    elements.yearStepBackButton.disabled = !hasYears || dashboardState.currentYearIndex <= 0;
+    elements.yearSelect.disabled = !hasYears || dashboardState.isReloading;
+    elements.yearStepBackButton.disabled =
+        dashboardState.isReloading || !hasYears || dashboardState.currentYearIndex <= 0;
     elements.yearStepForwardButton.disabled =
-        !hasYears || dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1;
-    elements.playbackToggleButton.disabled = dashboardState.yearKeys.length < 2;
+        dashboardState.isReloading
+        || !hasYears
+        || dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1;
+    elements.playbackToggleButton.disabled = dashboardState.isReloading || dashboardState.yearKeys.length < 2;
+    elements.reloadExportButton.disabled = dashboardState.isReloading;
     elements.currentYearPill.textContent = activeYearKey || "No year loaded";
+    elements.reloadExportButton.textContent = dashboardState.isReloading ? "Reloading..." : "Reload Export";
     elements.playbackToggleButton.textContent = dashboardState.playbackTimer ? "Pause" : "Play";
     for (const button of elements.speedButtons) {
         const speed = Number.parseInt(button.dataset.speed ?? "1", 10);
         button.classList.toggle("speed-button-active", speed === dashboardState.playbackSpeed);
-        button.disabled = !hasYears;
+        button.disabled = dashboardState.isReloading || !hasYears;
     }
 }
 
-async function loadDashboardData() {
+async function loadDashboardData({ reason = "initial" } = {}) {
+    const isReload = reason === "reload";
+    stopPlayback();
+    dashboardState.isReloading = true;
+    setExportStatus(
+        isReload ? "Reloading output/latest.json ..." : "Loading output/latest.json ...",
+        "loading"
+    );
+    updatePlaybackControls();
+
     try {
         const exportData = await fetchJson(EXPORT_PATH);
         if (!isValidExport(exportData)) {
             throw new Error("Invalid BESP export shape");
         }
 
-        let geoData = null;
-        let geoWarning = "";
-        try {
-            geoData = await loadGeoBoundaryData();
-        } catch (error) {
-            geoWarning = error instanceof Error ? error.message : "GeoJSON load failed";
+        let geoData = dashboardState.geoData;
+        let geoWarning = dashboardState.geoWarning;
+        if (!geoData) {
+            geoWarning = "";
+            try {
+                geoData = await loadGeoBoundaryData();
+            } catch (error) {
+                geoWarning = error instanceof Error ? error.message : "GeoJSON load failed";
+            }
         }
 
         renderDashboard(exportData, geoData, geoWarning);
+        setExportStatus(
+            isReload
+                ? "Export reloaded. Play replays the loaded years only."
+                : "Export loaded. Play replays the loaded years only.",
+            "success"
+        );
     } catch (error) {
         const detail = error instanceof Error ? ` (${error.message})` : "";
+        setExportStatus(
+            "Could not load output/latest.json. Run py main.py, then use Reload Export."
+            + detail,
+            "error"
+        );
         renderLoadError(
             "Could not load output/latest.json. Run py main.py and serve the repository root before opening the dashboard."
             + detail
         );
+    } finally {
+        dashboardState.isReloading = false;
+        updatePlaybackControls();
     }
 }
 
@@ -725,6 +762,7 @@ function renderActiveYearState() {
 function renderLoadError(message) {
     stopPlayback();
     renderEmptyState();
+    setExportStatus(message, "error");
     elements.metaCards.innerHTML = `
         <article class="meta-card empty-card">
             <span class="meta-label">Load error</span>
@@ -1200,6 +1238,7 @@ function renderEmptyState() {
     dashboardState.currentYearIndex = 0;
     dashboardState.countryRowCount = 0;
     dashboardState.regionRowCount = 0;
+    dashboardState.isReloading = false;
     elements.yearSelect.innerHTML = "";
     elements.currentYearPill.textContent = "No year loaded";
     updatePlaybackControls();
@@ -1216,6 +1255,19 @@ function renderEmptyState() {
         '<tr><td colspan="7" class="table-empty">No country summary loaded yet.</td></tr>';
     elements.regionTableBody.innerHTML =
         '<tr><td colspan="8" class="table-empty">No region summary loaded yet.</td></tr>';
+    setExportStatus(
+        "Run py main.py outside the dashboard, then use Reload Export.",
+        "muted"
+    );
+}
+
+function setExportStatus(message, tone = "muted") {
+    if (!elements.exportStatus) {
+        return;
+    }
+
+    elements.exportStatus.textContent = message;
+    elements.exportStatus.className = `export-status export-status-status-${tone}`;
 }
 
 function buildMetaCard(label, value) {

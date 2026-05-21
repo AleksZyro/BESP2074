@@ -175,6 +175,39 @@ th {
     font-weight: 600;
 }
 
+.timeline-note,
+.export-status {
+    margin: 0;
+    max-width: 42ch;
+    text-align: right;
+    line-height: 1.55;
+    font-size: 0.88rem;
+}
+
+.timeline-note {
+    color: var(--muted);
+}
+
+.export-status {
+    color: var(--text);
+}
+
+.export-status-status-muted {
+    color: var(--muted);
+}
+
+.export-status-status-loading {
+    color: var(--accent-cool);
+}
+
+.export-status-status-error {
+    color: #f3b0a2;
+}
+
+.export-status-status-success {
+    color: #9fd6b8;
+}
+
 .map-mode-controls {
     display: inline-flex;
     gap: 8px;
@@ -364,6 +397,11 @@ tbody tr:nth-child(even) {
     .timeline-controls {
         justify-items: stretch;
         justify-content: flex-start;
+    }
+
+    .timeline-note,
+    .export-status {
+        text-align: left;
     }
 }
 
