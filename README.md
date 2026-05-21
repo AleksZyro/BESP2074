@@ -16,7 +16,7 @@ Project status:
 - Phase 3.3 complete: validation / calibration pass
 - Phase 4 complete: dashboard v1 without map-first scope creep
 - Phase 5 complete in baseline form: map v1
-- Next planned bridge phase: Phase 5.6 - Timeline & Controlled Variation
+- Phase 5.6 in progress: timeline and controlled variation bridge phase
 
 Current scope:
 - Countries and regions as dataclasses
@@ -31,6 +31,7 @@ Current simulation behavior:
 - Region-sensitive external migration
 - Population-weighted internal migration between regions of the same country
 - Regional attractiveness based on economy, infrastructure, urbanization, metro pull and housing pressure
+- Bounded deterministic yearly variation for births, deaths, migration, GDP growth, and unemployment
 - Multi-year terminal output with area, density, natural change and migration values
 
 Modeling principles:
@@ -52,19 +53,16 @@ Dashboard 5.x (map v1):
 - Keeps hover details export-driven with country fallback where region mapping is not available
 
 Current dashboard limitations:
-- Dashboard currently opens from the latest available export year, not the earliest year
-- No year selector yet
-- No play / pause / speed controls yet
-- No flags in the country summary cards yet
 - No live simulation runs in the browser; the dashboard only reads exported JSON data
-- Current map and dashboard UI are still display-oriented, not timeline-driven
+- No backend/API state sync; controls only play back precomputed export years
+- Controlled variation is still lightweight and not yet a full shock or policy layer
 
 Phase 5 map status:
 - Dashboard reads export data only (no duplicated simulation logic in JavaScript)
 - No playback controls, no shocks, no backend/API changes
 - Map rendering is frontend-only and uses preloaded GeoJSON files
 
-Phase 5.6 - Timeline & Controlled Variation (planned next):
+Phase 5.6 - Timeline & Controlled Variation:
 - Add year selection to the dashboard
 - Default dashboard state should start from the earliest exported year instead of the latest
 - Add play / pause / speed controls using already exported yearly data
@@ -72,6 +70,13 @@ Phase 5.6 - Timeline & Controlled Variation (planned next):
 - Add controlled variation in the simulation core only when explicitly implemented in the next block
 - Variation must be plausible, slow, bounded, reproducible, and sensitive to country / region context
 - This phase absorbs the previously separate idea of a standalone controls-only phase
+
+Phase 5.6 current implementation:
+- Dashboard starts from the earliest exported year
+- Year selection, previous/next stepping, and play / pause / speed buttons are available
+- Country summary cards now show flags
+- Dashboard no longer shows the old top-right `Loaded ...` status banner
+- Variation is deterministic and bounded, not literal random noise
 
 Phase 5.6 does not include:
 - No shock system
@@ -91,9 +96,8 @@ Dashboard data flow:
 Current data-selection behavior:
 - `main.py` currently simulates `2020 -> 2030`
 - `output/latest.json` contains all simulated year buckets in that range
-- `dashboard/app.js` currently uses the latest available country and region rows for map cards and hover details
-- This is why the dashboard currently surfaces `2029-2030` values first
-- Changing the dashboard to start from the first exported year belongs to Phase 5.6, not the current map block
+- `dashboard/app.js` now starts from the earliest available year bucket and can step/play through later buckets
+- Map cards, hover details, and summary tables follow the currently selected export year
 
 Map data source:
 - Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for BIH, MNE, SRB, plus XKX (mapped into SRB scope for BESP consistency).

@@ -20,6 +20,12 @@ const VISUAL_REGION_LABEL_OFFSETS = {
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
+const COUNTRY_FLAGS = {
+    BIH: "🇧🇦",
+    MNE: "🇲🇪",
+    SRB: "🇷🇸",
+};
+const BASE_PLAYBACK_INTERVAL_MS = 1400;
 const COUNTRY_GEOJSON_PATHS = [
     "./data/geoBoundaries-BIH-ADM0_simplified.geojson",
     "./data/geoBoundaries-MNE-ADM0_simplified.geojson",
@@ -212,13 +218,29 @@ const mapDataCache = {
     latestYearByCountryCode: new Map(),
     visualRegionsByKey: new Map(),
 };
+const dashboardState = {
+    exportData: null,
+    geoData: null,
+    geoWarning: "",
+    yearKeys: [],
+    currentYearIndex: 0,
+    playbackSpeed: 1,
+    playbackTimer: null,
+    countryRowCount: 0,
+    regionRowCount: 0,
+};
 let activeMapMode = "country";
 
 const elements = {
-    loadStatus: document.getElementById("load-status"),
     metaCards: document.getElementById("meta-cards"),
     mapModeCountryButton: document.getElementById("map-mode-country"),
     mapModeRegionButton: document.getElementById("map-mode-region"),
+    yearStepBackButton: document.getElementById("year-step-back"),
+    yearStepForwardButton: document.getElementById("year-step-forward"),
+    playbackToggleButton: document.getElementById("playback-toggle"),
+    yearSelect: document.getElementById("year-select"),
+    currentYearPill: document.getElementById("current-year-pill"),
+    speedButtons: Array.from(document.querySelectorAll(".speed-button")),
     mapHoverTitle: document.getElementById("map-hover-title"),
     mapHoverBody: document.getElementById("map-hover-body"),
     countryLayer: document.getElementById("country-layer"),
@@ -232,6 +254,7 @@ const elements = {
 
 document.addEventListener("DOMContentLoaded", () => {
     bindMapModeEvents();
+    bindPlaybackControls();
     renderEmptyState();
     void loadDashboardData();
 });
@@ -239,6 +262,30 @@ document.addEventListener("DOMContentLoaded", () => {
 function bindMapModeEvents() {
     elements.mapModeCountryButton.addEventListener("click", () => setMapMode("country"));
     elements.mapModeRegionButton.addEventListener("click", () => setMapMode("region"));
+}
+
+function bindPlaybackControls() {
+    elements.yearStepBackButton.addEventListener("click", () => stepTimeline(-1));
+    elements.yearStepForwardButton.addEventListener("click", () => stepTimeline(1));
+    elements.playbackToggleButton.addEventListener("click", () => {
+        if (dashboardState.playbackTimer) {
+            stopPlayback();
+        } else {
+            startPlayback();
+        }
+    });
+    elements.yearSelect.addEventListener("change", () => {
+        const nextIndex = dashboardState.yearKeys.indexOf(elements.yearSelect.value);
+        if (nextIndex >= 0) {
+            setCurrentYearIndex(nextIndex);
+        }
+    });
+    for (const button of elements.speedButtons) {
+        button.addEventListener("click", () => {
+            const nextSpeed = Number.parseInt(button.dataset.speed ?? "1", 10);
+            setPlaybackSpeed(Number.isFinite(nextSpeed) ? nextSpeed : 1);
+        });
+    }
 }
 
 function setMapMode(mode) {
@@ -256,6 +303,93 @@ function applyMapModeVisibility() {
     elements.countryLabelLayer.classList.toggle("map-hidden", !showCountries);
     elements.regionLayer.classList.toggle("map-hidden", showCountries);
     elements.regionLabelLayer.classList.toggle("map-hidden", showCountries);
+}
+
+function initializeTimelineControls() {
+    elements.yearSelect.innerHTML = dashboardState.yearKeys
+        .map((yearKey) => `<option value="${escapeHtml(yearKey)}">${escapeHtml(yearKey)}</option>`)
+        .join("");
+    updatePlaybackControls();
+}
+
+function getActiveYearKey() {
+    return dashboardState.yearKeys[dashboardState.currentYearIndex] ?? "";
+}
+
+function setCurrentYearIndex(nextIndex) {
+    if (!dashboardState.yearKeys.length) {
+        return;
+    }
+
+    dashboardState.currentYearIndex = clamp(nextIndex, 0, dashboardState.yearKeys.length - 1);
+    renderActiveYearState();
+
+    if (dashboardState.playbackTimer) {
+        restartPlaybackTimer();
+    }
+}
+
+function stepTimeline(step) {
+    if (!dashboardState.yearKeys.length) {
+        return;
+    }
+
+    setCurrentYearIndex(dashboardState.currentYearIndex + step);
+}
+
+function setPlaybackSpeed(nextSpeed) {
+    dashboardState.playbackSpeed = nextSpeed;
+    updatePlaybackControls();
+    if (dashboardState.playbackTimer) {
+        restartPlaybackTimer();
+    }
+}
+
+function startPlayback() {
+    if (!dashboardState.yearKeys.length || dashboardState.playbackTimer) {
+        return;
+    }
+
+    if (dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1) {
+        dashboardState.currentYearIndex = 0;
+        renderActiveYearState();
+    }
+
+    restartPlaybackTimer();
+    updatePlaybackControls();
+}
+
+function stopPlayback() {
+    if (dashboardState.playbackTimer) {
+        window.clearInterval(dashboardState.playbackTimer);
+        dashboardState.playbackTimer = null;
+    }
+    updatePlaybackControls();
+}
+
+function restartPlaybackTimer() {
+    stopPlayback();
+    const interval = Math.max(240, Math.round(BASE_PLAYBACK_INTERVAL_MS / dashboardState.playbackSpeed));
+    dashboardState.playbackTimer = window.setInterval(() => {
+        if (dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1) {
+            stopPlayback();
+            return;
+        }
+        dashboardState.currentYearIndex += 1;
+        renderActiveYearState();
+    }, interval);
+    updatePlaybackControls();
+}
+
+function updatePlaybackControls() {
+    const activeYearKey = getActiveYearKey();
+    elements.yearSelect.value = activeYearKey;
+    elements.currentYearPill.textContent = activeYearKey || "Waiting for data";
+    elements.playbackToggleButton.textContent = dashboardState.playbackTimer ? "Pause" : "Play";
+    for (const button of elements.speedButtons) {
+        const speed = Number.parseInt(button.dataset.speed ?? "1", 10);
+        button.classList.toggle("speed-button-active", speed === dashboardState.playbackSpeed);
+    }
 }
 
 async function loadDashboardData() {
@@ -276,9 +410,10 @@ async function loadDashboardData() {
         renderDashboard(exportData, geoData, geoWarning);
     } catch (error) {
         const detail = error instanceof Error ? ` (${error.message})` : "";
-        elements.loadStatus.textContent =
+        renderLoadError(
             "Could not load output/latest.json. Run py main.py and serve the repository root before opening the dashboard."
-            + detail;
+            + detail
+        );
     }
 }
 
@@ -525,33 +660,93 @@ function renderDashboard(exportData, geoData, geoWarning) {
     countryRows.sort(compareYearAndCountry);
     regionRows.sort(compareYearCountryAndRegion);
 
-    mapDataCache.countriesByCode = getLatestCountryRowsByCode(countryRows);
-    mapDataCache.regionsByKey = getLatestRegionRowsByKey(regionRows);
-    mapDataCache.latestYearByCountryCode = getLatestYearByCountryCode(countryRows);
+    dashboardState.exportData = exportData;
+    dashboardState.geoData = geoData;
+    dashboardState.geoWarning = geoWarning;
+    dashboardState.yearKeys = Object.keys(exportData.years).sort(compareYearKeys);
+    dashboardState.currentYearIndex = 0;
+    dashboardState.countryRowCount = countryRows.length;
+    dashboardState.regionRowCount = regionRows.length;
 
-    renderMetaCards(exportData, countryRows.length, regionRows.length);
-    renderCountryLayer(geoData);
-    renderRegionLayer(geoData);
-    bindMapHoverEvents();
-    renderCountryTable(countryRows);
-    renderRegionTable(regionRows);
-    applyMapModeVisibility();
-    resetMapHoverDetails();
-
-    const geoSuffix = geoWarning ? ` | Map fallback: ${geoWarning}` : "";
-    elements.loadStatus.textContent =
-        `Loaded ${EXPORT_PATH} successfully (${countryRows.length} country rows, ${regionRows.length} region rows).${geoSuffix}`;
+    initializeTimelineControls();
+    renderActiveYearState();
 }
 
-function renderMetaCards(exportData, countryRowCount, regionRowCount) {
+function renderMetaCards(exportData, countryRowCount, regionRowCount, activeYearKey, geoWarning = "") {
     elements.metaCards.innerHTML = [
+        buildMetaCard("Selected year", activeYearKey || "-"),
         buildMetaCard("Start year", exportData.meta.start_year),
         buildMetaCard("End year", exportData.meta.end_year),
         buildMetaCard("Country year values", formatInteger(countryRowCount)),
         buildMetaCard("Region year values", formatInteger(regionRowCount)),
         buildMetaCard("Year buckets", formatInteger(Object.keys(exportData.years).length)),
         buildMetaCard("Validation warnings", formatInteger(exportData.meta.warning_count ?? 0)),
+        geoWarning ? buildMetaCard("Map warning", geoWarning) : "",
     ].join("");
+}
+
+function renderActiveYearState() {
+    if (!dashboardState.exportData) {
+        return;
+    }
+
+    const activeYearKey = getActiveYearKey();
+    const { countryRows, regionRows } = buildRowsForYear(dashboardState.exportData, activeYearKey);
+
+    mapDataCache.countriesByCode = buildCountryRowMap(countryRows);
+    mapDataCache.regionsByKey = buildRegionRowMap(regionRows);
+    mapDataCache.latestYearByCountryCode = buildYearMap(countryRows);
+
+    renderMetaCards(
+        dashboardState.exportData,
+        dashboardState.countryRowCount,
+        dashboardState.regionRowCount,
+        activeYearKey,
+        dashboardState.geoWarning
+    );
+    renderCountryLayer(dashboardState.geoData);
+    renderRegionLayer(dashboardState.geoData);
+    bindMapHoverEvents();
+    renderCountryTable(countryRows);
+    renderRegionTable(regionRows);
+    updatePlaybackControls();
+    applyMapModeVisibility();
+    resetMapHoverDetails();
+}
+
+function renderLoadError(message) {
+    stopPlayback();
+    renderEmptyState();
+    elements.metaCards.innerHTML = `
+        <article class="meta-card empty-card">
+            <span class="meta-label">Load error</span>
+            <strong class="meta-value">No export data</strong>
+            <p class="meta-note">${escapeHtml(message)}</p>
+        </article>
+    `;
+}
+
+function buildRowsForYear(exportData, yearKey) {
+    const yearData = exportData?.years?.[yearKey] ?? {};
+    const countryRows = (Array.isArray(yearData.countries) ? yearData.countries : [])
+        .map((country) => ({ yearKey, ...country }))
+        .sort(compareYearAndCountry);
+    const regionRows = (Array.isArray(yearData.regions) ? yearData.regions : [])
+        .map((region) => ({ yearKey, ...region }))
+        .sort(compareYearCountryAndRegion);
+    return { countryRows, regionRows };
+}
+
+function buildCountryRowMap(countryRows) {
+    return new Map(countryRows.map((row) => [normalizeCountryCode(row.country_code), row]));
+}
+
+function buildRegionRowMap(regionRows) {
+    return new Map(regionRows.map((row) => [buildRegionKey(row.country_code, row.region_name), row]));
+}
+
+function buildYearMap(countryRows) {
+    return new Map(countryRows.map((row) => [normalizeCountryCode(row.country_code), extractStartYear(row)]));
 }
 
 function renderCountryLayer(geoData) {
@@ -659,7 +854,7 @@ function renderCountryLayer(geoData) {
             if (!row) {
                 return `
                     <article class="meta-card">
-                        <span class="meta-label">${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
+                        <span class="meta-label"><span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
                         <strong class="meta-value">No data</strong>
                         <p class="meta-note">No matching country export row.</p>
                     </article>
@@ -668,7 +863,7 @@ function renderCountryLayer(geoData) {
 
             return `
                 <article class="meta-card">
-                    <span class="meta-label">${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
+                    <span class="meta-label"><span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
                     <strong class="meta-value">${formatInteger(row.end_population)}</strong>
                     <p class="meta-note">
                         ${escapeHtml(row.yearKey)} | GDP ${formatDecimal(row.end_gdp_billion_eur)} bn EUR
@@ -944,7 +1139,7 @@ function renderCountryTable(countryRows) {
         .map((country) => `
             <tr>
                 <td>${escapeHtml(country.yearKey)}</td>
-                <td>${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})</td>
+                <td>${escapeHtml(countryFlag(country.country_code))} ${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})</td>
                 <td>${formatInteger(country.end_population)}</td>
                 <td>${formatDecimal(country.end_gdp_billion_eur)} bn EUR</td>
                 <td>${formatPercent(country.gdp_growth_rate)}</td>
@@ -979,6 +1174,7 @@ function renderRegionTable(regionRows) {
 }
 
 function renderEmptyState() {
+    stopPlayback();
     elements.countryLayer.innerHTML = "";
     elements.countryLabelLayer.innerHTML = "";
     elements.regionLayer.innerHTML = "";
@@ -994,6 +1190,15 @@ function renderEmptyState() {
     mapDataCache.regionsByKey = new Map();
     mapDataCache.latestYearByCountryCode = new Map();
     mapDataCache.visualRegionsByKey = new Map();
+    dashboardState.exportData = null;
+    dashboardState.geoData = null;
+    dashboardState.geoWarning = "";
+    dashboardState.yearKeys = [];
+    dashboardState.currentYearIndex = 0;
+    dashboardState.countryRowCount = 0;
+    dashboardState.regionRowCount = 0;
+    elements.yearSelect.innerHTML = "";
+    elements.currentYearPill.textContent = "Waiting for data";
     setMapMode("country");
     resetMapHoverDetails();
     elements.metaCards.innerHTML = `
@@ -1044,47 +1249,10 @@ function compareYearCountryAndRegion(left, right) {
     return normalizeRegionName(left.region_name).localeCompare(normalizeRegionName(right.region_name));
 }
 
-function getLatestCountryRowsByCode(countryRows) {
-    const latestByCountryCode = new Map();
-
-    for (const row of countryRows) {
-        const countryCode = normalizeCountryCode(row.country_code);
-        const existing = latestByCountryCode.get(countryCode);
-        if (!existing || extractStartYear(row) > extractStartYear(existing)) {
-            latestByCountryCode.set(countryCode, row);
-        }
-    }
-
-    return latestByCountryCode;
-}
-
-function getLatestYearByCountryCode(countryRows) {
-    const latestYears = new Map();
-
-    for (const row of countryRows) {
-        const code = normalizeCountryCode(row.country_code);
-        const year = extractStartYear(row);
-        const existing = latestYears.get(code);
-        if (existing === undefined || year > existing) {
-            latestYears.set(code, year);
-        }
-    }
-
-    return latestYears;
-}
-
-function getLatestRegionRowsByKey(regionRows) {
-    const latestByRegionKey = new Map();
-
-    for (const row of regionRows) {
-        const regionKey = buildRegionKey(row.country_code, row.region_name);
-        const existing = latestByRegionKey.get(regionKey);
-        if (!existing || extractStartYear(row) > extractStartYear(existing)) {
-            latestByRegionKey.set(regionKey, row);
-        }
-    }
-
-    return latestByRegionKey;
+function compareYearKeys(left, right) {
+    const leftYear = Number.parseInt(String(left).slice(0, 4), 10);
+    const rightYear = Number.parseInt(String(right).slice(0, 4), 10);
+    return leftYear - rightYear;
 }
 
 function buildRegionKey(countryCode, regionName) {
@@ -1225,6 +1393,10 @@ function formatDecimal(value) {
 
 function formatPercent(value) {
     return percentFormatter.format(value);
+}
+
+function countryFlag(countryCode) {
+    return COUNTRY_FLAGS[normalizeCountryCode(countryCode)] ?? "🏳️";
 }
 
 function escapeHtml(value) {

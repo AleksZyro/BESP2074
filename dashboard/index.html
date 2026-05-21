@@ -10,30 +10,47 @@
     <div class="page-shell">
         <header class="hero">
             <div>
-                <p class="eyebrow">BESP Phase 5.x</p>
-                <h1>Dashboard With Real Geodata Map</h1>
+                <p class="eyebrow">BESP Phase 5.6</p>
+                <h1>Dashboard Timeline With Real Geodata Map</h1>
                 <p class="lead">
-                    This dashboard reads the existing simulation export and overlays it on real
-                    country and region geodata for BIH, MNE, and SRB.
+                    This dashboard reads the existing simulation export, lets you step through
+                    precomputed years, and overlays them on real country and region geodata for BIH, MNE, and SRB.
                 </p>
             </div>
-            <p id="load-status" class="status-banner">Waiting for export data.</p>
         </header>
 
         <main class="dashboard-grid">
             <section class="panel">
                 <div class="section-heading">
                     <div>
-                        <p class="section-kicker">Phase 5.1 Map</p>
+                        <p class="section-kicker">Phase 5.6 Timeline</p>
                         <h2>Balkan Country Layer</h2>
                     </div>
-                    <div class="map-mode-controls" role="group" aria-label="Map layer mode">
-                        <button id="map-mode-country" class="map-mode-button map-mode-button-active" type="button">
-                            Countries
-                        </button>
-                        <button id="map-mode-region" class="map-mode-button" type="button">
-                            Regions
-                        </button>
+                    <div class="section-actions">
+                        <div class="timeline-controls" role="group" aria-label="Timeline controls">
+                            <button id="year-step-back" class="timeline-button" type="button">Prev</button>
+                            <button id="playback-toggle" class="timeline-button timeline-button-primary" type="button">Play</button>
+                            <button id="year-step-forward" class="timeline-button" type="button">Next</button>
+                            <label class="timeline-select-wrap" for="year-select">
+                                <span>Year</span>
+                                <select id="year-select" class="timeline-select"></select>
+                            </label>
+                            <div class="speed-controls" role="group" aria-label="Playback speed">
+                                <button class="speed-button speed-button-active" data-speed="1" type="button">x1</button>
+                                <button class="speed-button" data-speed="2" type="button">x2</button>
+                                <button class="speed-button" data-speed="5" type="button">x5</button>
+                                <button class="speed-button" data-speed="10" type="button">x10</button>
+                            </div>
+                            <span id="current-year-pill" class="year-pill">Waiting for data</span>
+                        </div>
+                        <div class="map-mode-controls" role="group" aria-label="Map layer mode">
+                            <button id="map-mode-country" class="map-mode-button map-mode-button-active" type="button">
+                                Countries
+                            </button>
+                            <button id="map-mode-region" class="map-mode-button" type="button">
+                                Regions
+                            </button>
+                        </div>
                     </div>
                 </div>
 
