@@ -1,8 +1,9 @@
+import argparse
 from pathlib import Path
 
 from besp.exporter import build_simulation_export, save_simulation_export_json
-from besp.loader import load_world
-from besp.models import CountryYearResult, RegionYearResult
+from besp.loader import load_scenario_map, load_world
+from besp.models import CountryYearResult, RegionYearResult, SimulationScenario
 from besp.simulation import aggregate_country_results, simulate_period
 from besp.validation import validate_simulation_results
 
@@ -67,14 +68,74 @@ def print_validation_warnings(warnings: list[str]) -> None:
         print(f"- {warning}")
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run the BESP yearly simulation and write output/latest.json."
+    )
+    parser.add_argument(
+        "--scenario",
+        default="baseline",
+        help="Scenario code from data/scenarios.json (default: baseline).",
+    )
+    parser.add_argument(
+        "--seed",
+        default="baseline-2020",
+        help="Deterministic variation seed used for bounded yearly variation.",
+    )
+    parser.add_argument(
+        "--list-scenarios",
+        action="store_true",
+        help="List available scenario codes and exit.",
+    )
+    return parser.parse_args()
+
+
+def print_available_scenarios(scenarios: dict[str, SimulationScenario]) -> None:
+    print("Available BESP scenarios")
+    print("=" * 72)
+    for scenario in scenarios.values():
+        print(f"{scenario.code:<12} | {scenario.name}")
+        print(f"  {scenario.description}")
+
+
+def resolve_scenario(
+    scenarios: dict[str, SimulationScenario],
+    scenario_code: str,
+) -> SimulationScenario:
+    scenario = scenarios.get(scenario_code)
+    if scenario is not None:
+        return scenario
+
+    available = ", ".join(sorted(scenarios))
+    raise SystemExit(
+        f"Unknown scenario '{scenario_code}'. Available scenarios: {available}"
+    )
+
+
 def main() -> None:
+    args = parse_args()
     start_year = 2020
     end_year = 2030
 
+    scenarios = load_scenario_map("data")
+    if args.list_scenarios:
+        print_available_scenarios(scenarios)
+        return
+
+    scenario = resolve_scenario(scenarios, args.scenario)
     countries = load_world("data")
-    region_results = simulate_period(countries, start_year, end_year)
+    region_results = simulate_period(
+        countries,
+        start_year,
+        end_year,
+        scenario=scenario,
+        variation_seed=args.seed,
+    )
     country_results = aggregate_country_results(region_results, countries)
     warnings = validate_simulation_results(country_results, region_results)
+
+    print(f"Scenario: {scenario.code} ({scenario.name})")
+    print(f"Variation seed: {args.seed}")
 
     print_country_year_results(country_results)
     print_region_year_results(start_year, end_year, region_results)
@@ -86,6 +147,8 @@ def main() -> None:
         country_results=country_results,
         region_results=region_results,
         warning_count=len(warnings),
+        scenario=scenario,
+        variation_seed=args.seed,
     )
     output_dir = Path("output")
     output_path = output_dir / f"simulation_{start_year}_{end_year}.json"

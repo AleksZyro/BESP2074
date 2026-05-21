@@ -1,7 +1,7 @@
 import hashlib
 import math
 
-from besp.models import Country, CountryYearResult, Region, RegionYearResult
+from besp.models import Country, CountryYearResult, Region, RegionYearResult, SimulationScenario
 
 # -----------------------------------------------------------------------------
 # Attractiveness model tuning
@@ -50,9 +50,10 @@ def calculate_controlled_variation_signal(
     country_code: str,
     region_name: str,
     channel: str,
+    variation_seed: str,
 ) -> float:
     year_index = start_year - 2020
-    seed = f"{country_code}|{region_name}|{channel}".encode("utf-8")
+    seed = f"{variation_seed}|{country_code}|{region_name}|{channel}".encode("utf-8")
     digest = hashlib.sha1(seed).digest()
     phase = (int.from_bytes(digest[:4], "big") / 0xFFFFFFFF) * math.tau
 
@@ -71,7 +72,10 @@ def calculate_housing_penalty(region: Region) -> float:
     return min((overload - 1.0) * 0.25, 0.15)
 
 
-def calculate_regional_attractiveness(region: Region) -> float:
+def calculate_regional_attractiveness(
+    region: Region,
+    scenario: SimulationScenario | None = None,
+) -> float:
     positive_score = (
         region.economic_attractiveness * ECONOMIC_WEIGHT
         + region.infrastructure * INFRASTRUCTURE_WEIGHT
@@ -79,17 +83,21 @@ def calculate_regional_attractiveness(region: Region) -> float:
         + region.metro_pull * METRO_PULL_WEIGHT
     )
 
-    return positive_score - calculate_housing_penalty(region)
+    scenario_bias = scenario.attractiveness_bias if scenario else 0.0
+    return clamp(positive_score - calculate_housing_penalty(region) + scenario_bias, 0.0, 1.0)
 
 
-def calculate_country_average_attractiveness(country: Country) -> float:
+def calculate_country_average_attractiveness(
+    country: Country,
+    scenario: SimulationScenario | None = None,
+) -> float:
     total_population = sum(region.population for region in country.regions)
 
     if total_population <= 0:
         return 0.0
 
     weighted_sum = sum(
-        calculate_regional_attractiveness(region) * region.population
+        calculate_regional_attractiveness(region, scenario) * region.population
         for region in country.regions
     )
 
@@ -99,8 +107,9 @@ def calculate_country_average_attractiveness(country: Country) -> float:
 def calculate_internal_migration(
     region: Region,
     country_average_attractiveness: float,
+    scenario: SimulationScenario | None = None,
 ) -> int:
-    regional_attractiveness = calculate_regional_attractiveness(region)
+    regional_attractiveness = calculate_regional_attractiveness(region, scenario)
     attractiveness_gap = regional_attractiveness - country_average_attractiveness
 
     migration_rate = clamp(
@@ -112,20 +121,31 @@ def calculate_internal_migration(
     return round(region.population * migration_rate)
 
 
-def calculate_external_migration_rate(country: Country, region: Region) -> float:
-    attractiveness = calculate_regional_attractiveness(region)
+def calculate_external_migration_rate(
+    country: Country,
+    region: Region,
+    scenario: SimulationScenario | None = None,
+) -> float:
+    attractiveness = calculate_regional_attractiveness(region, scenario)
 
     retention_factor = clamp(1.10 - attractiveness, 0.35, 1.15)
 
-    return (
+    migration_rate = (
         country.base_net_migration_rate
         * region.net_migration_modifier
         * retention_factor
     )
+    if scenario:
+        migration_rate += scenario.net_migration_rate_shift
+
+    return clamp(migration_rate, -0.03, 0.01)
 
 
-def calculate_regional_gdp_growth_rate(region: Region) -> float:
-    attractiveness = calculate_regional_attractiveness(region)
+def calculate_regional_gdp_growth_rate(
+    region: Region,
+    scenario: SimulationScenario | None = None,
+) -> float:
+    attractiveness = calculate_regional_attractiveness(region, scenario)
     overload_penalty = max(region.housing_overload - 1.0, 0.0) * HOUSING_GDP_PENALTY
     unemployment_drag = region.unemployment_rate * UNEMPLOYMENT_GDP_DRAG
 
@@ -134,6 +154,7 @@ def calculate_regional_gdp_growth_rate(region: Region) -> float:
         + (attractiveness - 0.45) * ATTRACTIVENESS_GDP_MULTIPLIER
         - overload_penalty
         - unemployment_drag
+        + (scenario.gdp_growth_bias if scenario else 0.0)
     )
 
     return clamp(growth_rate, MIN_GDP_GROWTH, MAX_GDP_GROWTH)
@@ -143,6 +164,7 @@ def calculate_updated_unemployment_rate(
     current_unemployment_rate: float,
     gdp_growth_rate: float,
     regional_attractiveness: float,
+    scenario: SimulationScenario | None = None,
 ) -> float:
     unemployment_change = -gdp_growth_rate * 0.60
 
@@ -152,10 +174,18 @@ def calculate_updated_unemployment_rate(
         unemployment_change += 0.002
 
     updated_rate = current_unemployment_rate + unemployment_change
+    if scenario:
+        updated_rate += scenario.unemployment_bias
+
     return clamp(updated_rate, MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE)
 
 
-def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearResult]:
+def simulate_year(
+    countries: list[Country],
+    start_year: int,
+    scenario: SimulationScenario | None = None,
+    variation_seed: str = "baseline-2020",
+) -> list[RegionYearResult]:
     end_year = start_year + 1
     results: list[RegionYearResult] = []
 
@@ -163,7 +193,7 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
         if not country.regions:
             continue
 
-        average_attractiveness = calculate_country_average_attractiveness(country)
+        average_attractiveness = calculate_country_average_attractiveness(country, scenario)
 
         raw_internal_migration: dict[str, int] = {}
 
@@ -171,6 +201,7 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
             raw_internal_migration[region.name] = calculate_internal_migration(
                 region,
                 average_attractiveness,
+                scenario,
             )
 
         migration_balance = sum(raw_internal_migration.values())
@@ -191,43 +222,50 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
                 country.code,
                 region.name,
                 "birth",
+                variation_seed,
             )
             death_variation = calculate_controlled_variation_signal(
                 start_year,
                 country.code,
                 region.name,
                 "death",
+                variation_seed,
             )
             migration_variation = calculate_controlled_variation_signal(
                 start_year,
                 country.code,
                 region.name,
                 "migration",
+                variation_seed,
             )
             growth_variation = calculate_controlled_variation_signal(
                 start_year,
                 country.code,
                 region.name,
                 "growth",
+                variation_seed,
             )
             unemployment_variation = calculate_controlled_variation_signal(
                 start_year,
                 country.code,
                 region.name,
                 "unemployment",
+                variation_seed,
             )
 
             birth_rate = (
                 country.base_birth_rate
                 * region.birth_rate_modifier
+                * (scenario.birth_rate_multiplier if scenario else 1.0)
                 * (1.0 + birth_variation * CONTROLLED_BIRTH_VARIATION)
             )
             death_rate = (
                 country.base_death_rate
                 * region.death_rate_modifier
+                * (scenario.death_rate_multiplier if scenario else 1.0)
                 * (1.0 + death_variation * CONTROLLED_DEATH_VARIATION)
             )
-            external_migration_rate = calculate_external_migration_rate(country, region) * (
+            external_migration_rate = calculate_external_migration_rate(country, region, scenario) * (
                 1.0 + migration_variation * CONTROLLED_MIGRATION_VARIATION
             )
 
@@ -245,9 +283,9 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
             )
             region.population = max(end_population, 0)
 
-            regional_attractiveness = calculate_regional_attractiveness(region)
+            regional_attractiveness = calculate_regional_attractiveness(region, scenario)
             gdp_growth_rate = clamp(
-                calculate_regional_gdp_growth_rate(region)
+                calculate_regional_gdp_growth_rate(region, scenario)
                 + growth_variation * CONTROLLED_GDP_GROWTH_VARIATION,
                 MIN_GDP_GROWTH,
                 MAX_GDP_GROWTH,
@@ -260,6 +298,7 @@ def simulate_year(countries: list[Country], start_year: int) -> list[RegionYearR
                 region.unemployment_rate,
                 gdp_growth_rate,
                 regional_attractiveness,
+                scenario,
             )
             region.unemployment_rate = clamp(
                 unemployment_rate + unemployment_variation * CONTROLLED_UNEMPLOYMENT_VARIATION,
@@ -305,11 +344,13 @@ def simulate_period(
     countries: list[Country],
     start_year: int,
     end_year: int,
+    scenario: SimulationScenario | None = None,
+    variation_seed: str = "baseline-2020",
 ) -> list[RegionYearResult]:
     results: list[RegionYearResult] = []
 
     for year in range(start_year, end_year):
-        yearly_results = simulate_year(countries, year)
+        yearly_results = simulate_year(countries, year, scenario, variation_seed)
         results.extend(yearly_results)
 
     return results

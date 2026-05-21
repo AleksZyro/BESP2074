@@ -57,6 +57,20 @@ class Country:
 
 
 @dataclass
+class SimulationScenario:
+    code: str
+    name: str
+    description: str
+
+    birth_rate_multiplier: float = 1.0
+    death_rate_multiplier: float = 1.0
+    net_migration_rate_shift: float = 0.0
+    gdp_growth_bias: float = 0.0
+    unemployment_bias: float = 0.0
+    attractiveness_bias: float = 0.0
+
+
+@dataclass
 class RegionYearResult:
     start_year: int
     end_year: int

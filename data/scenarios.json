@@ -1,0 +1,35 @@
+[
+  {
+    "code": "baseline",
+    "name": "Baseline continuity",
+    "description": "Reference path with bounded deterministic variation and no extra reform or stagnation bias.",
+    "birth_rate_multiplier": 1.0,
+    "death_rate_multiplier": 1.0,
+    "net_migration_rate_shift": 0.0,
+    "gdp_growth_bias": 0.0,
+    "unemployment_bias": 0.0,
+    "attractiveness_bias": 0.0
+  },
+  {
+    "code": "reform",
+    "name": "Reform and convergence",
+    "description": "Moderate institutional improvement, somewhat stronger growth, slightly better retention, and gentler unemployment decline.",
+    "birth_rate_multiplier": 1.003,
+    "death_rate_multiplier": 0.996,
+    "net_migration_rate_shift": 0.00045,
+    "gdp_growth_bias": 0.0035,
+    "unemployment_bias": -0.0016,
+    "attractiveness_bias": 0.018
+  },
+  {
+    "code": "stagnation",
+    "name": "Stagnation and drift",
+    "description": "Weaker reform momentum, softer growth, slightly worse migration balance, and modest structural drag.",
+    "birth_rate_multiplier": 0.997,
+    "death_rate_multiplier": 1.004,
+    "net_migration_rate_shift": -0.00055,
+    "gdp_growth_bias": -0.003,
+    "unemployment_bias": 0.0018,
+    "attractiveness_bias": -0.015
+  }
+]

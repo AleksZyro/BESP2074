@@ -2,7 +2,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from besp.models import CountryYearResult, RegionYearResult
+from besp.models import CountryYearResult, RegionYearResult, SimulationScenario
 
 
 def build_simulation_export(
@@ -11,6 +11,8 @@ def build_simulation_export(
     country_results: list[CountryYearResult],
     region_results: list[RegionYearResult],
     warning_count: int = 0,
+    scenario: SimulationScenario | None = None,
+    variation_seed: str = "baseline-2020",
 ) -> dict:
     years: dict[str, dict[str, list[dict]]] = {}
 
@@ -29,6 +31,12 @@ def build_simulation_export(
             "start_year": start_year,
             "end_year": end_year,
             "warning_count": warning_count,
+            "scenario": {
+                "code": scenario.code if scenario else "baseline",
+                "name": scenario.name if scenario else "Baseline continuity",
+                "description": scenario.description if scenario else "Reference path.",
+                "variation_seed": variation_seed,
+            },
         },
         "years": years,
     }

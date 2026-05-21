@@ -679,10 +679,13 @@ function renderDashboard(exportData, geoData, geoWarning) {
 }
 
 function renderMetaCards(exportData, countryRowCount, regionRowCount, activeYearKey, geoWarning = "") {
+    const scenarioMeta = exportData.meta?.scenario ?? {};
     elements.metaCards.innerHTML = [
         buildMetaCard("Selected year", activeYearKey || "-"),
         buildMetaCard("Start year", exportData.meta.start_year),
         buildMetaCard("End year", exportData.meta.end_year),
+        scenarioMeta.name ? buildMetaCard("Scenario", scenarioMeta.name) : "",
+        scenarioMeta.variation_seed ? buildMetaCard("Variation seed", scenarioMeta.variation_seed) : "",
         buildMetaCard("Country year values", formatInteger(countryRowCount)),
         buildMetaCard("Region year values", formatInteger(regionRowCount)),
         buildMetaCard("Year buckets", formatInteger(Object.keys(exportData.years).length)),

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from besp.models import Country, Region
+from besp.models import Country, Region, SimulationScenario
 
 
 def load_json(path: str | Path) -> list[dict]:
@@ -41,6 +41,11 @@ def load_countries(path: str | Path, regions: list[Region]) -> list[Country]:
     return countries
 
 
+def load_scenarios(path: str | Path) -> list[SimulationScenario]:
+    scenario_data = load_json(path)
+    return [SimulationScenario(**entry) for entry in scenario_data]
+
+
 def load_world(data_dir: str | Path = "data") -> list[Country]:
     data_path = Path(data_dir)
 
@@ -48,3 +53,9 @@ def load_world(data_dir: str | Path = "data") -> list[Country]:
     countries = load_countries(data_path / "countries.json", regions)
 
     return countries
+
+
+def load_scenario_map(data_dir: str | Path = "data") -> dict[str, SimulationScenario]:
+    data_path = Path(data_dir)
+    scenarios = load_scenarios(data_path / "scenarios.json")
+    return {scenario.code: scenario for scenario in scenarios}

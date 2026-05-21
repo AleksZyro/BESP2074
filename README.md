@@ -17,6 +17,7 @@ Project status:
 - Phase 4 complete: dashboard v1 without map-first scope creep
 - Phase 5 complete in baseline form: map v1
 - Phase 5.6 in progress: timeline and controlled variation bridge phase
+- Phase 5.7 in progress: scenario-driven variation inputs
 
 Current scope:
 - Countries and regions as dataclasses
@@ -32,6 +33,7 @@ Current simulation behavior:
 - Population-weighted internal migration between regions of the same country
 - Regional attractiveness based on economy, infrastructure, urbanization, metro pull and housing pressure
 - Bounded deterministic yearly variation for births, deaths, migration, GDP growth, and unemployment
+- Scenario-driven variation inputs so runs can follow different plausible paths without degenerating into literal randomness
 - Multi-year terminal output with area, density, natural change and migration values
 
 Modeling principles:
@@ -78,6 +80,13 @@ Phase 5.6 current implementation:
 - Dashboard no longer shows the old top-right `Loaded ...` status banner
 - Variation is deterministic and bounded, not literal random noise
 
+Phase 5.7 - Scenario-driven variation inputs:
+- The simulation can now be run with explicit scenario codes from `data/scenarios.json`
+- The simulation can now be run with an explicit deterministic variation seed
+- Different seeds and scenarios can produce different plausible end states without introducing chaotic roulette behavior
+- Export metadata now records scenario and variation seed so dashboard output remains explainable
+- Frontend still reads exported JSON only; no live recalculation has been added
+
 Phase 5.6 does not include:
 - No shock system
 - No inflation system v1
@@ -93,9 +102,16 @@ Dashboard data flow:
 4. `dashboard/app.js` loads GeoJSON from `dashboard/data/`.
 5. Dashboard renders metadata, tables, and map hover information.
 
+Scenario examples:
+- `py main.py --scenario baseline --seed baseline-2020`
+- `py main.py --scenario reform --seed reform-a`
+- `py main.py --scenario stagnation --seed stress-1`
+- `py main.py --list-scenarios`
+
 Current data-selection behavior:
 - `main.py` currently simulates `2020 -> 2030`
 - `output/latest.json` contains all simulated year buckets in that range
+- `output/latest.json` now also records scenario and variation seed in export metadata
 - `dashboard/app.js` now starts from the earliest available year bucket and can step/play through later buckets
 - Map cards, hover details, and summary tables follow the currently selected export year
 

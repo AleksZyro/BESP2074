@@ -43,6 +43,7 @@ Examples:
 - `5.x debug: build serbia country view from region geometry`
 - `5.6 controls: add year selection and export playback`
 - `5.7 core: add bounded seeded yearly variation`
+- `5.7 docs: document scenario-driven variation inputs`
 
 ### 5. Allowed commit types
 - `core`
@@ -157,6 +158,32 @@ Current reason for this phase:
 - Controlled variation is now introduced as a bounded deterministic layer instead of literal randomness
 - A fuller shock / policy layer still remains outside this phase
 
+### Phase 5.7 - Scenario-Driven Variation Inputs
+Status: active
+
+Purpose:
+- Stop treating one deterministic baseline path as the only meaningful run result
+- Keep the model realistic and bounded while allowing different plausible paths
+- Make variation depend on explicit simulation inputs rather than roulette-like randomness
+
+Contains:
+- Scenario definitions in project data
+- Deterministic variation seed input
+- Export metadata for chosen scenario and seed
+- Scenario-aware simulation biases for growth, migration, unemployment, and demographic drift
+
+Explicitly not in scope:
+- No wild random generator
+- No shock system
+- No inflation system v1
+- No politics / state block
+- No live browser-side simulation
+
+Current implementation note:
+- Identical scenario + identical seed still produce identical results on purpose
+- Different scenarios and/or seeds can now create different but bounded and reproducible outcomes
+- This phase is the bridge between a single fixed path and later explicit shock / policy systems
+
 Phase numbering note:
 - The earlier idea of a separate standalone "controls phase" is now absorbed into Phase 5.6
 - This keeps timeline playback and controlled variation together instead of splitting one coherent block across multiple phases
@@ -187,8 +214,9 @@ Possible future systems:
 
 1. Phase 5 documentation and map baseline completed
 2. Phase 5.6 timeline and controlled variation
-3. Phase 7 shock system
-4. Phase 8 politics / state
+3. Phase 5.7 scenario-driven variation inputs
+4. Phase 7 shock system
+5. Phase 8 politics / state
 
 ## Current Actual State
 
@@ -199,3 +227,4 @@ Possible future systems:
 - Time progression is now controllable in the dashboard using precomputed export years
 - The frontend does not re-simulate anything live
 - Controlled yearly variation now exists in the Python core as a bounded deterministic layer
+- Scenario and seed inputs now allow multiple plausible deterministic paths without unbounded randomness
