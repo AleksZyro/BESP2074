@@ -213,7 +213,7 @@ Current implementation note:
 - This keeps the architecture suitable for later public presentation and hosting
 
 ### Phase 5.8.2 - Local Run Service & Generate Run
-Status: active
+Status: complete
 
 Purpose:
 - Correct the limited 5.8 reload-only solution without jumping to Phase 6
@@ -240,12 +240,37 @@ Current implementation note:
 - Frontend JavaScript does not execute shell commands directly
 - `Reload Export` remains available, but `Generate Run` now covers the local fresh-run workflow cleanly
 
+### Phase 7.1 - Shock System v1 (bounded core)
+Status: active
+
+Purpose:
+- Introduce plausible first shocks without event-spam design
+- Keep shocks bounded, explainable, and seed-consistent
+- Export shock metadata so each run remains auditable
+
+Contains:
+- Shock definitions in `data/shocks.json`
+- Bounded country-year shock draw layer in the simulation core
+- Exported `shock_events` plus `meta.shocks` summary
+- Optional per-run shock toggle (`--disable-shocks`, run-service payload)
+
+Explicitly not in scope:
+- No fantasy event scripting
+- No politics/state coupling yet
+- No inflation system v1 yet
+- No map redesign work
+
+Current implementation note:
+- Shocks are annual and reproducible under the same seed
+- Effects are capped to avoid unrealistic blowups
+- Initial shock families: economic and climate
+
 Phase numbering note:
 - The earlier idea of a separate standalone "controls phase" is now absorbed into Phase 5.6
 - This keeps timeline playback and controlled variation together instead of splitting one coherent block across multiple phases
 
 ### Phase 7 - Shock System v1
-Status: planned
+Status: in progress (started as 7.1 bounded core)
 
 Likely first shocks:
 - Recession
@@ -273,8 +298,9 @@ Possible future systems:
 3. Phase 5.7 scenario-driven variation inputs
 4. Phase 5.8 export reload and dashboard clarity
 5. Phase 5.8.2 local run service and generate-run flow
-6. Phase 7 shock system
-7. Phase 8 politics / state
+6. Phase 7.1 bounded shock core
+7. Phase 7.x shock expansion and calibration
+8. Phase 8 politics / state
 
 ## Current Actual State
 
@@ -289,3 +315,4 @@ Possible future systems:
 - Controlled yearly variation now exists in the Python core as a bounded deterministic layer
 - Scenario and seed inputs now allow multiple plausible paths without unbounded randomness
 - If the same seed is reused, the same path can still be reproduced on purpose
+- Shock events are now generated in a bounded way and exported for run transparency

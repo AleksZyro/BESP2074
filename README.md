@@ -18,8 +18,9 @@ Project status:
 - Phase 5 complete in baseline form: map v1
 - Phase 5.6 in progress: timeline and controlled variation bridge phase
 - Phase 5.7 in progress: scenario-driven variation inputs
-- Phase 5.8 in progress: export reload and dashboard clarity
-- Phase 5.8.2 in progress: local run service and generate-run dashboard flow
+- Phase 5.8 implemented: export reload and dashboard clarity
+- Phase 5.8.2 complete: local run service and generate-run dashboard flow
+- Phase 7.1 active: bounded shock system v1 (economic + climate)
 
 Current scope:
 - Countries and regions as dataclasses
@@ -36,6 +37,7 @@ Current simulation behavior:
 - Regional attractiveness based on economy, infrastructure, urbanization, metro pull and housing pressure
 - Bounded yearly variation for births, deaths, migration, GDP growth, and unemployment
 - Scenario-driven variation inputs so runs can follow different plausible paths without degenerating into literal randomness
+- Bounded yearly shocks (Phase 7.1) with realistic, capped effects
 - Multi-year terminal output with area, density, natural change and migration values
 
 Modeling principles:
@@ -57,8 +59,8 @@ Dashboard 5.x (map v1):
 - Keeps hover details export-driven with country fallback where region mapping is not available
 
 Current dashboard limitations:
-- No live simulation runs in the browser; the dashboard only reads exported JSON data
-- No backend/API state sync; controls only play back precomputed export years
+- No live simulation runs in the browser; the dashboard reads exported JSON data
+- No remote/public backend yet; run generation currently uses a local helper service
 - Controlled variation is still lightweight and not yet a full shock or policy layer
 - `Reload Export` reloads the latest JSON only; it does not start Python from the browser
 - `Generate Run` uses a local run service to start a fresh simulation without turning browser JavaScript into a shell launcher
@@ -104,6 +106,12 @@ Phase 5.8.2 - Local Run Service:
 - `Play` still only replays the years of the currently loaded export
 - The dashboard talks to the local run service instead of directly executing shell/Python from frontend code
 
+Phase 7.1 - Shock System v1 (bounded):
+- Adds plausible annual economic and climate shocks (e.g., recession, energy price shock, tourism slump, flood, heatwave/drought)
+- Shock draws are seed-consistent and bounded (no runaway absurd values)
+- Shock effects are exported as `shock_events` plus shock metadata in `meta.shocks`
+- Shocks can be disabled per run via CLI (`--disable-shocks`) or via the local run service payload
+
 Phase 5.6 / 5.7 do not include:
 - No shock system
 - No inflation system v1
@@ -125,6 +133,7 @@ Scenario examples:
 - `py main.py --scenario baseline --seed baseline-2020`
 - `py main.py --scenario reform --seed reform-a`
 - `py main.py --scenario stagnation --seed stress-1`
+- `py main.py --scenario baseline --disable-shocks`
 - `py main.py --list-scenarios`
 
 Current data-selection behavior:
@@ -149,6 +158,7 @@ Quick start:
 3. Open `http://localhost:8011/dashboard/index.html`.
 4. Use `Generate Run` for a new local simulation or `Reload Export` to re-read the newest JSON.
 5. Use `Play` only to replay the loaded years.
+6. Optional service health check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011`
 
 Documentation:
 - See `PROJECT_PHASES.md` for the cleaned-up roadmap, workflow rules, and the new Phase 5.6 bridge phase.

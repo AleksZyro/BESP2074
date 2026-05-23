@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from besp.models import Country, Region, SimulationScenario
+from besp.models import Country, Region, ShockDefinition, SimulationScenario
 
 
 def load_json(path: str | Path) -> list[dict]:
@@ -46,6 +46,11 @@ def load_scenarios(path: str | Path) -> list[SimulationScenario]:
     return [SimulationScenario(**entry) for entry in scenario_data]
 
 
+def load_shocks(path: str | Path) -> list[ShockDefinition]:
+    shock_data = load_json(path)
+    return [ShockDefinition(**entry) for entry in shock_data]
+
+
 def load_world(data_dir: str | Path = "data") -> list[Country]:
     data_path = Path(data_dir)
 
@@ -59,3 +64,9 @@ def load_scenario_map(data_dir: str | Path = "data") -> dict[str, SimulationScen
     data_path = Path(data_dir)
     scenarios = load_scenarios(data_path / "scenarios.json")
     return {scenario.code: scenario for scenario in scenarios}
+
+
+def load_shock_map(data_dir: str | Path = "data") -> dict[str, ShockDefinition]:
+    data_path = Path(data_dir)
+    shocks = load_shocks(data_path / "shocks.json")
+    return {shock.code: shock for shock in shocks}

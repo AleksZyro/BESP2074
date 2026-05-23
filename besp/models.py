@@ -71,6 +71,39 @@ class SimulationScenario:
 
 
 @dataclass
+class ShockDefinition:
+    code: str
+    name: str
+    description: str
+    category: str
+    annual_probability: float
+
+    gdp_growth_bias: float = 0.0
+    unemployment_bias: float = 0.0
+    net_migration_rate_shift: float = 0.0
+    birth_rate_multiplier: float = 1.0
+    death_rate_multiplier: float = 1.0
+    attractiveness_bias: float = 0.0
+
+    country_weight_overrides: dict[str, float] = field(default_factory=dict)
+
+
+@dataclass
+class ShockEvent:
+    start_year: int
+    end_year: int
+    country_code: str
+    country_name: str
+    shock_code: str
+    shock_name: str
+    category: str
+    probability_applied: float
+    gdp_growth_bias: float
+    unemployment_bias: float
+    net_migration_rate_shift: float
+
+
+@dataclass
 class RegionYearResult:
     start_year: int
     end_year: int

@@ -1,6 +1,14 @@
 import random
 
-from besp.models import Country, CountryYearResult, Region, RegionYearResult, SimulationScenario
+from besp.models import (
+    Country,
+    CountryYearResult,
+    Region,
+    RegionYearResult,
+    ShockDefinition,
+    ShockEvent,
+    SimulationScenario,
+)
 
 # -----------------------------------------------------------------------------
 # Attractiveness model tuning
@@ -39,6 +47,116 @@ CONTROLLED_MIGRATION_VARIATION = 0.10
 CONTROLLED_GDP_GROWTH_VARIATION = 0.004
 CONTROLLED_UNEMPLOYMENT_VARIATION = 0.0012
 
+# -----------------------------------------------------------------------------
+# Shock system v1 (bounded annual effects)
+# -----------------------------------------------------------------------------
+MAX_SHOCK_GDP_BIAS = 0.02
+MIN_SHOCK_GDP_BIAS = -0.03
+MAX_SHOCK_UNEMPLOYMENT_BIAS = 0.012
+MIN_SHOCK_UNEMPLOYMENT_BIAS = -0.01
+MAX_SHOCK_NET_MIGRATION_SHIFT = 0.003
+MIN_SHOCK_NET_MIGRATION_SHIFT = -0.004
+MAX_SHOCK_ATTRACTIVENESS_BIAS = 0.04
+MIN_SHOCK_ATTRACTIVENESS_BIAS = -0.06
+MAX_SHOCK_BIRTH_MULTIPLIER = 1.06
+MIN_SHOCK_BIRTH_MULTIPLIER = 0.94
+MAX_SHOCK_DEATH_MULTIPLIER = 1.08
+MIN_SHOCK_DEATH_MULTIPLIER = 0.94
+
+
+def _empty_shock_effect() -> dict[str, float]:
+    return {
+        "birth_multiplier": 1.0,
+        "death_multiplier": 1.0,
+        "net_migration_shift": 0.0,
+        "gdp_growth_bias": 0.0,
+        "unemployment_bias": 0.0,
+        "attractiveness_bias": 0.0,
+    }
+
+
+def build_country_shock_effects(
+    countries: list[Country],
+    shock_definitions: list[ShockDefinition] | None,
+    start_year: int,
+    variation_seed: str,
+) -> tuple[dict[str, dict[str, float]], list[ShockEvent]]:
+    effects = {country.code: _empty_shock_effect() for country in countries}
+    events: list[ShockEvent] = []
+
+    if not shock_definitions:
+        return effects, events
+
+    for country in countries:
+        for shock in shock_definitions:
+            base_probability = clamp(shock.annual_probability, 0.0, 1.0)
+            country_weight = shock.country_weight_overrides.get(country.code, 1.0)
+            probability = clamp(base_probability * country_weight, 0.0, 0.75)
+
+            draw_rng = random.Random(
+                f"{variation_seed}|shock-draw|{start_year}|{country.code}|{shock.code}"
+            )
+            if draw_rng.random() > probability:
+                continue
+
+            effect = effects[country.code]
+            effect["birth_multiplier"] *= shock.birth_rate_multiplier
+            effect["death_multiplier"] *= shock.death_rate_multiplier
+            effect["net_migration_shift"] += shock.net_migration_rate_shift
+            effect["gdp_growth_bias"] += shock.gdp_growth_bias
+            effect["unemployment_bias"] += shock.unemployment_bias
+            effect["attractiveness_bias"] += shock.attractiveness_bias
+
+            events.append(
+                ShockEvent(
+                    start_year=start_year,
+                    end_year=start_year + 1,
+                    country_code=country.code,
+                    country_name=country.name,
+                    shock_code=shock.code,
+                    shock_name=shock.name,
+                    category=shock.category,
+                    probability_applied=probability,
+                    gdp_growth_bias=shock.gdp_growth_bias,
+                    unemployment_bias=shock.unemployment_bias,
+                    net_migration_rate_shift=shock.net_migration_rate_shift,
+                )
+            )
+
+    for country_code, effect in effects.items():
+        effect["birth_multiplier"] = clamp(
+            effect["birth_multiplier"],
+            MIN_SHOCK_BIRTH_MULTIPLIER,
+            MAX_SHOCK_BIRTH_MULTIPLIER,
+        )
+        effect["death_multiplier"] = clamp(
+            effect["death_multiplier"],
+            MIN_SHOCK_DEATH_MULTIPLIER,
+            MAX_SHOCK_DEATH_MULTIPLIER,
+        )
+        effect["net_migration_shift"] = clamp(
+            effect["net_migration_shift"],
+            MIN_SHOCK_NET_MIGRATION_SHIFT,
+            MAX_SHOCK_NET_MIGRATION_SHIFT,
+        )
+        effect["gdp_growth_bias"] = clamp(
+            effect["gdp_growth_bias"],
+            MIN_SHOCK_GDP_BIAS,
+            MAX_SHOCK_GDP_BIAS,
+        )
+        effect["unemployment_bias"] = clamp(
+            effect["unemployment_bias"],
+            MIN_SHOCK_UNEMPLOYMENT_BIAS,
+            MAX_SHOCK_UNEMPLOYMENT_BIAS,
+        )
+        effect["attractiveness_bias"] = clamp(
+            effect["attractiveness_bias"],
+            MIN_SHOCK_ATTRACTIVENESS_BIAS,
+            MAX_SHOCK_ATTRACTIVENESS_BIAS,
+        )
+
+    return effects, events
+
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(value, maximum))
@@ -76,6 +194,7 @@ def calculate_housing_penalty(region: Region) -> float:
 def calculate_regional_attractiveness(
     region: Region,
     scenario: SimulationScenario | None = None,
+    shock_attractiveness_bias: float = 0.0,
 ) -> float:
     positive_score = (
         region.economic_attractiveness * ECONOMIC_WEIGHT
@@ -85,7 +204,11 @@ def calculate_regional_attractiveness(
     )
 
     scenario_bias = scenario.attractiveness_bias if scenario else 0.0
-    return clamp(positive_score - calculate_housing_penalty(region) + scenario_bias, 0.0, 1.0)
+    return clamp(
+        positive_score - calculate_housing_penalty(region) + scenario_bias + shock_attractiveness_bias,
+        0.0,
+        1.0,
+    )
 
 
 def calculate_country_average_attractiveness(
@@ -186,13 +309,22 @@ def simulate_year(
     start_year: int,
     scenario: SimulationScenario | None = None,
     variation_seed: str = "baseline-2020",
-) -> list[RegionYearResult]:
+    shock_definitions: list[ShockDefinition] | None = None,
+) -> tuple[list[RegionYearResult], list[ShockEvent]]:
     end_year = start_year + 1
     results: list[RegionYearResult] = []
+    shock_effects_by_country, shock_events = build_country_shock_effects(
+        countries,
+        shock_definitions,
+        start_year,
+        variation_seed,
+    )
 
     for country in countries:
         if not country.regions:
             continue
+
+        country_shock_effect = shock_effects_by_country.get(country.code, _empty_shock_effect())
 
         average_attractiveness = calculate_country_average_attractiveness(country, scenario)
 
@@ -259,16 +391,19 @@ def simulate_year(
                 * region.birth_rate_modifier
                 * (scenario.birth_rate_multiplier if scenario else 1.0)
                 * (1.0 + birth_variation * CONTROLLED_BIRTH_VARIATION)
+                * country_shock_effect["birth_multiplier"]
             )
             death_rate = (
                 country.base_death_rate
                 * region.death_rate_modifier
                 * (scenario.death_rate_multiplier if scenario else 1.0)
                 * (1.0 + death_variation * CONTROLLED_DEATH_VARIATION)
+                * country_shock_effect["death_multiplier"]
             )
-            external_migration_rate = calculate_external_migration_rate(country, region, scenario) * (
-                1.0 + migration_variation * CONTROLLED_MIGRATION_VARIATION
-            )
+            external_migration_rate = (
+                calculate_external_migration_rate(country, region, scenario)
+                + country_shock_effect["net_migration_shift"]
+            ) * (1.0 + migration_variation * CONTROLLED_MIGRATION_VARIATION)
 
             births = round(start_population * birth_rate)
             deaths = round(start_population * death_rate)
@@ -284,9 +419,14 @@ def simulate_year(
             )
             region.population = max(end_population, 0)
 
-            regional_attractiveness = calculate_regional_attractiveness(region, scenario)
+            regional_attractiveness = calculate_regional_attractiveness(
+                region,
+                scenario,
+                country_shock_effect["attractiveness_bias"],
+            )
             gdp_growth_rate = clamp(
                 calculate_regional_gdp_growth_rate(region, scenario)
+                + country_shock_effect["gdp_growth_bias"]
                 + growth_variation * CONTROLLED_GDP_GROWTH_VARIATION,
                 MIN_GDP_GROWTH,
                 MAX_GDP_GROWTH,
@@ -302,7 +442,9 @@ def simulate_year(
                 scenario,
             )
             region.unemployment_rate = clamp(
-                unemployment_rate + unemployment_variation * CONTROLLED_UNEMPLOYMENT_VARIATION,
+                unemployment_rate
+                + country_shock_effect["unemployment_bias"]
+                + unemployment_variation * CONTROLLED_UNEMPLOYMENT_VARIATION,
                 MIN_UNEMPLOYMENT_RATE,
                 MAX_UNEMPLOYMENT_RATE,
             )
@@ -338,7 +480,7 @@ def simulate_year(
                 )
             )
 
-    return results
+    return results, shock_events
 
 
 def simulate_period(
@@ -347,14 +489,23 @@ def simulate_period(
     end_year: int,
     scenario: SimulationScenario | None = None,
     variation_seed: str = "baseline-2020",
-) -> list[RegionYearResult]:
+    shock_definitions: list[ShockDefinition] | None = None,
+) -> tuple[list[RegionYearResult], list[ShockEvent]]:
     results: list[RegionYearResult] = []
+    shock_events: list[ShockEvent] = []
 
     for year in range(start_year, end_year):
-        yearly_results = simulate_year(countries, year, scenario, variation_seed)
+        yearly_results, yearly_shock_events = simulate_year(
+            countries,
+            year,
+            scenario,
+            variation_seed,
+            shock_definitions=shock_definitions,
+        )
         results.extend(yearly_results)
+        shock_events.extend(yearly_shock_events)
 
-    return results
+    return results, shock_events
 
 
 def aggregate_country_results(

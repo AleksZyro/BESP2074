@@ -3,8 +3,8 @@ import secrets
 from pathlib import Path
 
 from besp.exporter import build_simulation_export, save_simulation_export_json
-from besp.loader import load_scenario_map, load_world
-from besp.models import CountryYearResult, RegionYearResult, SimulationScenario
+from besp.loader import load_scenario_map, load_shock_map, load_world
+from besp.models import CountryYearResult, RegionYearResult, ShockEvent, SimulationScenario
 from besp.simulation import aggregate_country_results, simulate_period
 from besp.validation import validate_simulation_results
 
@@ -69,6 +69,25 @@ def print_validation_warnings(warnings: list[str]) -> None:
         print(f"- {warning}")
 
 
+def print_shock_summary(shock_events: list[ShockEvent]) -> None:
+    print()
+    print("Shock summary (v1)")
+    print("=" * 72)
+
+    if not shock_events:
+        print("No shocks were triggered in this run.")
+        return
+
+    events_by_year_country: dict[tuple[int, str], list[ShockEvent]] = {}
+    for event in shock_events:
+        key = (event.start_year, event.country_code)
+        events_by_year_country.setdefault(key, []).append(event)
+
+    for (year, country_code), events in sorted(events_by_year_country.items()):
+        shock_names = ", ".join(event.shock_name for event in events)
+        print(f"{year}-{year + 1} {country_code}: {shock_names}")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run the BESP yearly simulation and write output/latest.json."
@@ -87,6 +106,11 @@ def parse_args() -> argparse.Namespace:
         "--list-scenarios",
         action="store_true",
         help="List available scenario codes and exit.",
+    )
+    parser.add_argument(
+        "--disable-shocks",
+        action="store_true",
+        help="Disable yearly shock draws for this run.",
     )
     return parser.parse_args()
 
@@ -132,13 +156,16 @@ def main() -> None:
 
     scenario = resolve_scenario(scenarios, args.scenario)
     variation_seed = resolve_variation_seed(args.seed)
+    shock_map = load_shock_map("data")
+    active_shocks = [] if args.disable_shocks else list(shock_map.values())
     countries = load_world("data")
-    region_results = simulate_period(
+    region_results, shock_events = simulate_period(
         countries,
         start_year,
         end_year,
         scenario=scenario,
         variation_seed=variation_seed,
+        shock_definitions=active_shocks,
     )
     country_results = aggregate_country_results(region_results, countries)
     warnings = validate_simulation_results(country_results, region_results)
@@ -148,6 +175,7 @@ def main() -> None:
 
     print_country_year_results(country_results)
     print_region_year_results(start_year, end_year, region_results)
+    print_shock_summary(shock_events)
     print_validation_warnings(warnings)
 
     export_data = build_simulation_export(
@@ -158,6 +186,8 @@ def main() -> None:
         warning_count=len(warnings),
         scenario=scenario,
         variation_seed=variation_seed,
+        shock_events=shock_events,
+        shocks_enabled=not args.disable_shocks,
     )
     output_dir = Path("output")
     output_path = output_dir / f"simulation_{start_year}_{end_year}.json"

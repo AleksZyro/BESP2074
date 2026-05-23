@@ -2,7 +2,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from besp.models import CountryYearResult, RegionYearResult, SimulationScenario
+from besp.models import CountryYearResult, RegionYearResult, ShockEvent, SimulationScenario
 
 
 def build_simulation_export(
@@ -13,6 +13,8 @@ def build_simulation_export(
     warning_count: int = 0,
     scenario: SimulationScenario | None = None,
     variation_seed: str = "baseline-2020",
+    shock_events: list[ShockEvent] | None = None,
+    shocks_enabled: bool = True,
 ) -> dict:
     years: dict[str, dict[str, list[dict]]] = {}
 
@@ -26,6 +28,10 @@ def build_simulation_export(
         years.setdefault(year_key, {"countries": [], "regions": []})
         years[year_key]["regions"].append(asdict(result))
 
+    serialized_shock_events = [
+        asdict(event) for event in (shock_events or [])
+    ]
+
     return {
         "meta": {
             "start_year": start_year,
@@ -37,7 +43,12 @@ def build_simulation_export(
                 "description": scenario.description if scenario else "Reference path.",
                 "variation_seed": variation_seed,
             },
+            "shocks": {
+                "enabled": shocks_enabled,
+                "event_count": len(serialized_shock_events),
+            },
         },
+        "shock_events": serialized_shock_events,
         "years": years,
     }
 
