@@ -248,6 +248,7 @@ const elements = {
     reloadExportButton: document.getElementById("reload-export"),
     generateRunButton: document.getElementById("generate-run"),
     runScenarioSelect: document.getElementById("run-scenario-select"),
+    runShocksEnabled: document.getElementById("run-shocks-enabled"),
     yearSelect: document.getElementById("year-select"),
     currentYearPill: document.getElementById("current-year-pill"),
     exportStatus: document.getElementById("export-status"),
@@ -427,6 +428,7 @@ function updatePlaybackControls() {
     elements.generateRunButton.disabled = runControlsDisabled;
     elements.generateRunButton.textContent = dashboardState.isGeneratingRun ? "Generating..." : "Generate Run";
     elements.runScenarioSelect.disabled = runControlsDisabled;
+    elements.runShocksEnabled.disabled = runControlsDisabled;
     elements.playbackToggleButton.textContent = dashboardState.playbackTimer ? "Pause" : "Play";
     for (const button of elements.speedButtons) {
         const speed = Number.parseInt(button.dataset.speed ?? "1", 10);
@@ -483,7 +485,8 @@ function applyRunStatus(runStatus) {
 
     if (state === "running") {
         const scenarioLabel = runStatus?.scenario_name || runStatus?.scenario_code || "simulation";
-        setExportStatus(`Generating a fresh ${scenarioLabel} run ...`, "loading");
+        const shocksLabel = runStatus?.shocks_enabled ? "shocks on" : "shocks off";
+        setExportStatus(`Generating a fresh ${scenarioLabel} run (${shocksLabel}) ...`, "loading");
         startRunStatusPolling();
         return;
     }
@@ -497,8 +500,9 @@ function applyRunStatus(runStatus) {
 
     if (state === "success") {
         const scenarioLabel = runStatus?.scenario_name || runStatus?.scenario_code || "simulation";
+        const shocksLabel = runStatus?.shocks_enabled ? "shocks on" : "shocks off";
         const seedLabel = runStatus?.variation_seed ? ` Seed ${runStatus.variation_seed}.` : "";
-        setExportStatus(`Latest ${scenarioLabel} run is ready.${seedLabel}`.trim(), "success");
+        setExportStatus(`Latest ${scenarioLabel} run is ready (${shocksLabel}).${seedLabel}`.trim(), "success");
         return;
     }
 
@@ -528,6 +532,7 @@ async function triggerGenerateRun() {
             cache: "no-store",
             body: JSON.stringify({
                 scenario: elements.runScenarioSelect.value || "baseline",
+                shocks_enabled: elements.runShocksEnabled.checked,
             }),
         });
 
@@ -890,12 +895,15 @@ function renderDashboard(exportData, geoData, geoWarning) {
 
 function renderMetaCards(exportData, countryRowCount, regionRowCount, activeYearKey, geoWarning = "") {
     const scenarioMeta = exportData.meta?.scenario ?? {};
+    const shockMeta = exportData.meta?.shocks ?? {};
     elements.metaCards.innerHTML = [
         buildMetaCard("Selected year", activeYearKey || "-"),
         buildMetaCard("Start year", exportData.meta.start_year),
         buildMetaCard("End year", exportData.meta.end_year),
         scenarioMeta.name ? buildMetaCard("Scenario", scenarioMeta.name) : "",
         scenarioMeta.variation_seed ? buildMetaCard("Variation seed", scenarioMeta.variation_seed) : "",
+        buildMetaCard("Shocks enabled", shockMeta.enabled ? "yes" : "no"),
+        buildMetaCard("Shock events", formatInteger(shockMeta.event_count ?? 0)),
         buildMetaCard("Country year values", formatInteger(countryRowCount)),
         buildMetaCard("Region year values", formatInteger(regionRowCount)),
         buildMetaCard("Year buckets", formatInteger(Object.keys(exportData.years).length)),

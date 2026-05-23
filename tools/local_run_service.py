@@ -53,6 +53,7 @@ class RunManager:
             "scenario_code": "baseline",
             "scenario_name": self._scenario_map.get("baseline", {}).get("name", "Baseline continuity"),
             "message": "Ready to generate a fresh local simulation run.",
+            "shocks_enabled": True,
             "variation_seed": None,
             "started_at": None,
             "finished_at": None,
@@ -65,7 +66,7 @@ class RunManager:
         with self._lock:
             return dict(self._state)
 
-    def start_run(self, scenario_code: str) -> dict:
+    def start_run(self, scenario_code: str, shocks_enabled: bool = True) -> dict:
         scenario = self._scenario_map.get(scenario_code)
         if scenario is None:
             raise ValueError(f"Unknown scenario '{scenario_code}'.")
@@ -79,6 +80,7 @@ class RunManager:
                 "scenario_code": scenario["code"],
                 "scenario_name": scenario["name"],
                 "message": f"Running scenario '{scenario['name']}'.",
+                "shocks_enabled": shocks_enabled,
                 "variation_seed": None,
                 "started_at": timestamp_now(),
                 "finished_at": None,
@@ -86,14 +88,16 @@ class RunManager:
 
         worker = threading.Thread(
             target=self._run_simulation,
-            args=(scenario,),
+            args=(scenario, shocks_enabled),
             daemon=True,
         )
         worker.start()
         return self.get_status()
 
-    def _run_simulation(self, scenario: dict) -> None:
+    def _run_simulation(self, scenario: dict, shocks_enabled: bool) -> None:
         command = [sys.executable, "main.py", "--scenario", scenario["code"]]
+        if not shocks_enabled:
+            command.append("--disable-shocks")
         completed = subprocess.run(
             command,
             cwd=REPO_ROOT,
@@ -110,6 +114,7 @@ class RunManager:
                     "scenario_code": scenario["code"],
                     "scenario_name": scenario["name"],
                     "message": "Run finished successfully.",
+                    "shocks_enabled": shocks_enabled,
                     "variation_seed": scenario_meta.get("variation_seed"),
                     "started_at": self._state.get("started_at"),
                     "finished_at": timestamp_now(),
@@ -123,6 +128,7 @@ class RunManager:
                 "scenario_code": scenario["code"],
                 "scenario_name": scenario["name"],
                 "message": error_excerpt.splitlines()[-1][:220],
+                "shocks_enabled": shocks_enabled,
                 "variation_seed": None,
                 "started_at": self._state.get("started_at"),
                 "finished_at": timestamp_now(),
@@ -165,8 +171,9 @@ class BESPRequestHandler(SimpleHTTPRequestHandler):
             return
 
         scenario_code = str(payload.get("scenario") or "baseline")
+        shocks_enabled = bool(payload.get("shocks_enabled", True))
         try:
-            status = RUN_MANAGER.start_run(scenario_code)
+            status = RUN_MANAGER.start_run(scenario_code, shocks_enabled=shocks_enabled)
         except ValueError as error:
             self._send_json(HTTPStatus.BAD_REQUEST, {"message": str(error)})
             return

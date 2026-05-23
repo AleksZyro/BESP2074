@@ -120,6 +120,20 @@ th {
     justify-content: flex-end;
 }
 
+.toggle-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.toggle-wrap input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+}
+
 .timeline-button,
 .speed-button,
 .timeline-select {
