@@ -850,8 +850,8 @@ function renderActiveYearState() {
     const activeYearKey = getActiveYearKey();
     const { countryRows, regionRows } = buildRowsForYear(dashboardState.exportData, activeYearKey);
 
-    mapDataCache.countriesByCode = buildCountryRowMap(countryRows);
-    mapDataCache.regionsByKey = buildRegionRowMap(regionRows);
+    mapDataCache.countriesByCode = new Map(countryRows.map((row) => [normalizeCountryCode(row.country_code), row]));
+    mapDataCache.regionsByKey = new Map(regionRows.map((row) => [buildRegionKey(row.country_code, row.region_name), row]));
 
     renderMetaCards(
         dashboardState.exportData,
@@ -892,14 +892,6 @@ function buildRowsForYear(exportData, yearKey) {
         .map((region) => ({ yearKey, ...region }))
         .sort(compareYearCountryAndRegion);
     return { countryRows, regionRows };
-}
-
-function buildCountryRowMap(countryRows) {
-    return new Map(countryRows.map((row) => [normalizeCountryCode(row.country_code), row]));
-}
-
-function buildRegionRowMap(regionRows) {
-    return new Map(regionRows.map((row) => [buildRegionKey(row.country_code, row.region_name), row]));
 }
 
 function renderCountryLayer(geoData) {
@@ -1443,19 +1435,8 @@ function normalizeRegionName(regionName) {
 }
 
 function resolveBespRegionKey(countryCode, featureRegionName) {
-    const normalizedCountryCode = normalizeCountryCode(countryCode);
-    const normalizedName = normalizeRegionName(featureRegionName);
-    const directKey = `${normalizedCountryCode}::${normalizedName}`;
-
-    if (REGION_FEATURE_TO_BESP[directKey]) {
-        return REGION_FEATURE_TO_BESP[directKey];
-    }
-
-    if (BESP_REGION_KEYS.has(directKey)) {
-        return directKey;
-    }
-
-    return null;
+    const directKey = buildRegionKey(countryCode, featureRegionName);
+    return REGION_FEATURE_TO_BESP[directKey] ?? (BESP_REGION_KEYS.has(directKey) ? directKey : null);
 }
 
 function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
@@ -1472,18 +1453,6 @@ function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
         dataRegionKey: definition?.dataRegionKey ?? bespRegionKey,
         fill: definition?.fill ?? "rgba(126, 143, 161, 0.38)",
     };
-}
-
-function regionNameFromBespKey(bespRegionKey) {
-    const [, rawRegionName] = String(bespRegionKey).split("::");
-    if (!rawRegionName) {
-        return String(bespRegionKey);
-    }
-
-    return rawRegionName
-        .split(" ")
-        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(" ");
 }
 
 function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {

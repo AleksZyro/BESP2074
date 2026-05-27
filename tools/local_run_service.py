@@ -148,12 +148,13 @@ class BESPRequestHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(REPO_ROOT), **kwargs)
 
     def do_GET(self) -> None:
-        if self.path == "/api/run-status":
-            self._send_json(HTTPStatus.OK, RUN_MANAGER.get_status())
-            return
-
-        if self.path == "/api/scenarios":
-            self._send_json(HTTPStatus.OK, RUN_MANAGER.list_scenarios())
+        payload_by_path = {
+            "/api/run-status": RUN_MANAGER.get_status,
+            "/api/scenarios": RUN_MANAGER.list_scenarios,
+        }
+        resolver = payload_by_path.get(self.path)
+        if resolver:
+            self._send_json(HTTPStatus.OK, resolver())
             return
 
         super().do_GET()
@@ -163,27 +164,17 @@ class BESPRequestHandler(SimpleHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND, "Unknown API route.")
             return
 
-        body_length = int(self.headers.get("Content-Length", "0"))
-        raw_body = self.rfile.read(body_length) if body_length else b"{}"
-
-        try:
-            payload = json.loads(raw_body.decode("utf-8"))
-        except json.JSONDecodeError:
-            self._send_json(
-                HTTPStatus.BAD_REQUEST,
-                {"message": "Request body must be valid JSON."},
-            )
+        payload = self._read_json_payload()
+        if payload is None:
             return
 
         scenario_code = str(payload.get("scenario") or "baseline")
         shocks_enabled = bool(payload.get("shocks_enabled", True))
         try:
             status = RUN_MANAGER.start_run(scenario_code, shocks_enabled=shocks_enabled)
-        except ValueError as error:
-            self._send_json(HTTPStatus.BAD_REQUEST, {"message": str(error)})
-            return
-        except RuntimeError as error:
-            self._send_json(HTTPStatus.CONFLICT, {"message": str(error)})
+        except (ValueError, RuntimeError) as error:
+            status_code = HTTPStatus.BAD_REQUEST if isinstance(error, ValueError) else HTTPStatus.CONFLICT
+            self._send_json(status_code, {"message": str(error)})
             return
 
         self._send_json(HTTPStatus.ACCEPTED, status)
@@ -201,6 +192,15 @@ class BESPRequestHandler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _read_json_payload(self) -> dict | None:
+        body_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(body_length) if body_length else b"{}"
+        try:
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"message": "Request body must be valid JSON."})
+            return None
 
     def _send_default_headers(self) -> None:
         self.send_header("Cache-Control", "no-store")
