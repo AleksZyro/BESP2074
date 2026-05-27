@@ -9,15 +9,19 @@ from besp.simulation import aggregate_country_results, simulate_period
 from besp.validation import validate_simulation_results
 
 
+def print_section(title: str) -> None:
+    print()
+    print(title)
+    print("=" * 72)
+
+
 def print_country_year_results(country_results: list[CountryYearResult]) -> None:
     current_year: int | None = None
 
     for result in country_results:
         if result.start_year != current_year:
             current_year = result.start_year
-            print()
-            print(f"Country summary: {result.start_year} -> {result.end_year}")
-            print("=" * 72)
+            print_section(f"Country summary: {result.start_year} -> {result.end_year}")
 
         print(
             f"{result.country_code:<4} "
@@ -34,18 +38,14 @@ def print_region_year_results(
     end_year: int,
     results: list[RegionYearResult],
 ) -> None:
-    print()
-    print(f"BESP simulation period: {start_year} -> {end_year}")
-    print("=" * 72)
+    print_section(f"BESP simulation period: {start_year} -> {end_year}")
 
     current_year: int | None = None
 
     for result in results:
         if result.start_year != current_year:
             current_year = result.start_year
-            print()
-            print(f"Regions: {result.start_year} -> {result.end_year}")
-            print("=" * 72)
+            print_section(f"Regions: {result.start_year} -> {result.end_year}")
 
         print(
             f"{result.country_code:<4} | {result.region_name:<32} "
@@ -57,9 +57,7 @@ def print_region_year_results(
 
 
 def print_validation_warnings(warnings: list[str]) -> None:
-    print()
-    print("Validation / sanity checks")
-    print("=" * 72)
+    print_section("Validation / sanity checks")
 
     if not warnings:
         print("No obvious plausibility problems were detected.")
@@ -70,9 +68,7 @@ def print_validation_warnings(warnings: list[str]) -> None:
 
 
 def print_shock_summary(shock_events: list[ShockEvent]) -> None:
-    print()
-    print("Shock summary (v1)")
-    print("=" * 72)
+    print_section("Shock summary (v1)")
 
     if not shock_events:
         print("No shocks were triggered in this run.")

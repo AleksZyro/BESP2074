@@ -1521,16 +1521,7 @@ function formatPercent(value) {
 }
 
 function countryFlag(countryCode) {
-    switch (normalizeCountryCode(countryCode)) {
-        case "BIH":
-            return "\uD83C\uDDE7\uD83C\uDDE6";
-        case "MNE":
-            return "\uD83C\uDDF2\uD83C\uDDEA";
-        case "SRB":
-            return "\uD83C\uDDF7\uD83C\uDDF8";
-        default:
-            return "\uD83C\uDFF3\uFE0F";
-    }
+    return COUNTRY_FLAGS[normalizeCountryCode(countryCode)] ?? "\uD83C\uDFF3\uFE0F";
 }
 
 function escapeHtml(value) {
