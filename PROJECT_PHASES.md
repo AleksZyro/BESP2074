@@ -240,6 +240,17 @@ Current implementation note:
 - Frontend JavaScript does not execute shell commands directly
 - `Reload Export` remains available, but `Generate Run` now covers the local fresh-run workflow cleanly
 
+### Phase 6 - Controls (merged into 5.6)
+Status: merged / no standalone phase
+
+Purpose:
+- Keep numbering continuity for historical planning notes
+- Clarify why commits may jump from 5.x to 7.x
+
+Current implementation note:
+- The old standalone Phase 6 controls plan (Play/Pause/Speed) was absorbed into Phase 5.6
+- Controls already exist in the dashboard as export playback controls, not as a separate phase
+
 ### Phase 7.1 - Shock System v1 (bounded core)
 Status: complete
 
@@ -322,9 +333,10 @@ Possible future systems:
 3. Phase 5.7 scenario-driven variation inputs
 4. Phase 5.8 export reload and dashboard clarity
 5. Phase 5.8.2 local run service and generate-run flow
-6. Phase 7.1 bounded shock core
-7. Phase 7.3 shock validation and balancing pass
-8. Phase 8 politics / state
+6. Phase 6 merged into 5.6 (no separate implementation block)
+7. Phase 7.1 bounded shock core
+8. Phase 7.3 shock validation and balancing pass
+9. Phase 8 politics / state
 
 ## Current Actual State
 

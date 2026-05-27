@@ -20,6 +20,7 @@ Project status:
 - Phase 5.7 in progress: scenario-driven variation inputs
 - Phase 5.8 implemented: export reload and dashboard clarity
 - Phase 5.8.2 complete: local run service and generate-run dashboard flow
+- Phase 6 merged into 5.6: controls are delivered as part of timeline playback
 - Phase 7.1 complete: bounded shock core (economic + climate)
 - Phase 7.2 complete: shock calibration guardrails and testcase verifier
 

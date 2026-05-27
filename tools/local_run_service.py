@@ -48,16 +48,10 @@ class RunManager:
         self._lock = threading.Lock()
         self._scenarios = load_scenarios()
         self._scenario_map = {scenario["code"]: scenario for scenario in self._scenarios}
-        self._state = {
-            "state": "idle",
-            "scenario_code": "baseline",
-            "scenario_name": self._scenario_map.get("baseline", {}).get("name", "Baseline continuity"),
-            "message": "Ready to generate a fresh local simulation run.",
-            "shocks_enabled": True,
-            "variation_seed": None,
-            "started_at": None,
-            "finished_at": None,
-        }
+        self._state = self._build_state(
+            "idle",
+            message="Ready to generate a fresh local simulation run.",
+        )
 
     def list_scenarios(self) -> list[dict]:
         return self._scenarios
@@ -65,6 +59,20 @@ class RunManager:
     def get_status(self) -> dict:
         with self._lock:
             return dict(self._state)
+
+    def _build_state(self, state: str, **overrides: object) -> dict:
+        base = {
+            "state": state,
+            "scenario_code": "baseline",
+            "scenario_name": self._scenario_map.get("baseline", {}).get("name", "Baseline continuity"),
+            "message": "Ready.",
+            "shocks_enabled": True,
+            "variation_seed": None,
+            "started_at": None,
+            "finished_at": None,
+        }
+        base.update(overrides)
+        return base
 
     def start_run(self, scenario_code: str, shocks_enabled: bool = True) -> dict:
         scenario = self._scenario_map.get(scenario_code)
@@ -75,16 +83,14 @@ class RunManager:
             if self._state["state"] == "running":
                 raise RuntimeError("A simulation run is already in progress.")
 
-            self._state = {
-                "state": "running",
-                "scenario_code": scenario["code"],
-                "scenario_name": scenario["name"],
-                "message": f"Running scenario '{scenario['name']}'.",
-                "shocks_enabled": shocks_enabled,
-                "variation_seed": None,
-                "started_at": timestamp_now(),
-                "finished_at": None,
-            }
+            self._state = self._build_state(
+                "running",
+                scenario_code=scenario["code"],
+                scenario_name=scenario["name"],
+                message=f"Running scenario '{scenario['name']}'.",
+                shocks_enabled=shocks_enabled,
+                started_at=timestamp_now(),
+            )
 
         worker = threading.Thread(
             target=self._run_simulation,
@@ -109,30 +115,29 @@ class RunManager:
         if completed.returncode == 0:
             scenario_meta = read_latest_meta()
             with self._lock:
-                self._state = {
-                    "state": "success",
-                    "scenario_code": scenario["code"],
-                    "scenario_name": scenario["name"],
-                    "message": "Run finished successfully.",
-                    "shocks_enabled": shocks_enabled,
-                    "variation_seed": scenario_meta.get("variation_seed"),
-                    "started_at": self._state.get("started_at"),
-                    "finished_at": timestamp_now(),
-                }
+                self._state = self._build_state(
+                    "success",
+                    scenario_code=scenario["code"],
+                    scenario_name=scenario["name"],
+                    message="Run finished successfully.",
+                    shocks_enabled=shocks_enabled,
+                    variation_seed=scenario_meta.get("variation_seed"),
+                    started_at=self._state.get("started_at"),
+                    finished_at=timestamp_now(),
+                )
             return
 
         error_excerpt = completed.stderr.strip() or completed.stdout.strip() or "Unknown simulation error."
         with self._lock:
-            self._state = {
-                "state": "failed",
-                "scenario_code": scenario["code"],
-                "scenario_name": scenario["name"],
-                "message": error_excerpt.splitlines()[-1][:220],
-                "shocks_enabled": shocks_enabled,
-                "variation_seed": None,
-                "started_at": self._state.get("started_at"),
-                "finished_at": timestamp_now(),
-            }
+            self._state = self._build_state(
+                "failed",
+                scenario_code=scenario["code"],
+                scenario_name=scenario["name"],
+                message=error_excerpt.splitlines()[-1][:220],
+                shocks_enabled=shocks_enabled,
+                started_at=self._state.get("started_at"),
+                finished_at=timestamp_now(),
+            )
 
 
 RUN_MANAGER = RunManager()
