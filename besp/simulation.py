@@ -10,23 +10,14 @@ from besp.models import (
     SimulationScenario,
 )
 
-# -----------------------------------------------------------------------------
-# Attractiveness model tuning
-# -----------------------------------------------------------------------------
 ECONOMIC_WEIGHT = 0.50
 INFRASTRUCTURE_WEIGHT = 0.20
 URBANIZATION_WEIGHT = 0.10
 METRO_PULL_WEIGHT = 0.20
 
-# -----------------------------------------------------------------------------
-# Migration model tuning
-# -----------------------------------------------------------------------------
 INTERNAL_MIGRATION_STRENGTH = 0.02
 MAX_INTERNAL_MIGRATION_RATE = 0.012
 
-# -----------------------------------------------------------------------------
-# Economy v1 tuning
-# -----------------------------------------------------------------------------
 BASE_GDP_GROWTH = 0.008
 ATTRACTIVENESS_GDP_MULTIPLIER = 0.05
 HOUSING_GDP_PENALTY = 0.03
@@ -38,18 +29,12 @@ MAX_GDP_GROWTH = 0.08
 MIN_UNEMPLOYMENT_RATE = 0.04
 MAX_UNEMPLOYMENT_RATE = 0.35
 
-# -----------------------------------------------------------------------------
-# Controlled yearly variation
-# -----------------------------------------------------------------------------
 CONTROLLED_BIRTH_VARIATION = 0.012
 CONTROLLED_DEATH_VARIATION = 0.008
 CONTROLLED_MIGRATION_VARIATION = 0.10
 CONTROLLED_GDP_GROWTH_VARIATION = 0.004
 CONTROLLED_UNEMPLOYMENT_VARIATION = 0.0012
 
-# -----------------------------------------------------------------------------
-# Shock system v1 (bounded annual effects)
-# -----------------------------------------------------------------------------
 MAX_SHOCK_GDP_BIAS = 0.02
 MIN_SHOCK_GDP_BIAS = -0.03
 MAX_SHOCK_UNEMPLOYMENT_BIAS = 0.012
@@ -64,6 +49,14 @@ MAX_SHOCK_DEATH_MULTIPLIER = 1.08
 MIN_SHOCK_DEATH_MULTIPLIER = 0.94
 MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR = 2
 MAX_SHOCK_EVENTS_PER_CATEGORY_COUNTRY_YEAR = 1
+SHOCK_EFFECT_BOUNDS = {
+    "birth_multiplier": (MIN_SHOCK_BIRTH_MULTIPLIER, MAX_SHOCK_BIRTH_MULTIPLIER),
+    "death_multiplier": (MIN_SHOCK_DEATH_MULTIPLIER, MAX_SHOCK_DEATH_MULTIPLIER),
+    "net_migration_shift": (MIN_SHOCK_NET_MIGRATION_SHIFT, MAX_SHOCK_NET_MIGRATION_SHIFT),
+    "gdp_growth_bias": (MIN_SHOCK_GDP_BIAS, MAX_SHOCK_GDP_BIAS),
+    "unemployment_bias": (MIN_SHOCK_UNEMPLOYMENT_BIAS, MAX_SHOCK_UNEMPLOYMENT_BIAS),
+    "attractiveness_bias": (MIN_SHOCK_ATTRACTIVENESS_BIAS, MAX_SHOCK_ATTRACTIVENESS_BIAS),
+}
 
 
 def _empty_shock_effect() -> dict[str, float]:
@@ -155,37 +148,9 @@ def build_country_shock_effects(
                 )
             )
 
-    for country_code, effect in effects.items():
-        effect["birth_multiplier"] = clamp(
-            effect["birth_multiplier"],
-            MIN_SHOCK_BIRTH_MULTIPLIER,
-            MAX_SHOCK_BIRTH_MULTIPLIER,
-        )
-        effect["death_multiplier"] = clamp(
-            effect["death_multiplier"],
-            MIN_SHOCK_DEATH_MULTIPLIER,
-            MAX_SHOCK_DEATH_MULTIPLIER,
-        )
-        effect["net_migration_shift"] = clamp(
-            effect["net_migration_shift"],
-            MIN_SHOCK_NET_MIGRATION_SHIFT,
-            MAX_SHOCK_NET_MIGRATION_SHIFT,
-        )
-        effect["gdp_growth_bias"] = clamp(
-            effect["gdp_growth_bias"],
-            MIN_SHOCK_GDP_BIAS,
-            MAX_SHOCK_GDP_BIAS,
-        )
-        effect["unemployment_bias"] = clamp(
-            effect["unemployment_bias"],
-            MIN_SHOCK_UNEMPLOYMENT_BIAS,
-            MAX_SHOCK_UNEMPLOYMENT_BIAS,
-        )
-        effect["attractiveness_bias"] = clamp(
-            effect["attractiveness_bias"],
-            MIN_SHOCK_ATTRACTIVENESS_BIAS,
-            MAX_SHOCK_ATTRACTIVENESS_BIAS,
-        )
+    for effect in effects.values():
+        for field_name, (minimum, maximum) in SHOCK_EFFECT_BOUNDS.items():
+            effect[field_name] = clamp(effect[field_name], minimum, maximum)
 
     return effects, events, updated_last_triggered
 
@@ -384,60 +349,35 @@ def simulate_year(
             start_population = region.population
             start_gdp_billion_eur = region.gdp_billion_eur
 
-            birth_variation = calculate_controlled_variation_signal(
-                start_year,
-                country.code,
-                region.name,
-                "birth",
-                variation_seed,
-            )
-            death_variation = calculate_controlled_variation_signal(
-                start_year,
-                country.code,
-                region.name,
-                "death",
-                variation_seed,
-            )
-            migration_variation = calculate_controlled_variation_signal(
-                start_year,
-                country.code,
-                region.name,
-                "migration",
-                variation_seed,
-            )
-            growth_variation = calculate_controlled_variation_signal(
-                start_year,
-                country.code,
-                region.name,
-                "growth",
-                variation_seed,
-            )
-            unemployment_variation = calculate_controlled_variation_signal(
-                start_year,
-                country.code,
-                region.name,
-                "unemployment",
-                variation_seed,
-            )
+            variations = {
+                channel: calculate_controlled_variation_signal(
+                    start_year,
+                    country.code,
+                    region.name,
+                    channel,
+                    variation_seed,
+                )
+                for channel in ("birth", "death", "migration", "growth", "unemployment")
+            }
 
             birth_rate = (
                 country.base_birth_rate
                 * region.birth_rate_modifier
                 * (scenario.birth_rate_multiplier if scenario else 1.0)
-                * (1.0 + birth_variation * CONTROLLED_BIRTH_VARIATION)
+                * (1.0 + variations["birth"] * CONTROLLED_BIRTH_VARIATION)
                 * country_shock_effect["birth_multiplier"]
             )
             death_rate = (
                 country.base_death_rate
                 * region.death_rate_modifier
                 * (scenario.death_rate_multiplier if scenario else 1.0)
-                * (1.0 + death_variation * CONTROLLED_DEATH_VARIATION)
+                * (1.0 + variations["death"] * CONTROLLED_DEATH_VARIATION)
                 * country_shock_effect["death_multiplier"]
             )
             external_migration_rate = (
                 calculate_external_migration_rate(country, region, scenario)
                 + country_shock_effect["net_migration_shift"]
-            ) * (1.0 + migration_variation * CONTROLLED_MIGRATION_VARIATION)
+            ) * (1.0 + variations["migration"] * CONTROLLED_MIGRATION_VARIATION)
 
             births = round(start_population * birth_rate)
             deaths = round(start_population * death_rate)
@@ -461,7 +401,7 @@ def simulate_year(
             gdp_growth_rate = clamp(
                 calculate_regional_gdp_growth_rate(region, scenario)
                 + country_shock_effect["gdp_growth_bias"]
-                + growth_variation * CONTROLLED_GDP_GROWTH_VARIATION,
+                + variations["growth"] * CONTROLLED_GDP_GROWTH_VARIATION,
                 MIN_GDP_GROWTH,
                 MAX_GDP_GROWTH,
             )
@@ -478,7 +418,7 @@ def simulate_year(
             region.unemployment_rate = clamp(
                 unemployment_rate
                 + country_shock_effect["unemployment_bias"]
-                + unemployment_variation * CONTROLLED_UNEMPLOYMENT_VARIATION,
+                + variations["unemployment"] * CONTROLLED_UNEMPLOYMENT_VARIATION,
                 MIN_UNEMPLOYMENT_RATE,
                 MAX_UNEMPLOYMENT_RATE,
             )

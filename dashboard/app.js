@@ -41,91 +41,60 @@ const REGION_GEOJSON_PATHS = [
     "./data/geoBoundaries-XKX-ADM0_simplified.geojson",
 ];
 const BESP_REGION_KEYS = new Set([
-    "BIH::federation of bosnia and herzegovina",
-    "BIH::republika srpska",
-    "BIH::brcko",
-    "MNE::coast",
-    "MNE::inland",
-    "SRB::belgrade",
-    "SRB::vojvodina",
-    "SRB::central serbia",
-    "SRB::south and east serbia",
-    "SRB::kosovo and metohija",
+    "BIH::federation of bosnia and herzegovina", "BIH::republika srpska", "BIH::brcko",
+    "MNE::coast", "MNE::inland", "SRB::belgrade", "SRB::vojvodina", "SRB::central serbia",
+    "SRB::south and east serbia", "SRB::kosovo and metohija",
 ]);
-const REGION_NAME_ALIASES = {
-    "federation of bosnia and herzegovina": "federation of bosnia and herzegovina",
-    "federation of bosnia-herzegovina": "federation of bosnia and herzegovina",
-    "republika srpska": "republika srpska",
-    "brcko": "brcko",
-    "brcko district": "brcko",
-    "belgrade": "belgrade",
-    "belgrade district": "belgrade",
-    "autonomous province of vojvodina": "vojvodina",
-    "vojvodina": "vojvodina",
-    "central serbia": "central serbia",
-    "south and east serbia": "south and east serbia",
-    "kosovo and metohija": "kosovo and metohija",
-    kosovo: "kosovo and metohija",
-    "kosovo & metohija": "kosovo and metohija",
-    "coast": "coast",
-    "inland": "inland",
-};
-const REGION_FEATURE_TO_BESP = {
-    "BIH::federation of bosnia and herzegovina": "BIH::federation of bosnia and herzegovina",
-    "BIH::republika srpska": "BIH::republika srpska",
-    "BIH::brcko": "BIH::republika srpska",
-    "SRB::belgrade": "SRB::belgrade",
-    "SRB::autonomous province of vojvodina": "SRB::vojvodina",
-    "SRB::vojvodina": "SRB::vojvodina",
-    "SRB::syrmia district": "SRB::vojvodina",
-    "SRB::south banat district": "SRB::vojvodina",
-    "SRB::north banat district": "SRB::vojvodina",
-    "SRB::north backa district": "SRB::vojvodina",
-    "SRB::central banat district": "SRB::vojvodina",
-    "SRB::west backa district": "SRB::vojvodina",
-    "SRB::south backa district": "SRB::vojvodina",
-    "SRB::bor district": "SRB::south and east serbia",
-    "SRB::pcinja district": "SRB::south and east serbia",
-    "SRB::branicevo district": "SRB::south and east serbia",
-    "SRB::zajecar district": "SRB::south and east serbia",
-    "SRB::pirot district": "SRB::south and east serbia",
-    "SRB::jablanica district": "SRB::south and east serbia",
-    "SRB::toplica district": "SRB::south and east serbia",
-    "SRB::nisava district": "SRB::south and east serbia",
-    "SRB::rasina district": "SRB::south and east serbia",
-    "SRB::pomoravlje district": "SRB::south and east serbia",
-    "SRB::kolubara district": "SRB::central serbia",
-    "SRB::macva district": "SRB::central serbia",
-    "SRB::podunavlje district": "SRB::south and east serbia",
-    "SRB::sumadija district": "SRB::central serbia",
-    "SRB::moravica district": "SRB::central serbia",
-    "SRB::zlatibor district": "SRB::central serbia",
-    "SRB::raska district": "SRB::central serbia",
-    "SRB::kosovo": "SRB::kosovo and metohija",
-    "MNE::herceg novi municipality": "MNE::coast",
-    "MNE::bar municipality": "MNE::coast",
-    "MNE::budva municipality": "MNE::coast",
-    "MNE::kotor municipality": "MNE::coast",
-    "MNE::tivat municipality": "MNE::coast",
-    "MNE::ulcinj municipality": "MNE::coast",
-    "MNE::plav municipality": "MNE::inland",
-    "MNE::rozaje municipality": "MNE::inland",
-    "MNE::andrijevica municipality": "MNE::inland",
-    "MNE::berane municipality": "MNE::inland",
-    "MNE::podgorica municipality": "MNE::inland",
-    "MNE::bijelo polje municipality": "MNE::inland",
-    "MNE::cetinje municipality": "MNE::inland",
-    "MNE::danilovgrad municipality": "MNE::inland",
-    "MNE::kolasin municipality": "MNE::inland",
-    "MNE::mojkovac municipality": "MNE::inland",
-    "MNE::niksic municipality": "MNE::inland",
-    "MNE::pljevlja municipality": "MNE::inland",
-    "MNE::pluzine municipality": "MNE::inland",
-    "MNE::savnik municipality": "MNE::inland",
-    "MNE::zabljak municipality": "MNE::inland",
-    "MNE::gusinje municipality": "MNE::inland",
-    "MNE::petnjica municipality": "MNE::inland",
-};
+const REGION_NAME_ALIASES = Object.fromEntries([
+    ["federation of bosnia and herzegovina", "federation of bosnia and herzegovina"],
+    ["federation of bosnia-herzegovina", "federation of bosnia and herzegovina"],
+    ["republika srpska", "republika srpska"], ["brcko", "brcko"], ["brcko district", "brcko"],
+    ["belgrade", "belgrade"], ["belgrade district", "belgrade"],
+    ["autonomous province of vojvodina", "vojvodina"], ["vojvodina", "vojvodina"],
+    ["central serbia", "central serbia"], ["south and east serbia", "south and east serbia"],
+    ["kosovo and metohija", "kosovo and metohija"], ["kosovo", "kosovo and metohija"],
+    ["kosovo & metohija", "kosovo and metohija"], ["coast", "coast"], ["inland", "inland"],
+]);
+function mapFeatureGroup(countryCode, names, targetKey) {
+    return names.map((name) => [`${countryCode}::${name}`, targetKey]);
+}
+const SRB_VOJVODINA_FEATURES = [
+    "autonomous province of vojvodina", "vojvodina", "syrmia district", "south banat district",
+    "north banat district", "north backa district", "central banat district", "west backa district",
+    "south backa district",
+];
+const SRB_SOUTH_EAST_FEATURES = [
+    "bor district", "pcinja district", "branicevo district", "zajecar district", "pirot district",
+    "jablanica district", "toplica district", "nisava district", "rasina district",
+    "pomoravlje district", "podunavlje district",
+];
+const SRB_CENTRAL_FEATURES = [
+    "kolubara district", "macva district", "sumadija district", "moravica district",
+    "zlatibor district", "raska district",
+];
+const MNE_COAST_FEATURES = [
+    "herceg novi municipality", "bar municipality", "budva municipality",
+    "kotor municipality", "tivat municipality", "ulcinj municipality",
+];
+const MNE_INLAND_FEATURES = [
+    "plav municipality", "rozaje municipality", "andrijevica municipality", "berane municipality",
+    "podgorica municipality", "bijelo polje municipality", "cetinje municipality",
+    "danilovgrad municipality", "kolasin municipality", "mojkovac municipality",
+    "niksic municipality", "pljevlja municipality", "pluzine municipality",
+    "savnik municipality", "zabljak municipality", "gusinje municipality", "petnjica municipality",
+];
+const REGION_FEATURE_TO_BESP = Object.fromEntries([
+    ["BIH::federation of bosnia and herzegovina", "BIH::federation of bosnia and herzegovina"],
+    ["BIH::republika srpska", "BIH::republika srpska"],
+    ["BIH::brcko", "BIH::republika srpska"],
+    ["SRB::belgrade", "SRB::belgrade"],
+    ...mapFeatureGroup("SRB", SRB_VOJVODINA_FEATURES, "SRB::vojvodina"),
+    ...mapFeatureGroup("SRB", SRB_SOUTH_EAST_FEATURES, "SRB::south and east serbia"),
+    ...mapFeatureGroup("SRB", SRB_CENTRAL_FEATURES, "SRB::central serbia"),
+    ["SRB::kosovo", "SRB::kosovo and metohija"],
+    ...mapFeatureGroup("MNE", MNE_COAST_FEATURES, "MNE::coast"),
+    ...mapFeatureGroup("MNE", MNE_INLAND_FEATURES, "MNE::inland"),
+]);
 const VISUAL_REGION_DEFINITIONS = {
     "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
     "BIH::rs": { label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c" },
@@ -142,63 +111,24 @@ const VISUAL_REGION_DEFINITIONS = {
     "MNE::brda": { label: "Brda", dataRegionKey: "MNE::inland", fill: "#5e98cf" },
     "MNE::stara-raska": { label: "Stara Raska", dataRegionKey: "MNE::inland", fill: "#c6964d" },
 };
-const FEATURE_TO_VISUAL_REGION = {
-    "BIH::federation of bosnia and herzegovina": "BIH::fbih",
-    "BIH::republika srpska": "BIH::rs",
-    "BIH::brcko": "BIH::rs",
-    "SRB::autonomous province of vojvodina": "SRB::vojvodina",
-    "SRB::vojvodina": "SRB::vojvodina",
-    "SRB::syrmia district": "SRB::vojvodina",
-    "SRB::south banat district": "SRB::vojvodina",
-    "SRB::north banat district": "SRB::vojvodina",
-    "SRB::north backa district": "SRB::vojvodina",
-    "SRB::central banat district": "SRB::vojvodina",
-    "SRB::west backa district": "SRB::vojvodina",
-    "SRB::south backa district": "SRB::vojvodina",
-    "SRB::belgrade": "SRB::belgrade",
-    "SRB::kolubara district": "SRB::sz-srb",
-    "SRB::macva district": "SRB::sz-srb",
-    "SRB::sumadija district": "SRB::sz-srb",
-    "SRB::moravica district": "SRB::sz-srb",
-    "SRB::zlatibor district": "SRB::sz-srb",
-    "SRB::raska district": "SRB::sz-srb",
-    "SRB::bor district": "SRB::ji-srb",
-    "SRB::pcinja district": "SRB::ji-srb",
-    "SRB::branicevo district": "SRB::ji-srb",
-    "SRB::zajecar district": "SRB::ji-srb",
-    "SRB::pirot district": "SRB::ji-srb",
-    "SRB::jablanica district": "SRB::ji-srb",
-    "SRB::toplica district": "SRB::ji-srb",
-    "SRB::nisava district": "SRB::ji-srb",
-    "SRB::rasina district": "SRB::ji-srb",
-    "SRB::pomoravlje district": "SRB::ji-srb",
-    "SRB::podunavlje district": "SRB::ji-srb",
-    "SRB::kosovo": "SRB::kosovo-metohija",
-    "SRB::kosovo and metohija": "SRB::kosovo-metohija",
-    "MNE::herceg novi municipality": "MNE::boka",
-    "MNE::kotor municipality": "MNE::boka",
-    "MNE::tivat municipality": "MNE::boka",
-    "MNE::budva municipality": "MNE::primorje",
-    "MNE::bar municipality": "MNE::primorje",
-    "MNE::ulcinj municipality": "MNE::primorje",
-    "MNE::podgorica municipality": "MNE::zeta",
-    "MNE::danilovgrad municipality": "MNE::zeta",
-    "MNE::cetinje municipality": "MNE::stara-crna-gora",
-    "MNE::niksic municipality": "MNE::stara-hercegovina",
-    "MNE::pljevlja municipality": "MNE::stara-hercegovina",
-    "MNE::pluzine municipality": "MNE::stara-hercegovina",
-    "MNE::savnik municipality": "MNE::stara-hercegovina",
-    "MNE::zabljak municipality": "MNE::stara-hercegovina",
-    "MNE::kolasin municipality": "MNE::brda",
-    "MNE::mojkovac municipality": "MNE::brda",
-    "MNE::andrijevica municipality": "MNE::brda",
-    "MNE::berane municipality": "MNE::brda",
-    "MNE::bijelo polje municipality": "MNE::stara-raska",
-    "MNE::rozaje municipality": "MNE::stara-raska",
-    "MNE::plav municipality": "MNE::stara-raska",
-    "MNE::gusinje municipality": "MNE::stara-raska",
-    "MNE::petnjica municipality": "MNE::stara-raska",
-};
+const FEATURE_TO_VISUAL_REGION = Object.fromEntries([
+    ["BIH::federation of bosnia and herzegovina", "BIH::fbih"],
+    ["BIH::republika srpska", "BIH::rs"],
+    ["BIH::brcko", "BIH::rs"],
+    ...mapFeatureGroup("SRB", SRB_VOJVODINA_FEATURES, "SRB::vojvodina"),
+    ["SRB::belgrade", "SRB::belgrade"],
+    ...mapFeatureGroup("SRB", SRB_CENTRAL_FEATURES, "SRB::sz-srb"),
+    ...mapFeatureGroup("SRB", SRB_SOUTH_EAST_FEATURES, "SRB::ji-srb"),
+    ["SRB::kosovo", "SRB::kosovo-metohija"],
+    ["SRB::kosovo and metohija", "SRB::kosovo-metohija"],
+    ...mapFeatureGroup("MNE", ["herceg novi municipality", "kotor municipality", "tivat municipality"], "MNE::boka"),
+    ...mapFeatureGroup("MNE", ["budva municipality", "bar municipality", "ulcinj municipality"], "MNE::primorje"),
+    ...mapFeatureGroup("MNE", ["podgorica municipality", "danilovgrad municipality"], "MNE::zeta"),
+    ...mapFeatureGroup("MNE", ["cetinje municipality"], "MNE::stara-crna-gora"),
+    ...mapFeatureGroup("MNE", ["niksic municipality", "pljevlja municipality", "pluzine municipality", "savnik municipality", "zabljak municipality"], "MNE::stara-hercegovina"),
+    ...mapFeatureGroup("MNE", ["kolasin municipality", "mojkovac municipality", "andrijevica municipality", "berane municipality"], "MNE::brda"),
+    ...mapFeatureGroup("MNE", ["bijelo polje municipality", "rozaje municipality", "plav municipality", "gusinje municipality", "petnjica municipality"], "MNE::stara-raska"),
+]);
 
 const integerFormatter = new Intl.NumberFormat("en-US");
 const decimalFormatter = new Intl.NumberFormat("en-US", {
@@ -1304,11 +1234,8 @@ function renderCountryHover(countryCode, countryData) {
         return;
     }
 
-    elements.mapHoverTitle.textContent =
-        `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`;
-    elements.mapHoverBody.textContent =
-        `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, `
-        + `growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}.`;
+    elements.mapHoverTitle.textContent = `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`;
+    elements.mapHoverBody.textContent = describeCountrySummary(countryData);
 }
 
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
@@ -1329,8 +1256,7 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
         elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
         elements.mapHoverBody.textContent =
             "No direct BESP region mapping for this geoboundary. "
-            + `Fallback country context: ${countryData.country_name}, ${countryData.yearKey}, `
-            + `population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR.`;
+            + `Fallback country context: ${countryData.country_name}, ${countryData.yearKey}, ${describeCountrySummary(countryData, false)}`;
         return;
     }
 
@@ -1352,14 +1278,11 @@ function resetMapHoverDetails() {
 }
 
 function renderCountryTable(countryRows) {
-    if (!countryRows.length) {
-        elements.countryTableBody.innerHTML =
-            '<tr><td colspan="7" class="table-empty">No country year values found in the export.</td></tr>';
-        return;
-    }
-
-    elements.countryTableBody.innerHTML = countryRows
-        .map((country) => `
+    renderTable(
+        elements.countryTableBody,
+        countryRows,
+        '<tr><td colspan="7" class="table-empty">No country year values found in the export.</td></tr>',
+        (country) => `
             <tr>
                 <td>${escapeHtml(country.yearKey)}</td>
                 <td>${escapeHtml(countryFlag(country.country_code))} ${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})</td>
@@ -1369,19 +1292,16 @@ function renderCountryTable(countryRows) {
                 <td>${formatInteger(Math.round(country.gdp_per_capita_eur))} EUR</td>
                 <td>${formatPercent(country.average_unemployment_rate)}</td>
             </tr>
-        `)
-        .join("");
+        `
+    );
 }
 
 function renderRegionTable(regionRows) {
-    if (!regionRows.length) {
-        elements.regionTableBody.innerHTML =
-            '<tr><td colspan="8" class="table-empty">No region year values found in the export.</td></tr>';
-        return;
-    }
-
-    elements.regionTableBody.innerHTML = regionRows
-        .map((region) => `
+    renderTable(
+        elements.regionTableBody,
+        regionRows,
+        '<tr><td colspan="8" class="table-empty">No region year values found in the export.</td></tr>',
+        (region) => `
             <tr>
                 <td>${escapeHtml(region.yearKey)}</td>
                 <td>${escapeHtml(region.country_code)}</td>
@@ -1392,8 +1312,8 @@ function renderRegionTable(regionRows) {
                 <td>${formatPercent(region.unemployment_rate)}</td>
                 <td>${formatDecimal(region.regional_attractiveness)}</td>
             </tr>
-        `)
-        .join("");
+        `
+    );
 }
 
 function renderEmptyState() {
@@ -1453,6 +1373,21 @@ function setExportStatus(message, tone = "muted") {
     elements.exportStatus.className = `export-status export-status-status-${tone}`;
 }
 
+function renderTable(targetElement, rows, emptyRowHtml, rowBuilder) {
+    if (!rows.length) {
+        targetElement.innerHTML = emptyRowHtml;
+        return;
+    }
+    targetElement.innerHTML = rows.map(rowBuilder).join("");
+}
+
+function describeCountrySummary(countryData, includeUnemployment = true) {
+    const base = `population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}`;
+    return includeUnemployment
+        ? `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}.`
+        : `${base}.`;
+}
+
 function buildMetaCard(label, value) {
     return `
         <article class="meta-card">
@@ -1463,29 +1398,22 @@ function buildMetaCard(label, value) {
 }
 
 function compareYearAndCountry(left, right) {
-    const leftYear = extractStartYear(left);
-    const rightYear = extractStartYear(right);
-    if (leftYear !== rightYear) {
-        return leftYear - rightYear;
-    }
-
-    return normalizeCountryCode(left.country_code).localeCompare(normalizeCountryCode(right.country_code));
+    return compareByYearThen(left, right, (row) => normalizeCountryCode(row.country_code));
 }
 
 function compareYearCountryAndRegion(left, right) {
-    const leftYear = extractStartYear(left);
-    const rightYear = extractStartYear(right);
-    if (leftYear !== rightYear) {
-        return leftYear - rightYear;
-    }
+    return compareByYearThen(left, right, (row) => [
+        normalizeCountryCode(row.country_code),
+        normalizeRegionName(row.region_name),
+    ].join("::"));
+}
 
-    const leftCountryCode = normalizeCountryCode(left.country_code);
-    const rightCountryCode = normalizeCountryCode(right.country_code);
-    if (leftCountryCode !== rightCountryCode) {
-        return leftCountryCode.localeCompare(rightCountryCode);
+function compareByYearThen(left, right, keyBuilder) {
+    const yearDiff = extractStartYear(left) - extractStartYear(right);
+    if (yearDiff !== 0) {
+        return yearDiff;
     }
-
-    return normalizeRegionName(left.region_name).localeCompare(normalizeRegionName(right.region_name));
+    return keyBuilder(left).localeCompare(keyBuilder(right));
 }
 
 function compareYearKeys(left, right) {
@@ -1569,48 +1497,6 @@ function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
     const green = Math.round(113 + ratio * 90);
     const blue = Math.round(145 + ratio * 35);
     return `rgba(${red}, ${green}, ${blue}, 0.88)`;
-}
-
-function mapRegionFill(regionData, countryData, minUnemployment, maxUnemployment) {
-    if (regionData) {
-        const span = maxUnemployment - minUnemployment;
-        const ratio = span > 0 ? (regionData.unemployment_rate - minUnemployment) / span : 0.5;
-        const red = Math.round(84 + ratio * 135);
-        const green = Math.round(168 - ratio * 58);
-        const blue = Math.round(139 - ratio * 36);
-        return `rgba(${red}, ${green}, ${blue}, 0.9)`;
-    }
-
-    if (countryData) {
-        return "rgba(126, 143, 161, 0.38)";
-    }
-
-    return "rgba(110, 126, 143, 0.3)";
-}
-
-function shortBespRegionLabel(regionName, bespRegionKey) {
-    const normalized = normalizeRegionName(regionName);
-    const byNormalized = {
-        "federation of bosnia and herzegovina": "FBiH",
-        "republika srpska": "RS",
-        brcko: "Brcko",
-        belgrade: "Beograd",
-        vojvodina: "Vojvodina",
-        "central serbia": "Central SRB",
-        "south and east serbia": "SE SRB",
-        "kosovo and metohija": "Kosovo",
-        coast: "Coast",
-        inland: "Inland",
-    };
-
-    if (byNormalized[normalized]) {
-        return byNormalized[normalized];
-    }
-
-    const fallbackFromKey = regionNameFromBespKey(bespRegionKey);
-    return fallbackFromKey.length > 24
-        ? fallbackFromKey.replace(" and ", " & ")
-        : fallbackFromKey;
 }
 
 function extractStartYear(row) {
