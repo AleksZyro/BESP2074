@@ -85,6 +85,10 @@ class ShockDefinition:
     death_rate_multiplier: float = 1.0
     attractiveness_bias: float = 0.0
 
+    cooldown_years: int = 0
+    severity_min: float = 1.0
+    severity_max: float = 1.0
+
     country_weight_overrides: dict[str, float] = field(default_factory=dict)
 
 
@@ -98,6 +102,7 @@ class ShockEvent:
     shock_name: str
     category: str
     probability_applied: float
+    severity_scale: float
     gdp_growth_bias: float
     unemployment_bias: float
     net_migration_rate_shift: float

@@ -20,7 +20,8 @@ Project status:
 - Phase 5.7 in progress: scenario-driven variation inputs
 - Phase 5.8 implemented: export reload and dashboard clarity
 - Phase 5.8.2 complete: local run service and generate-run dashboard flow
-- Phase 7.1 active: bounded shock system v1 (economic + climate)
+- Phase 7.1 complete: bounded shock core (economic + climate)
+- Phase 7.2 complete: shock calibration guardrails and testcase verifier
 
 Current scope:
 - Countries and regions as dataclasses
@@ -38,6 +39,7 @@ Current simulation behavior:
 - Bounded yearly variation for births, deaths, migration, GDP growth, and unemployment
 - Scenario-driven variation inputs so runs can follow different plausible paths without degenerating into literal randomness
 - Bounded yearly shocks (Phase 7.1) with realistic, capped effects
+- Shock calibration guardrails (Phase 7.2): cooldowns, event caps per country-year, and bounded severity scaling
 - Multi-year terminal output with area, density, natural change and migration values
 
 Modeling principles:
@@ -112,6 +114,12 @@ Phase 7.1 - Shock System v1 (bounded):
 - Shock effects are exported as `shock_events` plus shock metadata in `meta.shocks`
 - Shocks can be disabled per run via CLI (`--disable-shocks`) or via the local run service payload
 
+Phase 7.2 - Shock expansion and calibration:
+- Adds cooldown windows per shock type to avoid immediate year-to-year repeats for the same country
+- Caps stacked shocks per country-year and per category-country-year
+- Adds bounded per-event severity scaling so shock strength varies plausibly but remains constrained
+- Adds testcase verifier `tools/verify_shock_events.py` for export-level shock integrity checks
+
 Phase 5.6 / 5.7 do not include:
 - No shock system
 - No inflation system v1
@@ -152,6 +160,9 @@ Map testcase fixture:
 - Fixture validation script: `tools/verify_map_fixture.py`
 - Run check with `py tools/verify_map_fixture.py`
 
+Shock testcase verifier:
+- Verify latest run with `py tools/verify_shock_events.py`
+
 Quick start:
 1. Run `py main.py` to generate `output/latest.json`.
 2. From the repository root, run `py tools/local_run_service.py --port 8011`.
@@ -159,6 +170,7 @@ Quick start:
 4. Use `Generate Run` for a new local simulation or `Reload Export` to re-read the newest JSON.
 5. Use `Play` only to replay the loaded years.
 6. Optional service health check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011`
+7. Optional shock integrity check after a run: `py tools/verify_shock_events.py`
 
 Documentation:
 - See `PROJECT_PHASES.md` for the cleaned-up roadmap, workflow rules, and the new Phase 5.6 bridge phase.

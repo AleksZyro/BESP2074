@@ -62,6 +62,8 @@ MAX_SHOCK_BIRTH_MULTIPLIER = 1.06
 MIN_SHOCK_BIRTH_MULTIPLIER = 0.94
 MAX_SHOCK_DEATH_MULTIPLIER = 1.08
 MIN_SHOCK_DEATH_MULTIPLIER = 0.94
+MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR = 2
+MAX_SHOCK_EVENTS_PER_CATEGORY_COUNTRY_YEAR = 1
 
 
 def _empty_shock_effect() -> dict[str, float]:
@@ -80,15 +82,34 @@ def build_country_shock_effects(
     shock_definitions: list[ShockDefinition] | None,
     start_year: int,
     variation_seed: str,
-) -> tuple[dict[str, dict[str, float]], list[ShockEvent]]:
+    last_triggered_by_country_shock: dict[tuple[str, str], int] | None = None,
+) -> tuple[dict[str, dict[str, float]], list[ShockEvent], dict[tuple[str, str], int]]:
     effects = {country.code: _empty_shock_effect() for country in countries}
     events: list[ShockEvent] = []
+    updated_last_triggered = dict(last_triggered_by_country_shock or {})
 
     if not shock_definitions:
-        return effects, events
+        return effects, events, updated_last_triggered
 
     for country in countries:
+        selected_count = 0
+        selected_categories: dict[str, int] = {}
         for shock in shock_definitions:
+            if selected_count >= MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR:
+                break
+
+            if (
+                selected_categories.get(shock.category, 0)
+                >= MAX_SHOCK_EVENTS_PER_CATEGORY_COUNTRY_YEAR
+            ):
+                continue
+
+            last_triggered_year = updated_last_triggered.get((country.code, shock.code))
+            if last_triggered_year is not None:
+                years_since_last = start_year - last_triggered_year
+                if years_since_last <= max(shock.cooldown_years, 0):
+                    continue
+
             base_probability = clamp(shock.annual_probability, 0.0, 1.0)
             country_weight = shock.country_weight_overrides.get(country.code, 1.0)
             probability = clamp(base_probability * country_weight, 0.0, 0.75)
@@ -99,13 +120,23 @@ def build_country_shock_effects(
             if draw_rng.random() > probability:
                 continue
 
+            severity_min = min(shock.severity_min, shock.severity_max)
+            severity_max = max(shock.severity_min, shock.severity_max)
+            severity_rng = random.Random(
+                f"{variation_seed}|shock-severity|{start_year}|{country.code}|{shock.code}"
+            )
+            severity_scale = severity_rng.uniform(severity_min, severity_max)
+
             effect = effects[country.code]
-            effect["birth_multiplier"] *= shock.birth_rate_multiplier
-            effect["death_multiplier"] *= shock.death_rate_multiplier
-            effect["net_migration_shift"] += shock.net_migration_rate_shift
-            effect["gdp_growth_bias"] += shock.gdp_growth_bias
-            effect["unemployment_bias"] += shock.unemployment_bias
-            effect["attractiveness_bias"] += shock.attractiveness_bias
+            effect["birth_multiplier"] *= 1.0 + (shock.birth_rate_multiplier - 1.0) * severity_scale
+            effect["death_multiplier"] *= 1.0 + (shock.death_rate_multiplier - 1.0) * severity_scale
+            effect["net_migration_shift"] += shock.net_migration_rate_shift * severity_scale
+            effect["gdp_growth_bias"] += shock.gdp_growth_bias * severity_scale
+            effect["unemployment_bias"] += shock.unemployment_bias * severity_scale
+            effect["attractiveness_bias"] += shock.attractiveness_bias * severity_scale
+            updated_last_triggered[(country.code, shock.code)] = start_year
+            selected_count += 1
+            selected_categories[shock.category] = selected_categories.get(shock.category, 0) + 1
 
             events.append(
                 ShockEvent(
@@ -117,9 +148,10 @@ def build_country_shock_effects(
                     shock_name=shock.name,
                     category=shock.category,
                     probability_applied=probability,
-                    gdp_growth_bias=shock.gdp_growth_bias,
-                    unemployment_bias=shock.unemployment_bias,
-                    net_migration_rate_shift=shock.net_migration_rate_shift,
+                    severity_scale=severity_scale,
+                    gdp_growth_bias=shock.gdp_growth_bias * severity_scale,
+                    unemployment_bias=shock.unemployment_bias * severity_scale,
+                    net_migration_rate_shift=shock.net_migration_rate_shift * severity_scale,
                 )
             )
 
@@ -155,7 +187,7 @@ def build_country_shock_effects(
             MAX_SHOCK_ATTRACTIVENESS_BIAS,
         )
 
-    return effects, events
+    return effects, events, updated_last_triggered
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
@@ -310,14 +342,16 @@ def simulate_year(
     scenario: SimulationScenario | None = None,
     variation_seed: str = "baseline-2020",
     shock_definitions: list[ShockDefinition] | None = None,
-) -> tuple[list[RegionYearResult], list[ShockEvent]]:
+    last_triggered_by_country_shock: dict[tuple[str, str], int] | None = None,
+) -> tuple[list[RegionYearResult], list[ShockEvent], dict[tuple[str, str], int]]:
     end_year = start_year + 1
     results: list[RegionYearResult] = []
-    shock_effects_by_country, shock_events = build_country_shock_effects(
+    shock_effects_by_country, shock_events, updated_last_triggered = build_country_shock_effects(
         countries,
         shock_definitions,
         start_year,
         variation_seed,
+        last_triggered_by_country_shock,
     )
 
     for country in countries:
@@ -480,7 +514,7 @@ def simulate_year(
                 )
             )
 
-    return results, shock_events
+    return results, shock_events, updated_last_triggered
 
 
 def simulate_period(
@@ -493,14 +527,16 @@ def simulate_period(
 ) -> tuple[list[RegionYearResult], list[ShockEvent]]:
     results: list[RegionYearResult] = []
     shock_events: list[ShockEvent] = []
+    last_triggered_by_country_shock: dict[tuple[str, str], int] = {}
 
     for year in range(start_year, end_year):
-        yearly_results, yearly_shock_events = simulate_year(
+        yearly_results, yearly_shock_events, last_triggered_by_country_shock = simulate_year(
             countries,
             year,
             scenario,
             variation_seed,
             shock_definitions=shock_definitions,
+            last_triggered_by_country_shock=last_triggered_by_country_shock,
         )
         results.extend(yearly_results)
         shock_events.extend(yearly_shock_events)

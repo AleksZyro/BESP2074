@@ -241,7 +241,7 @@ Current implementation note:
 - `Reload Export` remains available, but `Generate Run` now covers the local fresh-run workflow cleanly
 
 ### Phase 7.1 - Shock System v1 (bounded core)
-Status: active
+Status: complete
 
 Purpose:
 - Introduce plausible first shocks without event-spam design
@@ -265,12 +265,36 @@ Current implementation note:
 - Effects are capped to avoid unrealistic blowups
 - Initial shock families: economic and climate
 
+### Phase 7.2 - Shock Expansion & Calibration
+Status: complete
+
+Purpose:
+- Reduce unrealistic clustering of shock events while keeping variability
+- Keep shock intensity plausible and bounded under all seeds
+- Add explicit testcase-style validation for shock export quality
+
+Contains:
+- Cooldown windows per shock type (`cooldown_years`)
+- Bounded per-event severity scaling (`severity_min` / `severity_max`)
+- Caps per country-year and category-country-year to limit stacked shocks
+- Shock testcase verifier script (`tools/verify_shock_events.py`)
+
+Explicitly not in scope:
+- No politics/state coupling
+- No inflation system v1
+- No map redesign work
+
+Current implementation note:
+- Same seed still reproduces identical shock timing/intensity
+- Different seeds produce different but bounded shock paths
+- Exported shock metadata/event list is now verified by a dedicated integrity script
+
 Phase numbering note:
 - The earlier idea of a separate standalone "controls phase" is now absorbed into Phase 5.6
 - This keeps timeline playback and controlled variation together instead of splitting one coherent block across multiple phases
 
 ### Phase 7 - Shock System v1
-Status: in progress (started as 7.1 bounded core)
+Status: in progress (7.1 core + 7.2 calibration complete)
 
 Likely first shocks:
 - Recession
@@ -299,7 +323,7 @@ Possible future systems:
 4. Phase 5.8 export reload and dashboard clarity
 5. Phase 5.8.2 local run service and generate-run flow
 6. Phase 7.1 bounded shock core
-7. Phase 7.x shock expansion and calibration
+7. Phase 7.3 shock validation and balancing pass
 8. Phase 8 politics / state
 
 ## Current Actual State
@@ -316,3 +340,4 @@ Possible future systems:
 - Scenario and seed inputs now allow multiple plausible paths without unbounded randomness
 - If the same seed is reused, the same path can still be reproduced on purpose
 - Shock events are now generated in a bounded way and exported for run transparency
+- Shock calibration now includes cooldowns, stacking caps, and bounded severity scaling
