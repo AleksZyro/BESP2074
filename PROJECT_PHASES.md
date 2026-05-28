@@ -316,7 +316,7 @@ Likely first shocks:
 - Heat wave
 
 ### Phase 8 - Politics / State v1
-Status: active (8.1 core implemented)
+Status: active (8.2 tick integration implemented)
 
 Possible future systems:
 - Budget
@@ -346,6 +346,20 @@ Explicitly not in scope:
 - No policy-tree or event-scripting layer
 - No inflation subsystem yet
 
+### Phase 8.2 - State Tick Integration & Validation
+Status: complete
+
+Contains:
+- Explicit yearly state-step limits for:
+  - budget balance
+  - debt ratio
+  - stability
+  - corruption
+  - investment climate
+- Validation checks for state bounds and year-to-year state deltas
+- Dedicated verifier script for state dynamics (`tools/verify_state_dynamics.py`)
+- Updated export metadata marker: `meta.state_model.phase = "8.2"`
+
 ## Current Roadmap Order
 
 1. Phase 5 documentation and map baseline completed
@@ -356,7 +370,7 @@ Explicitly not in scope:
 6. Phase 6 merged into 5.6 (no separate implementation block)
 7. Phase 7.1 bounded shock core
 8. Phase 7.3 shock validation and balancing pass
-9. Phase 8.1 politics / state core model
+9. Phase 8.2 politics / state tick integration and validation
 
 ## Current Actual State
 
@@ -373,3 +387,4 @@ Explicitly not in scope:
 - If the same seed is reused, the same path can still be reproduced on purpose
 - Shock events are now generated in a bounded way and exported for run transparency
 - Shock calibration now includes cooldowns, stacking caps, and bounded severity scaling
+- State-core values are now integrated into yearly progression with explicit delta caps and validation checks

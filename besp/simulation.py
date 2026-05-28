@@ -68,6 +68,11 @@ MIN_CORRUPTION_INDEX = 0.15
 MAX_CORRUPTION_INDEX = 0.95
 MIN_INVESTMENT_CLIMATE_INDEX = 0.15
 MAX_INVESTMENT_CLIMATE_INDEX = 0.95
+MAX_BUDGET_BALANCE_STEP = 0.025
+MAX_DEBT_TO_GDP_STEP = 0.05
+MAX_STABILITY_STEP = 0.06
+MAX_CORRUPTION_STEP = 0.05
+MAX_INVESTMENT_CLIMATE_STEP = 0.06
 
 
 def _empty_shock_effect() -> dict[str, float]:
@@ -170,6 +175,19 @@ def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(value, maximum))
 
 
+def bounded_state_step(
+    previous_value: float,
+    target_value: float,
+    minimum: float,
+    maximum: float,
+    max_step: float,
+) -> float:
+    bounded_target = clamp(target_value, minimum, maximum)
+    raw_delta = bounded_target - previous_value
+    bounded_delta = clamp(raw_delta, -max_step, max_step)
+    return clamp(previous_value + bounded_delta, minimum, maximum)
+
+
 def initialize_country_state(country: Country) -> dict[str, float]:
     return {
         "budget_balance_pct_gdp": clamp(
@@ -217,10 +235,15 @@ def evolve_country_state(
         - unemployment_gap * 0.06
         + attractiveness_gap * 0.03
     )
-    budget_balance_pct_gdp = clamp(
-        previous_state["budget_balance_pct_gdp"] * 0.72 + budget_target * 0.28,
+    budget_smoothed = (
+        previous_state["budget_balance_pct_gdp"] * 0.72 + budget_target * 0.28
+    )
+    budget_balance_pct_gdp = bounded_state_step(
+        previous_state["budget_balance_pct_gdp"],
+        budget_smoothed,
         MIN_BUDGET_BALANCE_PCT_GDP,
         MAX_BUDGET_BALANCE_PCT_GDP,
+        MAX_BUDGET_BALANCE_STEP,
     )
 
     debt_change = (
@@ -228,10 +251,13 @@ def evolve_country_state(
         - gdp_growth_rate * 0.10
         + max(unemployment_gap, 0.0) * 0.04
     )
-    debt_to_gdp = clamp(
-        previous_state["debt_to_gdp"] + clamp(debt_change, -0.03, 0.04),
+    debt_target = previous_state["debt_to_gdp"] + clamp(debt_change, -0.03, 0.04)
+    debt_to_gdp = bounded_state_step(
+        previous_state["debt_to_gdp"],
+        debt_target,
         MIN_DEBT_TO_GDP,
         MAX_DEBT_TO_GDP,
+        MAX_DEBT_TO_GDP_STEP,
     )
 
     stability_target = (
@@ -241,10 +267,15 @@ def evolve_country_state(
         + attractiveness_gap * 0.80
         - (previous_state["corruption_index"] - 0.50) * 0.50
     )
-    stability_index = clamp(
-        previous_state["stability_index"] * 0.78 + stability_target * 0.22,
+    stability_smoothed = (
+        previous_state["stability_index"] * 0.78 + stability_target * 0.22
+    )
+    stability_index = bounded_state_step(
+        previous_state["stability_index"],
+        stability_smoothed,
         MIN_STABILITY_INDEX,
         MAX_STABILITY_INDEX,
+        MAX_STABILITY_STEP,
     )
 
     corruption_target = (
@@ -253,10 +284,15 @@ def evolve_country_state(
         + max(unemployment_gap, 0.0) * 0.25
         - (stability_index - 0.50) * 0.20
     )
-    corruption_index = clamp(
-        previous_state["corruption_index"] * 0.82 + corruption_target * 0.18,
+    corruption_smoothed = (
+        previous_state["corruption_index"] * 0.82 + corruption_target * 0.18
+    )
+    corruption_index = bounded_state_step(
+        previous_state["corruption_index"],
+        corruption_smoothed,
         MIN_CORRUPTION_INDEX,
         MAX_CORRUPTION_INDEX,
+        MAX_CORRUPTION_STEP,
     )
 
     investment_target = (
@@ -267,10 +303,15 @@ def evolve_country_state(
         - corruption_index * 0.30
         + attractiveness_gap * 0.70
     )
-    investment_climate_index = clamp(
-        previous_state["investment_climate_index"] * 0.75 + investment_target * 0.25,
+    investment_smoothed = (
+        previous_state["investment_climate_index"] * 0.75 + investment_target * 0.25
+    )
+    investment_climate_index = bounded_state_step(
+        previous_state["investment_climate_index"],
+        investment_smoothed,
         MIN_INVESTMENT_CLIMATE_INDEX,
         MAX_INVESTMENT_CLIMATE_INDEX,
+        MAX_INVESTMENT_CLIMATE_STEP,
     )
 
     return {

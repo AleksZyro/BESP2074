@@ -27,6 +27,7 @@ Project status:
 - Phase 7.4 complete: testcase expansion for export + dashboard flow
 - Phase 7.5 complete: refactor / bloat-reduction pass (net negative)
 - Phase 8.1 complete: politics/state v1 core model and export wiring
+- Phase 8.2 complete: yearly tick integration + state validation pass
 
 Current scope:
 - Countries and regions as dataclasses
@@ -46,6 +47,7 @@ Current simulation behavior:
 - Bounded yearly shocks (Phase 7.1) with realistic, capped effects
 - Shock calibration guardrails (Phase 7.2): cooldowns, event caps per country-year, and bounded severity scaling
 - Country state v1 core (Phase 8.1): budget balance, debt ratio, stability index, corruption index, and investment-climate index
+- State values are step-limited per year (Phase 8.2) for plausible inertial progression
 - Multi-year terminal output with area, density, natural change and migration values
 
 Modeling principles:
@@ -154,7 +156,7 @@ Current data-selection behavior:
 - `main.py` currently simulates `2020 -> 2030`
 - `output/latest.json` contains all simulated year buckets in that range
 - `output/latest.json` now also records scenario and variation seed in export metadata
-- `output/latest.json` now also records `meta.state_model` for the Phase 8.1 state-core payload
+- `output/latest.json` now also records `meta.state_model` for the Phase 8.2 integrated state-core payload
 - Runs without `--seed` now generate a fresh seed automatically, so repeated simulations can diverge in bounded ways
 - `dashboard/app.js` now starts from the earliest available year bucket and can step/play through later buckets
 - Map cards, hover details, and summary tables follow the currently selected export year
@@ -170,6 +172,7 @@ Map testcase fixture:
 Export testcase verifiers:
 - Year-state consistency: `py tools/verify_export_year_state.py`
 - Scenario/seed meta consistency: `py tools/verify_export_meta.py`
+- State dynamics consistency: `py tools/verify_state_dynamics.py`
 
 Shock testcase verifier:
 - Verify latest run with `py tools/verify_shock_events.py`
@@ -184,7 +187,7 @@ Quick start:
 3. Open `http://localhost:8011/dashboard/index.html`.
 4. Use `Generate Run` for a new local simulation or `Reload Export` to re-read the newest JSON.
 5. Use `Play` only to replay the loaded years.
-6. Optional export checks: `py tools/verify_export_year_state.py` and `py tools/verify_export_meta.py`
+6. Optional export checks: `py tools/verify_export_year_state.py`, `py tools/verify_export_meta.py`, and `py tools/verify_state_dynamics.py`
 7. Optional service health check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011`
 8. Optional local E2E run check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011 --e2e`
 9. Optional shock integrity check after a run: `py tools/verify_shock_events.py`

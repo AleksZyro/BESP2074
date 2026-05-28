@@ -14,6 +14,11 @@ from besp.simulation import (
     MIN_INVESTMENT_CLIMATE_INDEX,
     MIN_STABILITY_INDEX,
     MIN_UNEMPLOYMENT_RATE,
+    MAX_BUDGET_BALANCE_STEP,
+    MAX_CORRUPTION_STEP,
+    MAX_DEBT_TO_GDP_STEP,
+    MAX_INVESTMENT_CLIMATE_STEP,
+    MAX_STABILITY_STEP,
 )
 
 
@@ -109,5 +114,50 @@ def validate_simulation_results(
                 f"{year_label}: investment_climate_index {result.investment_climate_index:.3f} is outside "
                 f"[{MIN_INVESTMENT_CLIMATE_INDEX:.3f}, {MAX_INVESTMENT_CLIMATE_INDEX:.3f}]."
             )
+
+    grouped_country_results: dict[str, list[CountryYearResult]] = {}
+    for result in country_results:
+        grouped_country_results.setdefault(result.country_code, []).append(result)
+
+    for country_code, entries in grouped_country_results.items():
+        sorted_entries = sorted(entries, key=lambda entry: entry.start_year)
+        for previous, current in zip(sorted_entries, sorted_entries[1:]):
+            budget_delta = abs(current.budget_balance_pct_gdp - previous.budget_balance_pct_gdp)
+            debt_delta = abs(current.debt_to_gdp - previous.debt_to_gdp)
+            stability_delta = abs(current.stability_index - previous.stability_index)
+            corruption_delta = abs(current.corruption_index - previous.corruption_index)
+            investment_delta = abs(
+                current.investment_climate_index - previous.investment_climate_index
+            )
+            year_label = (
+                f"{previous.start_year}->{previous.end_year} to "
+                f"{current.start_year}->{current.end_year} {country_code}"
+            )
+
+            if budget_delta > MAX_BUDGET_BALANCE_STEP + 1e-9:
+                warnings.append(
+                    f"{year_label}: budget_balance_pct_gdp step {budget_delta:.3f} exceeds "
+                    f"{MAX_BUDGET_BALANCE_STEP:.3f}."
+                )
+            if debt_delta > MAX_DEBT_TO_GDP_STEP + 1e-9:
+                warnings.append(
+                    f"{year_label}: debt_to_gdp step {debt_delta:.3f} exceeds "
+                    f"{MAX_DEBT_TO_GDP_STEP:.3f}."
+                )
+            if stability_delta > MAX_STABILITY_STEP + 1e-9:
+                warnings.append(
+                    f"{year_label}: stability_index step {stability_delta:.3f} exceeds "
+                    f"{MAX_STABILITY_STEP:.3f}."
+                )
+            if corruption_delta > MAX_CORRUPTION_STEP + 1e-9:
+                warnings.append(
+                    f"{year_label}: corruption_index step {corruption_delta:.3f} exceeds "
+                    f"{MAX_CORRUPTION_STEP:.3f}."
+                )
+            if investment_delta > MAX_INVESTMENT_CLIMATE_STEP + 1e-9:
+                warnings.append(
+                    f"{year_label}: investment_climate_index step {investment_delta:.3f} exceeds "
+                    f"{MAX_INVESTMENT_CLIMATE_STEP:.3f}."
+                )
 
     return warnings

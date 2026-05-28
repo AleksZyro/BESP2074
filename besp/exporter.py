@@ -48,8 +48,8 @@ def build_simulation_export(
                 "event_count": len(serialized_shock_events),
             },
             "state_model": {
-                "phase": "8.1",
-                "version": "politics_state_v1_core",
+                "phase": "8.2",
+                "version": "politics_state_v1_tick_integration",
             },
         },
         "shock_events": serialized_shock_events,
