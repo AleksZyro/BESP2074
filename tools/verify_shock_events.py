@@ -41,13 +41,23 @@ def main() -> None:
     for event in shock_events:
         country_code = str(event.get("country_code"))
         start_year = int(event.get("start_year"))
+        end_year = int(event.get("end_year"))
         shock_code = str(event.get("shock_code"))
         category = str(event.get("category"))
         severity = float(event.get("severity_scale", 0.0))
+        probability_applied = float(event.get("probability_applied", -1.0))
 
         if severity <= 0.0:
             fail(
                 f"Invalid severity_scale for {country_code}/{shock_code}/{start_year}: {severity}"
+            )
+        if end_year != start_year + 1:
+            fail(
+                f"Invalid year span for {country_code}/{shock_code}: {start_year}->{end_year}"
+            )
+        if probability_applied < 0.0 or probability_applied > 0.75:
+            fail(
+                f"Invalid probability_applied for {country_code}/{shock_code}/{start_year}: {probability_applied}"
             )
 
         key = (country_code, start_year)
