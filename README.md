@@ -16,8 +16,8 @@ Project status:
 - Phase 3.3 complete: validation / calibration pass
 - Phase 4 complete: dashboard v1 without map-first scope creep
 - Phase 5 complete in baseline form: map v1
-- Phase 5.6 in progress: timeline and controlled variation bridge phase
-- Phase 5.7 in progress: scenario-driven variation inputs
+- Phase 5.6 complete: timeline and controlled variation bridge phase
+- Phase 5.7 complete: scenario-driven variation inputs
 - Phase 5.8 implemented: export reload and dashboard clarity
 - Phase 5.8.2 complete: local run service and generate-run dashboard flow
 - Phase 6 merged into 5.6: controls are delivered as part of timeline playback
@@ -28,6 +28,7 @@ Project status:
 - Phase 7.5 complete: refactor / bloat-reduction pass (net negative)
 - Phase 8.1 complete: politics/state v1 core model and export wiring
 - Phase 8.2 complete: yearly tick integration + state validation pass
+- Phase 8.3 complete: dashboard state-value panels with timeline year sync
 
 Current scope:
 - Countries and regions as dataclasses
@@ -71,7 +72,7 @@ Dashboard 5.x (map v1):
 Current dashboard limitations:
 - No live simulation runs in the browser; the dashboard reads exported JSON data
 - No remote/public backend yet; run generation currently uses a local helper service
-- Controlled variation is still lightweight and not yet a full shock or policy layer
+- Controlled variation and shocks are bounded by design and not a full policy engine
 - `Reload Export` reloads the latest JSON only; it does not start Python from the browser
 - `Generate Run` uses a local run service to start a fresh simulation without turning browser JavaScript into a shell launcher
 
@@ -160,6 +161,7 @@ Current data-selection behavior:
 - Runs without `--seed` now generate a fresh seed automatically, so repeated simulations can diverge in bounded ways
 - `dashboard/app.js` now starts from the earliest available year bucket and can step/play through later buckets
 - Map cards, hover details, and summary tables follow the currently selected export year
+- State cards and state table (Phase 8.3) also follow the currently selected export year
 
 Map data source:
 - Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for BIH, MNE, SRB, plus XKX (mapped into SRB scope for BESP consistency).
@@ -193,4 +195,4 @@ Quick start:
 9. Optional shock integrity check after a run: `py tools/verify_shock_events.py`
 
 Documentation:
-- See `PROJECT_PHASES.md` for the cleaned-up roadmap, workflow rules, and the new Phase 5.6 bridge phase.
+- See `PROJECT_PHASES.md` for the full up-to-date roadmap, workflow rules, current phase states, and next planned blocks.
