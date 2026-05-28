@@ -170,6 +170,7 @@ let activeMapMode = "country";
 
 const elements = {
     metaCards: document.getElementById("meta-cards"),
+    stateCards: document.getElementById("state-cards"),
     mapModeCountryButton: document.getElementById("map-mode-country"),
     mapModeRegionButton: document.getElementById("map-mode-region"),
     yearStepBackButton: document.getElementById("year-step-back"),
@@ -190,6 +191,7 @@ const elements = {
     regionLayer: document.getElementById("region-layer"),
     regionLabelLayer: document.getElementById("region-label-layer"),
     mapSummaryCards: document.getElementById("map-summary-cards"),
+    stateTableBody: document.getElementById("state-table-body"),
     countryTableBody: document.getElementById("country-table-body"),
     regionTableBody: document.getElementById("region-table-body"),
 };
@@ -863,6 +865,7 @@ function renderActiveYearState() {
     renderCountryLayer(dashboardState.geoData);
     renderRegionLayer(dashboardState.geoData);
     bindMapHoverEvents();
+    renderStatePanels(countryRows);
     renderCountryTable(countryRows);
     renderRegionTable(regionRows);
     updatePlaybackControls();
@@ -1288,6 +1291,55 @@ function renderCountryTable(countryRows) {
     );
 }
 
+function renderStatePanels(countryRows) {
+    if (!countryRows.length) {
+        elements.stateCards.innerHTML = `
+            <article class="meta-card empty-card">
+                <span class="meta-label">No state data loaded</span>
+                <strong class="meta-value">-</strong>
+                <p class="meta-note">No country rows found for the selected year.</p>
+            </article>
+        `;
+        elements.stateTableBody.innerHTML =
+            '<tr><td colspan="7" class="table-empty">No state summary loaded yet.</td></tr>';
+        return;
+    }
+
+    const averages = {
+        budget_balance_pct_gdp: averageMetric(countryRows, "budget_balance_pct_gdp"),
+        debt_to_gdp: averageMetric(countryRows, "debt_to_gdp"),
+        stability_index: averageMetric(countryRows, "stability_index"),
+        corruption_index: averageMetric(countryRows, "corruption_index"),
+        investment_climate_index: averageMetric(countryRows, "investment_climate_index"),
+    };
+    const activeYearKey = getActiveYearKey();
+
+    elements.stateCards.innerHTML = [
+        buildStateCard("Avg budget balance", averages.budget_balance_pct_gdp, activeYearKey),
+        buildStateCard("Avg debt-to-GDP", averages.debt_to_gdp, activeYearKey),
+        buildStateCard("Avg stability", averages.stability_index, activeYearKey),
+        buildStateCard("Avg corruption", averages.corruption_index, activeYearKey),
+        buildStateCard("Avg investment climate", averages.investment_climate_index, activeYearKey),
+    ].join("");
+
+    renderTable(
+        elements.stateTableBody,
+        countryRows,
+        '<tr><td colspan="7" class="table-empty">No state summary loaded yet.</td></tr>',
+        (country) => `
+            <tr>
+                <td>${escapeHtml(country.yearKey)}</td>
+                <td>${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})</td>
+                <td>${formatStateRatio(country.budget_balance_pct_gdp)}</td>
+                <td>${formatStateRatio(country.debt_to_gdp)}</td>
+                <td>${formatStateRatio(country.stability_index)}</td>
+                <td>${formatStateRatio(country.corruption_index)}</td>
+                <td>${formatStateRatio(country.investment_climate_index)}</td>
+            </tr>
+        `
+    );
+}
+
 function renderRegionTable(regionRows) {
     renderTable(
         elements.regionTableBody,
@@ -1346,6 +1398,15 @@ function renderEmptyState() {
             <p class="meta-note">The dashboard is waiting for <code>output/latest.json</code>.</p>
         </article>
     `;
+    elements.stateCards.innerHTML = `
+        <article class="meta-card empty-card">
+            <span class="meta-label">No state data loaded</span>
+            <strong class="meta-value">-</strong>
+            <p class="meta-note">Run or load an export with Phase 8 state values.</p>
+        </article>
+    `;
+    elements.stateTableBody.innerHTML =
+        '<tr><td colspan="7" class="table-empty">No state summary loaded yet.</td></tr>';
     elements.countryTableBody.innerHTML =
         '<tr><td colspan="7" class="table-empty">No country summary loaded yet.</td></tr>';
     elements.regionTableBody.innerHTML =
@@ -1371,6 +1432,37 @@ function renderTable(targetElement, rows, emptyRowHtml, rowBuilder) {
         return;
     }
     targetElement.innerHTML = rows.map(rowBuilder).join("");
+}
+
+function buildStateCard(label, value, activeYearKey) {
+    const safeValue = value === null ? "-" : formatPercent(value);
+    const note = activeYearKey ? `Selected year: ${escapeHtml(activeYearKey)}` : "No year selected";
+    return `
+        <article class="meta-card">
+            <span class="meta-label">${escapeHtml(label)}</span>
+            <strong class="meta-value">${safeValue}</strong>
+            <p class="meta-note">${note}</p>
+        </article>
+    `;
+}
+
+function averageMetric(rows, metricKey) {
+    let sum = 0;
+    let count = 0;
+    for (const row of rows) {
+        const value = Number(row?.[metricKey]);
+        if (!Number.isFinite(value)) {
+            continue;
+        }
+        sum += value;
+        count += 1;
+    }
+    return count > 0 ? sum / count : null;
+}
+
+function formatStateRatio(value) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? formatPercent(numeric) : "-";
 }
 
 function describeCountrySummary(countryData, includeUnemployment = true) {
