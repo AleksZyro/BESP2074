@@ -1,24 +1,12 @@
-import json
 from pathlib import Path
 
-
-def fail(message: str) -> None:
-    print(f"[FAIL] {message}")
-    raise SystemExit(1)
+from verify_common import fail, load_latest_export, read_json_file
 
 
 def main() -> None:
-    export_path = Path("output/latest.json")
     scenarios_path = Path("data/scenarios.json")
-    if not export_path.exists():
-        fail("Missing output/latest.json. Run `py main.py` first.")
-    if not scenarios_path.exists():
-        fail("Missing data/scenarios.json.")
-
-    with export_path.open("r", encoding="utf-8") as handle:
-        export_data = json.load(handle)
-    with scenarios_path.open("r", encoding="utf-8") as handle:
-        scenarios = json.load(handle)
+    export_data = load_latest_export()
+    scenarios = read_json_file(scenarios_path, "Missing data/scenarios.json.")
 
     scenario_map = {
         str(item["code"]): item

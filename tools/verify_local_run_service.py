@@ -6,27 +6,32 @@ import urllib.error
 import urllib.request
 
 
-def fetch_json(url: str) -> object:
-    request = urllib.request.Request(url, method="GET")
-    with urllib.request.urlopen(request, timeout=4) as response:
-        return json.loads(response.read().decode("utf-8"))
-
-
-def post_json(url: str, payload: dict[str, object]) -> object:
+def request_json(
+    url: str,
+    *,
+    method: str = "GET",
+    payload: dict[str, object] | None = None,
+    timeout: int = 4,
+) -> object:
+    body = None
+    headers: dict[str, str] = {}
+    if payload is not None:
+        body = json.dumps(payload).encode("utf-8")
+        headers["Content-Type"] = "application/json"
     request = urllib.request.Request(
         url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
+        data=body,
+        headers=headers,
+        method=method,
     )
-    with urllib.request.urlopen(request, timeout=6) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
 def wait_for_run_completion(base_url: str, timeout_seconds: int) -> dict:
     deadline = time.time() + timeout_seconds
     while time.time() < deadline:
-        payload = fetch_json(f"{base_url}/api/run-status")
+        payload = request_json(f"{base_url}/api/run-status")
         if not isinstance(payload, dict):
             raise SystemExit("Unexpected run-status payload while polling.")
         state = str(payload.get("state", "unknown"))
@@ -67,8 +72,8 @@ def main() -> None:
 
     base_url = args.base_url.rstrip("/")
     try:
-        scenarios = fetch_json(f"{base_url}/api/scenarios")
-        status = fetch_json(f"{base_url}/api/run-status")
+        scenarios = request_json(f"{base_url}/api/scenarios")
+        status = request_json(f"{base_url}/api/run-status")
     except urllib.error.URLError as error:
         raise SystemExit(
             f"Could not reach local run service at {base_url}. {error.reason}"
@@ -85,9 +90,11 @@ def main() -> None:
     print(f"Run status: {status.get('state', 'unknown')}")
 
     if args.trigger_run or args.e2e:
-        run_result = post_json(
+        run_result = request_json(
             f"{base_url}/api/run",
-            {"scenario": "baseline", "shocks_enabled": True},
+            method="POST",
+            payload={"scenario": "baseline", "shocks_enabled": True},
+            timeout=6,
         )
         print(f"Run trigger accepted: state={run_result.get('state', 'unknown')}")
         if args.e2e:

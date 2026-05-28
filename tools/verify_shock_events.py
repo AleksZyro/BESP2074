@@ -1,6 +1,5 @@
-import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -11,21 +10,11 @@ from besp.simulation import (
     MAX_SHOCK_EVENTS_PER_CATEGORY_COUNTRY_YEAR,
     MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR,
 )
-
-
-def fail(message: str) -> None:
-    print(f"[FAIL] {message}")
-    raise SystemExit(1)
+from verify_common import fail, load_latest_export
 
 
 def main() -> None:
-    export_path = Path("output/latest.json")
-    if not export_path.exists():
-        fail("Missing output/latest.json. Run `py main.py` first.")
-
-    with export_path.open("r", encoding="utf-8") as handle:
-        export_data = json.load(handle)
-
+    export_data = load_latest_export()
     shock_events = export_data.get("shock_events", [])
     meta_shocks = export_data.get("meta", {}).get("shocks", {})
     shocks_enabled = bool(meta_shocks.get("enabled", True))

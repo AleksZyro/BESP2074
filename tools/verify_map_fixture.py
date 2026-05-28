@@ -1,6 +1,5 @@
-import json
 from pathlib import Path
-import sys
+from verify_common import fail, read_json_file
 
 
 EXPECTED_COUNTRY_CODES = {"BIH", "MNE", "SRB"}
@@ -17,19 +16,9 @@ EXPECTED_REGIONS = {
     ("BIH", "Brcko"),
 }
 
-
-def fail(message: str) -> None:
-    print(f"[FAIL] {message}")
-    raise SystemExit(1)
-
-
 def main() -> None:
     fixture_path = Path("dashboard/fixtures/map_fixture_latest.json")
-    if not fixture_path.exists():
-        fail(f"Fixture file not found: {fixture_path}")
-
-    with fixture_path.open("r", encoding="utf-8") as file:
-        fixture = json.load(file)
+    fixture = read_json_file(fixture_path, f"Fixture file not found: {fixture_path}")
 
     years = fixture.get("years", {})
     if not years:
