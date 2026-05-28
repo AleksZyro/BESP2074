@@ -2,15 +2,15 @@ const EXPORT_PATH = "../output/latest.json";
 const RUN_STATUS_PATH = "/api/run-status";
 const RUN_SCENARIOS_PATH = "/api/scenarios";
 const RUN_TRIGGER_PATH = "/api/run";
+const RUN_SERVICE_OFFLINE_MESSAGE =
+    "Local run service unavailable. Start the local run service or use py main.py and Reload Export.";
+const PLAYBACK_HELP_MESSAGE =
+    "Use Generate Run for a fresh local simulation, Reload Export for the newest JSON, and Play for timeline playback.";
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 22;
 const TARGET_COUNTRIES = new Set(["BIH", "MNE", "SRB"]);
-const COUNTRY_LABEL_OFFSETS = {
-    SRB: [0, -26],
-    BIH: [0, 0],
-    MNE: [0, 0],
-};
+const COUNTRY_LABEL_OFFSETS = { SRB: [0, -26] };
 const VISUAL_REGION_LABEL_OFFSETS = {
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
@@ -23,11 +23,7 @@ const VISUAL_REGION_LABEL_OFFSETS = {
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
-const COUNTRY_FLAGS = {
-    BIH: "🇧🇦",
-    MNE: "🇲🇪",
-    SRB: "🇷🇸",
-};
+const COUNTRY_FLAGS = { BIH: "🇧🇦", MNE: "🇲🇪", SRB: "🇷🇸" };
 const BASE_PLAYBACK_INTERVAL_MS = 1400;
 const GEOJSON_PATHS = {
     country: ["BIH", "MNE", "SRB"].map(
@@ -383,13 +379,13 @@ async function refreshRunServiceState({ includeScenarios = false } = {}) {
         dashboardState.isGeneratingRun = false;
         stopRunStatusPolling();
         renderScenarioOptions([]);
-        setExportStatus(
-            "Local run service unavailable. Start the local run service or use py main.py and Reload Export.",
-            "muted"
-        );
+        setExportStatus(RUN_SERVICE_OFFLINE_MESSAGE, "muted");
     } finally {
         updatePlaybackControls();
     }
+}
+function summarizeRunStatus(runStatus) {
+    return { scenarioLabel: runStatus?.scenario_name || runStatus?.scenario_code || "simulation", shocksLabel: runStatus?.shocks_enabled ? "shocks on" : "shocks off" };
 }
 function renderScenarioOptions(scenarios) {
     const safeScenarios = Array.isArray(scenarios) ? scenarios : [];
@@ -405,9 +401,8 @@ function renderScenarioOptions(scenarios) {
 function applyRunStatus(runStatus) {
     const state = String(runStatus?.state ?? "idle");
     dashboardState.isGeneratingRun = state === "running";
+    const { scenarioLabel, shocksLabel } = summarizeRunStatus(runStatus);
     if (state === "running") {
-        const scenarioLabel = runStatus?.scenario_name || runStatus?.scenario_code || "simulation";
-        const shocksLabel = runStatus?.shocks_enabled ? "shocks on" : "shocks off";
         setExportStatus(`Generating a fresh ${scenarioLabel} run (${shocksLabel}) ...`, "loading");
         startRunStatusPolling();
         return;
@@ -419,18 +414,11 @@ function applyRunStatus(runStatus) {
         return;
     }
     if (state === "success") {
-        const scenarioLabel = runStatus?.scenario_name || runStatus?.scenario_code || "simulation";
-        const shocksLabel = runStatus?.shocks_enabled ? "shocks on" : "shocks off";
         const seedLabel = runStatus?.variation_seed ? ` Seed ${runStatus.variation_seed}.` : "";
         setExportStatus(`Latest ${scenarioLabel} run is ready (${shocksLabel}).${seedLabel}`.trim(), "success");
         return;
     }
-    setExportStatus(
-        dashboardState.runServiceAvailable
-            ? "Use Generate Run for a fresh local simulation, Reload Export for the newest JSON, and Play for timeline playback."
-            : "Local run service unavailable. Start the local run service or use py main.py and Reload Export.",
-        "muted"
-    );
+    setExportStatus(dashboardState.runServiceAvailable ? PLAYBACK_HELP_MESSAGE : RUN_SERVICE_OFFLINE_MESSAGE, "muted");
 }
 async function triggerGenerateRun() {
     if (!dashboardState.runServiceAvailable || dashboardState.isGeneratingRun) {
@@ -482,10 +470,7 @@ function startRunStatusPolling() {
             stopRunStatusPolling();
             dashboardState.isGeneratingRun = false;
             dashboardState.runServiceAvailable = false;
-            setExportStatus(
-                "Lost connection to the local run service. Restart it, then try Generate Run again.",
-                "error"
-            );
+            setExportStatus("Lost connection to the local run service. Restart it, then try Generate Run again.", "error");
             updatePlaybackControls();
         }
     }, 1250);
@@ -759,7 +744,7 @@ function renderMetaCards(exportData, countryRowCount, regionRowCount, activeYear
         ["Year buckets", formatInteger(Object.keys(exportData.years).length)],
         ["Validation warnings", formatInteger(exportData.meta.warning_count ?? 0)],
         ["Map warning", geoWarning],
-    ].map(([label, value]) => value ? buildMetaCard(label, value) : "").join("");
+    ].map(([label, value]) => hasDisplayValue(value) ? buildMetaCard(label, value) : "").join("");
 }
 function renderActiveYearState() {
     if (!dashboardState.exportData) {
@@ -812,25 +797,14 @@ function renderCountryLayer(geoData) {
     if (!geoData?.countryFeatures?.length) {
         elements.countryLayer.innerHTML = "";
         elements.countryLabelLayer.innerHTML = "";
-        elements.mapSummaryCards.innerHTML = `
-            <article class="meta-card empty-card">
-                <span class="meta-label">No country layer data</span>
-                <strong class="meta-value">-</strong>
-                <p class="meta-note">Country GeoJSON could not be loaded.</p>
-            </article>
-        `;
+        elements.mapSummaryCards.innerHTML = buildEmptyCard("No country layer data", "Country GeoJSON could not be loaded.");
         return;
     }
     const availableCountryRows = [...mapDataCache.countriesByCode.values()];
     const gdpValues = availableCountryRows.map((entry) => entry.gdp_per_capita_eur);
     const minGdpPerCapita = gdpValues.length ? Math.min(...gdpValues) : 0;
     const maxGdpPerCapita = gdpValues.length ? Math.max(...gdpValues) : 1;
-    const groupedByCountry = new Map();
-    for (const feature of geoData.countryFeatures) {
-        const list = groupedByCountry.get(feature.countryCode) ?? [];
-        list.push(feature);
-        groupedByCountry.set(feature.countryCode, list);
-    }
+    const groupedByCountry = groupBy(geoData.countryFeatures, (feature) => feature.countryCode);
     const groupedVisualRegions = buildVisualRegionGroups(geoData.regionFeatures ?? []);
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
@@ -904,24 +878,7 @@ function renderCountryLayer(geoData) {
     elements.mapSummaryCards.innerHTML = groupedCountries
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode);
-            if (!row) {
-                return `
-                    <article class="meta-card">
-                        <span class="meta-label"><span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
-                        <strong class="meta-value">No data</strong>
-                        <p class="meta-note">No matching country export row.</p>
-                    </article>
-                `;
-            }
-            return `
-                <article class="meta-card">
-                    <span class="meta-label"><span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
-                    <strong class="meta-value">${formatInteger(row.end_population)}</strong>
-                    <p class="meta-note">
-                        ${escapeHtml(row.yearKey)} | GDP ${formatDecimal(row.end_gdp_billion_eur)} bn EUR
-                    </p>
-                </article>
-            `;
+            return buildCountrySummaryCard(country, row);
         })
         .join("");
 }
@@ -1007,15 +964,10 @@ function shoelaceArea(points) {
     return total / 2;
 }
 function buildVisualRegionGroups(regionFeatures) {
-    const groups = new Map();
-    for (const feature of regionFeatures) {
-        if (!feature.visualRegionKey) {
-            continue;
-        }
-        const list = groups.get(feature.visualRegionKey) ?? [];
-        list.push(feature);
-        groups.set(feature.visualRegionKey, list);
-    }
+    const groups = groupBy(
+        regionFeatures.filter((feature) => feature.visualRegionKey),
+        (feature) => feature.visualRegionKey
+    );
     const groupedVisualRegions = [...groups.entries()].map(([visualRegionKey, features]) => {
         const template = VISUAL_REGION_DEFINITIONS[visualRegionKey];
         const mergedPathD = features.map((feature) => feature.pathD).join(" ");
@@ -1106,63 +1058,64 @@ function bindMapHoverTargets(nodes, enterHandler) {
 }
 function renderCountryHover(countryCode, countryData) {
     if (!countryData) {
-        elements.mapHoverTitle.textContent = `${countryCode} (no export row)`;
-        elements.mapHoverBody.textContent = "No country-year row matched for this country boundary.";
+        setMapHoverDetails(
+            `${countryCode} (no export row)`,
+            "No country-year row matched for this country boundary."
+        );
         return;
     }
-    elements.mapHoverTitle.textContent = `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`;
-    elements.mapHoverBody.textContent = describeCountrySummary(countryData);
+    setMapHoverDetails(
+        `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`,
+        describeCountrySummary(countryData)
+    );
 }
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
         const aggregateNote = regionData.is_visual_split && regionData.source_region_name
             ? ` Split from aggregate: ${regionData.source_region_name}.`
             : "";
-        elements.mapHoverTitle.textContent =
-            `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`;
-        elements.mapHoverBody.textContent =
+        setMapHoverDetails(
+            `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`,
             `Population ${formatInteger(regionData.end_population)}, GDP ${formatDecimal(regionData.end_gdp_billion_eur)} bn EUR, `
             + `growth ${formatPercent(regionData.gdp_growth_rate)}, unemployment ${formatPercent(regionData.unemployment_rate)}, `
-            + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.${aggregateNote}`;
+            + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.${aggregateNote}`
+        );
         return;
     }
     if (countryData) {
-        elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
-        elements.mapHoverBody.textContent =
+        setMapHoverDetails(
+            `${regionName} (${countryCode})`,
             "No direct BESP region mapping for this geoboundary. "
-            + `Fallback country context: ${countryData.country_name}, ${countryData.yearKey}, ${describeCountrySummary(countryData, false)}`;
+            + `Fallback country context: ${countryData.country_name}, ${countryData.yearKey}, ${describeCountrySummary(countryData, false)}`
+        );
         return;
     }
-    elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
-    elements.mapHoverBody.textContent = "No matching export row for region or country fallback.";
+    setMapHoverDetails(`${regionName} (${countryCode})`, "No matching export row for region or country fallback.");
 }
 function resetMapHoverDetails() {
     if (activeMapMode === "country") {
-        elements.mapHoverTitle.textContent = "Country hover active";
-        elements.mapHoverBody.textContent =
-            "Move over a country area to inspect the selected country-year values from the export.";
+        setMapHoverDetails(
+            "Country hover active",
+            "Move over a country area to inspect the selected country-year values from the export."
+        );
         return;
     }
-    elements.mapHoverTitle.textContent = "Region hover active";
-    elements.mapHoverBody.textContent =
-        "Move over a region area to inspect region-year values when available; otherwise a country fallback is shown.";
+    setMapHoverDetails(
+        "Region hover active",
+        "Move over a region area to inspect region-year values when available; otherwise a country fallback is shown."
+    );
 }
 function renderCountryTable(countryRows) {
     renderTable(
         elements.countryTableBody,
         countryRows,
         EMPTY_TABLE_ROWS.countryExport,
-        (country) => `
-            <tr>
-                <td>${escapeHtml(country.yearKey)}</td>
-                <td>${escapeHtml(countryFlag(country.country_code))} ${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})</td>
-                <td>${formatInteger(country.end_population)}</td>
-                <td>${formatDecimal(country.end_gdp_billion_eur)} bn EUR</td>
-                <td>${formatPercent(country.gdp_growth_rate)}</td>
-                <td>${formatInteger(Math.round(country.gdp_per_capita_eur))} EUR</td>
-                <td>${formatPercent(country.average_unemployment_rate)}</td>
-            </tr>
-        `
+        (country) => buildTableRow([
+            escapeHtml(country.yearKey), `${escapeHtml(countryFlag(country.country_code))} ${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})`,
+            formatInteger(country.end_population), `${formatDecimal(country.end_gdp_billion_eur)} bn EUR`,
+            formatPercent(country.gdp_growth_rate), `${formatInteger(Math.round(country.gdp_per_capita_eur))} EUR`,
+            formatPercent(country.average_unemployment_rate),
+        ])
     );
 }
 function flattenYearRows(exportData, collectionKey) {
@@ -1185,13 +1138,7 @@ function renderStatePanels(countryRows) {
         elements.stateTableBody,
         countryRows,
         EMPTY_TABLE_ROWS.state,
-        (country) => `
-            <tr>
-                <td>${escapeHtml(country.yearKey)}</td>
-                <td>${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})</td>
-                ${STATE_METRICS.map(([metricKey]) => `<td>${formatStateRatio(country[metricKey])}</td>`).join("")}
-            </tr>
-        `
+        (country) => buildTableRow([escapeHtml(country.yearKey), `${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})`, ...STATE_METRICS.map(([metricKey]) => formatStateRatio(country[metricKey]))])
     );
 }
 function renderRegionTable(regionRows) {
@@ -1199,31 +1146,20 @@ function renderRegionTable(regionRows) {
         elements.regionTableBody,
         regionRows,
         EMPTY_TABLE_ROWS.regionExport,
-        (region) => `
-            <tr>
-                <td>${escapeHtml(region.yearKey)}</td>
-                <td>${escapeHtml(region.country_code)}</td>
-                <td>${escapeHtml(region.region_name)}</td>
-                <td>${formatInteger(region.end_population)}</td>
-                <td>${formatDecimal(region.end_gdp_billion_eur)} bn EUR</td>
-                <td>${formatPercent(region.gdp_growth_rate)}</td>
-                <td>${formatPercent(region.unemployment_rate)}</td>
-                <td>${formatDecimal(region.regional_attractiveness)}</td>
-            </tr>
-        `
+        (region) => buildTableRow([
+            escapeHtml(region.yearKey), escapeHtml(region.country_code), escapeHtml(region.region_name),
+            formatInteger(region.end_population), `${formatDecimal(region.end_gdp_billion_eur)} bn EUR`,
+            formatPercent(region.gdp_growth_rate), formatPercent(region.unemployment_rate),
+            formatDecimal(region.regional_attractiveness),
+        ])
     );
 }
 function renderEmptyState() {
     stopPlayback();
     stopRunStatusPolling();
-    elements.countryLayer.innerHTML = "";
-    elements.countryLabelLayer.innerHTML = "";
-    elements.regionLayer.innerHTML = "";
-    elements.regionLabelLayer.innerHTML = "";
+    clearMapLayers();
     elements.mapSummaryCards.innerHTML = EMPTY_CARDS.map;
-    mapDataCache.countriesByCode = new Map();
-    mapDataCache.regionsByKey = new Map();
-    mapDataCache.visualRegionsByKey = new Map();
+    resetMapCaches();
     Object.assign(dashboardState, {
         exportData: null,
         geoData: null,
@@ -1254,12 +1190,29 @@ function setExportStatus(message, tone = "muted") {
     elements.exportStatus.textContent = message;
     elements.exportStatus.className = `export-status export-status-status-${tone}`;
 }
+function setMapHoverDetails(title, body) {
+    elements.mapHoverTitle.textContent = title;
+    elements.mapHoverBody.textContent = body;
+}
 function renderTable(targetElement, rows, emptyRowHtml, rowBuilder) {
     if (!rows.length) {
         targetElement.innerHTML = emptyRowHtml;
         return;
     }
     targetElement.innerHTML = rows.map(rowBuilder).join("");
+}
+function buildTableRow(cells) {
+    return `<tr>${cells.map((cell) => `<td>${cell}</td>`).join("")}</tr>`;
+}
+function clearMapLayers() {
+    for (const layer of [elements.countryLayer, elements.countryLabelLayer, elements.regionLayer, elements.regionLabelLayer]) {
+        layer.innerHTML = "";
+    }
+}
+function resetMapCaches() {
+    mapDataCache.countriesByCode = new Map();
+    mapDataCache.regionsByKey = new Map();
+    mapDataCache.visualRegionsByKey = new Map();
 }
 function buildEmptyCard(label, note) {
     return `
@@ -1315,6 +1268,17 @@ function buildMetaCard(label, value) {
         </article>
     `;
 }
+function buildCountrySummaryCard(country, row) {
+    const label = `<span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})`;
+    const note = row ? `${escapeHtml(row.yearKey)} | GDP ${formatDecimal(row.end_gdp_billion_eur)} bn EUR` : "No matching country export row.";
+    return `
+        <article class="meta-card">
+            <span class="meta-label">${label}</span>
+            <strong class="meta-value">${row ? formatInteger(row.end_population) : "No data"}</strong>
+            <p class="meta-note">${note}</p>
+        </article>
+    `;
+}
 function compareYearAndCountry(left, right) {
     return compareByYearThen(left, right, (row) => normalizeCountryCode(row.country_code));
 }
@@ -1335,6 +1299,19 @@ function compareYearKeys(left, right) {
     const leftYear = Number.parseInt(String(left).slice(0, 4), 10);
     const rightYear = Number.parseInt(String(right).slice(0, 4), 10);
     return leftYear - rightYear;
+}
+function groupBy(items, keyBuilder) {
+    const groups = new Map();
+    for (const item of items) {
+        const key = keyBuilder(item);
+        const list = groups.get(key);
+        if (list) {
+            list.push(item);
+        } else {
+            groups.set(key, [item]);
+        }
+    }
+    return groups;
 }
 function buildRegionKey(countryCode, regionName) {
     return `${normalizeCountryCode(countryCode)}::${normalizeRegionName(regionName)}`;
@@ -1401,6 +1378,7 @@ function formatPercent(value) {
 function countryFlag(countryCode) {
     return COUNTRY_FLAGS[normalizeCountryCode(countryCode)] ?? "\uD83C\uDFF3\uFE0F";
 }
+const hasDisplayValue = (value) => value !== undefined && value !== null && value !== "";
 function escapeHtml(value) {
     return String(value)
         .replaceAll("&", "&amp;")
