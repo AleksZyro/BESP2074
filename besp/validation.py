@@ -1,8 +1,18 @@
 from besp.models import CountryYearResult, RegionYearResult
 from besp.simulation import (
+    MAX_BUDGET_BALANCE_PCT_GDP,
+    MAX_CORRUPTION_INDEX,
+    MAX_DEBT_TO_GDP,
     MAX_GDP_GROWTH,
+    MAX_INVESTMENT_CLIMATE_INDEX,
+    MAX_STABILITY_INDEX,
     MAX_UNEMPLOYMENT_RATE,
+    MIN_BUDGET_BALANCE_PCT_GDP,
+    MIN_CORRUPTION_INDEX,
+    MIN_DEBT_TO_GDP,
     MIN_GDP_GROWTH,
+    MIN_INVESTMENT_CLIMATE_INDEX,
+    MIN_STABILITY_INDEX,
     MIN_UNEMPLOYMENT_RATE,
 )
 
@@ -64,6 +74,40 @@ def validate_simulation_results(
             warnings.append(
                 f"{year_label}: country gdp_growth_rate {result.gdp_growth_rate:.3f} is outside "
                 f"[{MIN_GDP_GROWTH:.3f}, {MAX_GDP_GROWTH:.3f}]."
+            )
+
+        if not (MIN_BUDGET_BALANCE_PCT_GDP <= result.budget_balance_pct_gdp <= MAX_BUDGET_BALANCE_PCT_GDP):
+            warnings.append(
+                f"{year_label}: budget_balance_pct_gdp {result.budget_balance_pct_gdp:.3f} is outside "
+                f"[{MIN_BUDGET_BALANCE_PCT_GDP:.3f}, {MAX_BUDGET_BALANCE_PCT_GDP:.3f}]."
+            )
+
+        if not (MIN_DEBT_TO_GDP <= result.debt_to_gdp <= MAX_DEBT_TO_GDP):
+            warnings.append(
+                f"{year_label}: debt_to_gdp {result.debt_to_gdp:.3f} is outside "
+                f"[{MIN_DEBT_TO_GDP:.3f}, {MAX_DEBT_TO_GDP:.3f}]."
+            )
+
+        if not (MIN_STABILITY_INDEX <= result.stability_index <= MAX_STABILITY_INDEX):
+            warnings.append(
+                f"{year_label}: stability_index {result.stability_index:.3f} is outside "
+                f"[{MIN_STABILITY_INDEX:.3f}, {MAX_STABILITY_INDEX:.3f}]."
+            )
+
+        if not (MIN_CORRUPTION_INDEX <= result.corruption_index <= MAX_CORRUPTION_INDEX):
+            warnings.append(
+                f"{year_label}: corruption_index {result.corruption_index:.3f} is outside "
+                f"[{MIN_CORRUPTION_INDEX:.3f}, {MAX_CORRUPTION_INDEX:.3f}]."
+            )
+
+        if not (
+            MIN_INVESTMENT_CLIMATE_INDEX
+            <= result.investment_climate_index
+            <= MAX_INVESTMENT_CLIMATE_INDEX
+        ):
+            warnings.append(
+                f"{year_label}: investment_climate_index {result.investment_climate_index:.3f} is outside "
+                f"[{MIN_INVESTMENT_CLIMATE_INDEX:.3f}, {MAX_INVESTMENT_CLIMATE_INDEX:.3f}]."
             )
 
     return warnings

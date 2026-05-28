@@ -34,6 +34,9 @@ def load_countries(path: str | Path, regions: list[Region]) -> list[Country]:
                 stability=entry["stability"],
                 eu_integration=entry["eu_integration"],
                 corruption=entry["corruption"],
+                base_budget_balance_pct_gdp=entry.get("base_budget_balance_pct_gdp", -0.03),
+                base_debt_to_gdp=entry.get("base_debt_to_gdp", 0.60),
+                base_investment_climate_index=entry.get("base_investment_climate_index", 0.50),
                 regions=country_regions,
             )
         )

@@ -60,6 +60,14 @@ def main() -> None:
     if not isinstance(warning_count, int) or warning_count < 0:
         fail(f"Invalid warning_count: {warning_count!r}")
 
+    state_model_meta = meta.get("state_model")
+    if not isinstance(state_model_meta, dict):
+        fail("Missing meta.state_model object.")
+    if str(state_model_meta.get("phase", "")).strip() != "8.1":
+        fail(f"Unexpected state_model phase: {state_model_meta!r}")
+    if not str(state_model_meta.get("version", "")).strip():
+        fail("meta.state_model.version is empty.")
+
     print("[OK] Scenario metadata is consistent with data/scenarios.json.")
     print(
         f"[OK] variation_seed='{variation_seed}', year buckets={len(years)}, "

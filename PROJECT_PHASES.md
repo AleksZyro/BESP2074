@@ -316,7 +316,7 @@ Likely first shocks:
 - Heat wave
 
 ### Phase 8 - Politics / State v1
-Status: planned
+Status: active (8.1 core implemented)
 
 Possible future systems:
 - Budget
@@ -325,6 +325,26 @@ Possible future systems:
 - Corruption
 - Investment climate
 - Later inflation
+
+### Phase 8.1 - Politics / State v1 Core Model
+Status: complete
+
+Contains:
+- Baseline country-state inputs in `data/countries.json`
+- Träge, begrenzte jährliche State-Entwicklung auf Länderaggregat-Ebene
+- Export fields in `CountryYearResult`:
+  - `budget_balance_pct_gdp`
+  - `debt_to_gdp`
+  - `stability_index`
+  - `corruption_index`
+  - `investment_climate_index`
+- `meta.state_model` export marker for phase/version traceability
+
+Explicitly not in scope:
+- No shock rework
+- No map/dashboard feature redesign
+- No policy-tree or event-scripting layer
+- No inflation subsystem yet
 
 ## Current Roadmap Order
 
@@ -336,7 +356,7 @@ Possible future systems:
 6. Phase 6 merged into 5.6 (no separate implementation block)
 7. Phase 7.1 bounded shock core
 8. Phase 7.3 shock validation and balancing pass
-9. Phase 8 politics / state
+9. Phase 8.1 politics / state core model
 
 ## Current Actual State
 

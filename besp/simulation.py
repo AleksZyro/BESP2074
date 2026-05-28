@@ -58,6 +58,17 @@ SHOCK_EFFECT_BOUNDS = {
     "attractiveness_bias": (MIN_SHOCK_ATTRACTIVENESS_BIAS, MAX_SHOCK_ATTRACTIVENESS_BIAS),
 }
 
+MIN_BUDGET_BALANCE_PCT_GDP = -0.12
+MAX_BUDGET_BALANCE_PCT_GDP = 0.06
+MIN_DEBT_TO_GDP = 0.15
+MAX_DEBT_TO_GDP = 1.50
+MIN_STABILITY_INDEX = 0.20
+MAX_STABILITY_INDEX = 0.95
+MIN_CORRUPTION_INDEX = 0.15
+MAX_CORRUPTION_INDEX = 0.95
+MIN_INVESTMENT_CLIMATE_INDEX = 0.15
+MAX_INVESTMENT_CLIMATE_INDEX = 0.95
+
 
 def _empty_shock_effect() -> dict[str, float]:
     return {
@@ -157,6 +168,118 @@ def build_country_shock_effects(
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(value, maximum))
+
+
+def initialize_country_state(country: Country) -> dict[str, float]:
+    return {
+        "budget_balance_pct_gdp": clamp(
+            country.base_budget_balance_pct_gdp,
+            MIN_BUDGET_BALANCE_PCT_GDP,
+            MAX_BUDGET_BALANCE_PCT_GDP,
+        ),
+        "debt_to_gdp": clamp(
+            country.base_debt_to_gdp,
+            MIN_DEBT_TO_GDP,
+            MAX_DEBT_TO_GDP,
+        ),
+        "stability_index": clamp(
+            country.stability,
+            MIN_STABILITY_INDEX,
+            MAX_STABILITY_INDEX,
+        ),
+        "corruption_index": clamp(
+            country.corruption,
+            MIN_CORRUPTION_INDEX,
+            MAX_CORRUPTION_INDEX,
+        ),
+        "investment_climate_index": clamp(
+            country.base_investment_climate_index,
+            MIN_INVESTMENT_CLIMATE_INDEX,
+            MAX_INVESTMENT_CLIMATE_INDEX,
+        ),
+    }
+
+
+def evolve_country_state(
+    country: Country,
+    previous_state: dict[str, float],
+    gdp_growth_rate: float,
+    average_unemployment_rate: float,
+    average_regional_attractiveness: float,
+) -> dict[str, float]:
+    growth_gap = gdp_growth_rate - BASE_GDP_GROWTH
+    unemployment_gap = average_unemployment_rate - 0.12
+    attractiveness_gap = average_regional_attractiveness - 0.50
+
+    budget_target = (
+        country.base_budget_balance_pct_gdp
+        + growth_gap * 0.35
+        - unemployment_gap * 0.06
+        + attractiveness_gap * 0.03
+    )
+    budget_balance_pct_gdp = clamp(
+        previous_state["budget_balance_pct_gdp"] * 0.72 + budget_target * 0.28,
+        MIN_BUDGET_BALANCE_PCT_GDP,
+        MAX_BUDGET_BALANCE_PCT_GDP,
+    )
+
+    debt_change = (
+        (-budget_balance_pct_gdp) * 0.20
+        - gdp_growth_rate * 0.10
+        + max(unemployment_gap, 0.0) * 0.04
+    )
+    debt_to_gdp = clamp(
+        previous_state["debt_to_gdp"] + clamp(debt_change, -0.03, 0.04),
+        MIN_DEBT_TO_GDP,
+        MAX_DEBT_TO_GDP,
+    )
+
+    stability_target = (
+        country.stability
+        + growth_gap * 2.20
+        - max(unemployment_gap, 0.0) * 1.20
+        + attractiveness_gap * 0.80
+        - (previous_state["corruption_index"] - 0.50) * 0.50
+    )
+    stability_index = clamp(
+        previous_state["stability_index"] * 0.78 + stability_target * 0.22,
+        MIN_STABILITY_INDEX,
+        MAX_STABILITY_INDEX,
+    )
+
+    corruption_target = (
+        country.corruption
+        - growth_gap * 0.80
+        + max(unemployment_gap, 0.0) * 0.25
+        - (stability_index - 0.50) * 0.20
+    )
+    corruption_index = clamp(
+        previous_state["corruption_index"] * 0.82 + corruption_target * 0.18,
+        MIN_CORRUPTION_INDEX,
+        MAX_CORRUPTION_INDEX,
+    )
+
+    investment_target = (
+        country.base_investment_climate_index
+        + growth_gap * 2.80
+        - average_unemployment_rate * 0.35
+        + stability_index * 0.25
+        - corruption_index * 0.30
+        + attractiveness_gap * 0.70
+    )
+    investment_climate_index = clamp(
+        previous_state["investment_climate_index"] * 0.75 + investment_target * 0.25,
+        MIN_INVESTMENT_CLIMATE_INDEX,
+        MAX_INVESTMENT_CLIMATE_INDEX,
+    )
+
+    return {
+        "budget_balance_pct_gdp": budget_balance_pct_gdp,
+        "debt_to_gdp": debt_to_gdp,
+        "stability_index": stability_index,
+        "corruption_index": corruption_index,
+        "investment_climate_index": investment_climate_index,
+    }
 
 
 def calculate_controlled_variation_signal(
@@ -488,8 +611,12 @@ def aggregate_country_results(
     region_results: list[RegionYearResult],
     countries: list[Country],
 ) -> list[CountryYearResult]:
-    country_names = {country.code: country.name for country in countries}
+    country_by_code = {country.code: country for country in countries}
     grouped_results: dict[tuple[int, int, str], list[RegionYearResult]] = {}
+    state_by_country_code = {
+        country.code: initialize_country_state(country)
+        for country in countries
+    }
 
     for result in region_results:
         key = (result.start_year, result.end_year, result.country_code)
@@ -542,11 +669,32 @@ def aggregate_country_results(
                 for entry in entries
             ) / total_weight
 
+        country = country_by_code.get(country_code)
+        if country is None:
+            current_state = {
+                "budget_balance_pct_gdp": 0.0,
+                "debt_to_gdp": 0.6,
+                "stability_index": 0.5,
+                "corruption_index": 0.5,
+                "investment_climate_index": 0.5,
+            }
+            country_name = country_code
+        else:
+            current_state = evolve_country_state(
+                country,
+                state_by_country_code[country_code],
+                gdp_growth_rate,
+                average_unemployment_rate,
+                average_regional_attractiveness,
+            )
+            state_by_country_code[country_code] = current_state
+            country_name = country.name
+
         country_results.append(
             CountryYearResult(
                 start_year=start_year,
                 end_year=end_year,
-                country_name=country_names.get(country_code, country_code),
+                country_name=country_name,
                 country_code=country_code,
                 start_population=start_population,
                 end_population=end_population,
@@ -563,6 +711,11 @@ def aggregate_country_results(
                 average_population_density=average_population_density,
                 average_housing_overload=average_housing_overload,
                 average_regional_attractiveness=average_regional_attractiveness,
+                budget_balance_pct_gdp=current_state["budget_balance_pct_gdp"],
+                debt_to_gdp=current_state["debt_to_gdp"],
+                stability_index=current_state["stability_index"],
+                corruption_index=current_state["corruption_index"],
+                investment_climate_index=current_state["investment_climate_index"],
             )
         )
 

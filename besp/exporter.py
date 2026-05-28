@@ -47,6 +47,10 @@ def build_simulation_export(
                 "enabled": shocks_enabled,
                 "event_count": len(serialized_shock_events),
             },
+            "state_model": {
+                "phase": "8.1",
+                "version": "politics_state_v1_core",
+            },
         },
         "shock_events": serialized_shock_events,
         "years": years,

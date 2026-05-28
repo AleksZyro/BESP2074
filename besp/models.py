@@ -52,6 +52,9 @@ class Country:
     stability: float
     eu_integration: float
     corruption: float
+    base_budget_balance_pct_gdp: float = -0.03
+    base_debt_to_gdp: float = 0.60
+    base_investment_climate_index: float = 0.50
 
     regions: list[Region] = field(default_factory=list)
 
@@ -162,3 +165,9 @@ class CountryYearResult:
     average_population_density: float
     average_housing_overload: float
     average_regional_attractiveness: float
+
+    budget_balance_pct_gdp: float
+    debt_to_gdp: float
+    stability_index: float
+    corruption_index: float
+    investment_climate_index: float

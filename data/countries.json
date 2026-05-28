@@ -7,7 +7,10 @@
     "base_net_migration_rate": -0.0035,
     "stability": 0.62,
     "eu_integration": 0.48,
-    "corruption": 0.58
+    "corruption": 0.58,
+    "base_budget_balance_pct_gdp": -0.028,
+    "base_debt_to_gdp": 0.56,
+    "base_investment_climate_index": 0.52
   },
   {
     "name": "Montenegro",
@@ -17,7 +20,10 @@
     "base_net_migration_rate": -0.0028,
     "stability": 0.60,
     "eu_integration": 0.56,
-    "corruption": 0.55
+    "corruption": 0.55,
+    "base_budget_balance_pct_gdp": -0.034,
+    "base_debt_to_gdp": 0.79,
+    "base_investment_climate_index": 0.54
   },
   {
     "name": "Bosnia and Herzegovina",
@@ -27,6 +33,9 @@
     "base_net_migration_rate": -0.0042,
     "stability": 0.47,
     "eu_integration": 0.38,
-    "corruption": 0.66
+    "corruption": 0.66,
+    "base_budget_balance_pct_gdp": -0.036,
+    "base_debt_to_gdp": 0.34,
+    "base_investment_climate_index": 0.43
   }
 ]
