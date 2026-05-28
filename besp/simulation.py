@@ -49,6 +49,14 @@ MAX_SHOCK_DEATH_MULTIPLIER = 1.08
 MIN_SHOCK_DEATH_MULTIPLIER = 0.94
 MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR = 2
 MAX_SHOCK_EVENTS_PER_CATEGORY_COUNTRY_YEAR = 1
+SHOCK_EFFECT_DEFAULTS = {
+    "birth_multiplier": 1.0,
+    "death_multiplier": 1.0,
+    "net_migration_shift": 0.0,
+    "gdp_growth_bias": 0.0,
+    "unemployment_bias": 0.0,
+    "attractiveness_bias": 0.0,
+}
 SHOCK_EFFECT_BOUNDS = {
     "birth_multiplier": (MIN_SHOCK_BIRTH_MULTIPLIER, MAX_SHOCK_BIRTH_MULTIPLIER),
     "death_multiplier": (MIN_SHOCK_DEATH_MULTIPLIER, MAX_SHOCK_DEATH_MULTIPLIER),
@@ -57,33 +65,44 @@ SHOCK_EFFECT_BOUNDS = {
     "unemployment_bias": (MIN_SHOCK_UNEMPLOYMENT_BIAS, MAX_SHOCK_UNEMPLOYMENT_BIAS),
     "attractiveness_bias": (MIN_SHOCK_ATTRACTIVENESS_BIAS, MAX_SHOCK_ATTRACTIVENESS_BIAS),
 }
-
-MIN_BUDGET_BALANCE_PCT_GDP = -0.12
-MAX_BUDGET_BALANCE_PCT_GDP = 0.06
-MIN_DEBT_TO_GDP = 0.15
-MAX_DEBT_TO_GDP = 1.50
-MIN_STABILITY_INDEX = 0.20
-MAX_STABILITY_INDEX = 0.95
-MIN_CORRUPTION_INDEX = 0.15
-MAX_CORRUPTION_INDEX = 0.95
-MIN_INVESTMENT_CLIMATE_INDEX = 0.15
-MAX_INVESTMENT_CLIMATE_INDEX = 0.95
-MAX_BUDGET_BALANCE_STEP = 0.025
-MAX_DEBT_TO_GDP_STEP = 0.05
-MAX_STABILITY_STEP = 0.06
-MAX_CORRUPTION_STEP = 0.05
-MAX_INVESTMENT_CLIMATE_STEP = 0.06
+STATE_SPECS = {
+    "budget_balance_pct_gdp": {
+        "bounds": (-0.12, 0.06),
+        "max_step": 0.025,
+        "base_attr": "base_budget_balance_pct_gdp",
+    },
+    "debt_to_gdp": {
+        "bounds": (0.15, 1.50),
+        "max_step": 0.05,
+        "base_attr": "base_debt_to_gdp",
+    },
+    "stability_index": {
+        "bounds": (0.20, 0.95),
+        "max_step": 0.06,
+        "base_attr": "stability",
+    },
+    "corruption_index": {
+        "bounds": (0.15, 0.95),
+        "max_step": 0.05,
+        "base_attr": "corruption",
+    },
+    "investment_climate_index": {
+        "bounds": (0.15, 0.95),
+        "max_step": 0.06,
+        "base_attr": "base_investment_climate_index",
+    },
+}
+DEFAULT_COUNTRY_STATE = {
+    "budget_balance_pct_gdp": 0.0,
+    "debt_to_gdp": 0.6,
+    "stability_index": 0.5,
+    "corruption_index": 0.5,
+    "investment_climate_index": 0.5,
+}
 
 
 def _empty_shock_effect() -> dict[str, float]:
-    return {
-        "birth_multiplier": 1.0,
-        "death_multiplier": 1.0,
-        "net_migration_shift": 0.0,
-        "gdp_growth_bias": 0.0,
-        "unemployment_bias": 0.0,
-        "attractiveness_bias": 0.0,
-    }
+    return SHOCK_EFFECT_DEFAULTS.copy()
 
 
 def build_country_shock_effects(
@@ -190,32 +209,27 @@ def bounded_state_step(
 
 def initialize_country_state(country: Country) -> dict[str, float]:
     return {
-        "budget_balance_pct_gdp": clamp(
-            country.base_budget_balance_pct_gdp,
-            MIN_BUDGET_BALANCE_PCT_GDP,
-            MAX_BUDGET_BALANCE_PCT_GDP,
-        ),
-        "debt_to_gdp": clamp(
-            country.base_debt_to_gdp,
-            MIN_DEBT_TO_GDP,
-            MAX_DEBT_TO_GDP,
-        ),
-        "stability_index": clamp(
-            country.stability,
-            MIN_STABILITY_INDEX,
-            MAX_STABILITY_INDEX,
-        ),
-        "corruption_index": clamp(
-            country.corruption,
-            MIN_CORRUPTION_INDEX,
-            MAX_CORRUPTION_INDEX,
-        ),
-        "investment_climate_index": clamp(
-            country.base_investment_climate_index,
-            MIN_INVESTMENT_CLIMATE_INDEX,
-            MAX_INVESTMENT_CLIMATE_INDEX,
-        ),
+        key: clamp(getattr(country, spec["base_attr"]), *spec["bounds"])
+        for key, spec in STATE_SPECS.items()
     }
+
+
+def evolve_state_metric(
+    previous_state: dict[str, float],
+    metric_key: str,
+    target_value: float,
+    smoothing_keep: float,
+) -> float:
+    current_value = previous_state[metric_key]
+    minimum, maximum = STATE_SPECS[metric_key]["bounds"]
+    smoothed_target = current_value * smoothing_keep + target_value * (1.0 - smoothing_keep)
+    return bounded_state_step(
+        current_value,
+        smoothed_target,
+        minimum,
+        maximum,
+        STATE_SPECS[metric_key]["max_step"],
+    )
 
 
 def evolve_country_state(
@@ -235,15 +249,11 @@ def evolve_country_state(
         - unemployment_gap * 0.06
         + attractiveness_gap * 0.03
     )
-    budget_smoothed = (
-        previous_state["budget_balance_pct_gdp"] * 0.72 + budget_target * 0.28
-    )
-    budget_balance_pct_gdp = bounded_state_step(
-        previous_state["budget_balance_pct_gdp"],
-        budget_smoothed,
-        MIN_BUDGET_BALANCE_PCT_GDP,
-        MAX_BUDGET_BALANCE_PCT_GDP,
-        MAX_BUDGET_BALANCE_STEP,
+    budget_balance_pct_gdp = evolve_state_metric(
+        previous_state,
+        "budget_balance_pct_gdp",
+        budget_target,
+        0.72,
     )
 
     debt_change = (
@@ -252,13 +262,7 @@ def evolve_country_state(
         + max(unemployment_gap, 0.0) * 0.04
     )
     debt_target = previous_state["debt_to_gdp"] + clamp(debt_change, -0.03, 0.04)
-    debt_to_gdp = bounded_state_step(
-        previous_state["debt_to_gdp"],
-        debt_target,
-        MIN_DEBT_TO_GDP,
-        MAX_DEBT_TO_GDP,
-        MAX_DEBT_TO_GDP_STEP,
-    )
+    debt_to_gdp = evolve_state_metric(previous_state, "debt_to_gdp", debt_target, 0.0)
 
     stability_target = (
         country.stability
@@ -267,15 +271,11 @@ def evolve_country_state(
         + attractiveness_gap * 0.80
         - (previous_state["corruption_index"] - 0.50) * 0.50
     )
-    stability_smoothed = (
-        previous_state["stability_index"] * 0.78 + stability_target * 0.22
-    )
-    stability_index = bounded_state_step(
-        previous_state["stability_index"],
-        stability_smoothed,
-        MIN_STABILITY_INDEX,
-        MAX_STABILITY_INDEX,
-        MAX_STABILITY_STEP,
+    stability_index = evolve_state_metric(
+        previous_state,
+        "stability_index",
+        stability_target,
+        0.78,
     )
 
     corruption_target = (
@@ -284,15 +284,11 @@ def evolve_country_state(
         + max(unemployment_gap, 0.0) * 0.25
         - (stability_index - 0.50) * 0.20
     )
-    corruption_smoothed = (
-        previous_state["corruption_index"] * 0.82 + corruption_target * 0.18
-    )
-    corruption_index = bounded_state_step(
-        previous_state["corruption_index"],
-        corruption_smoothed,
-        MIN_CORRUPTION_INDEX,
-        MAX_CORRUPTION_INDEX,
-        MAX_CORRUPTION_STEP,
+    corruption_index = evolve_state_metric(
+        previous_state,
+        "corruption_index",
+        corruption_target,
+        0.82,
     )
 
     investment_target = (
@@ -303,15 +299,11 @@ def evolve_country_state(
         - corruption_index * 0.30
         + attractiveness_gap * 0.70
     )
-    investment_smoothed = (
-        previous_state["investment_climate_index"] * 0.75 + investment_target * 0.25
-    )
-    investment_climate_index = bounded_state_step(
-        previous_state["investment_climate_index"],
-        investment_smoothed,
-        MIN_INVESTMENT_CLIMATE_INDEX,
-        MAX_INVESTMENT_CLIMATE_INDEX,
-        MAX_INVESTMENT_CLIMATE_STEP,
+    investment_climate_index = evolve_state_metric(
+        previous_state,
+        "investment_climate_index",
+        investment_target,
+        0.75,
     )
 
     return {
@@ -463,6 +455,28 @@ def calculate_updated_unemployment_rate(
         updated_rate += scenario.unemployment_bias
 
     return clamp(updated_rate, MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE)
+
+
+def sum_metric(entries: list[RegionYearResult], field_name: str) -> float:
+    return sum(getattr(entry, field_name) for entry in entries)
+
+
+def average_metric(entries: list[RegionYearResult], field_name: str) -> float:
+    return sum_metric(entries, field_name) / len(entries) if entries else 0.0
+
+
+def weighted_average_metric(
+    entries: list[RegionYearResult],
+    value_field: str,
+    weight_field: str,
+) -> float:
+    total_weight = sum_metric(entries, weight_field)
+    if total_weight <= 0:
+        return 0.0
+    return sum(
+        getattr(entry, value_field) * getattr(entry, weight_field)
+        for entry in entries
+    ) / total_weight
 
 
 def simulate_year(
@@ -666,16 +680,15 @@ def aggregate_country_results(
     country_results: list[CountryYearResult] = []
 
     for (start_year, end_year, country_code), entries in sorted(grouped_results.items()):
-        start_population = sum(entry.start_population for entry in entries)
-        end_population = sum(entry.end_population for entry in entries)
-        births = sum(entry.births for entry in entries)
-        deaths = sum(entry.deaths for entry in entries)
-        natural_change = sum(entry.natural_change for entry in entries)
-        net_external_migration = sum(entry.net_external_migration for entry in entries)
-        internal_migration = sum(entry.internal_migration for entry in entries)
-
-        start_gdp_billion_eur = sum(entry.start_gdp_billion_eur for entry in entries)
-        end_gdp_billion_eur = sum(entry.end_gdp_billion_eur for entry in entries)
+        start_population = sum_metric(entries, "start_population")
+        end_population = sum_metric(entries, "end_population")
+        births = sum_metric(entries, "births")
+        deaths = sum_metric(entries, "deaths")
+        natural_change = sum_metric(entries, "natural_change")
+        net_external_migration = sum_metric(entries, "net_external_migration")
+        internal_migration = sum_metric(entries, "internal_migration")
+        start_gdp_billion_eur = sum_metric(entries, "start_gdp_billion_eur")
+        end_gdp_billion_eur = sum_metric(entries, "end_gdp_billion_eur")
 
         gdp_growth_rate = 0.0
         if start_gdp_billion_eur > 0:
@@ -685,40 +698,18 @@ def aggregate_country_results(
         if end_population > 0:
             gdp_per_capita_eur = (end_gdp_billion_eur * 1_000_000_000) / end_population
 
-        region_count = len(entries)
-        average_population_density = (
-            sum(entry.population_density for entry in entries) / region_count
-            if region_count > 0
-            else 0.0
+        average_population_density = average_metric(entries, "population_density")
+        average_housing_overload = average_metric(entries, "housing_overload")
+        average_regional_attractiveness = average_metric(entries, "regional_attractiveness")
+        average_unemployment_rate = weighted_average_metric(
+            entries,
+            "unemployment_rate",
+            "end_population",
         )
-        average_housing_overload = (
-            sum(entry.housing_overload for entry in entries) / region_count
-            if region_count > 0
-            else 0.0
-        )
-        average_regional_attractiveness = (
-            sum(entry.regional_attractiveness for entry in entries) / region_count
-            if region_count > 0
-            else 0.0
-        )
-
-        total_weight = sum(entry.end_population for entry in entries)
-        average_unemployment_rate = 0.0
-        if total_weight > 0:
-            average_unemployment_rate = sum(
-                entry.unemployment_rate * entry.end_population
-                for entry in entries
-            ) / total_weight
 
         country = country_by_code.get(country_code)
         if country is None:
-            current_state = {
-                "budget_balance_pct_gdp": 0.0,
-                "debt_to_gdp": 0.6,
-                "stability_index": 0.5,
-                "corruption_index": 0.5,
-                "investment_climate_index": 0.5,
-            }
+            current_state = DEFAULT_COUNTRY_STATE.copy()
             country_name = country_code
         else:
             current_state = evolve_country_state(

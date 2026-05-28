@@ -29,22 +29,17 @@ const COUNTRY_FLAGS = {
     SRB: "🇷🇸",
 };
 const BASE_PLAYBACK_INTERVAL_MS = 1400;
-const COUNTRY_GEOJSON_PATHS = [
-    "./data/geoBoundaries-BIH-ADM0_simplified.geojson",
-    "./data/geoBoundaries-MNE-ADM0_simplified.geojson",
-    "./data/geoBoundaries-SRB-ADM0_simplified.geojson",
-];
-const REGION_GEOJSON_PATHS = [
-    "./data/geoBoundaries-BIH-ADM1_simplified.geojson",
-    "./data/geoBoundaries-MNE-ADM1_simplified.geojson",
-    "./data/geoBoundaries-SRB-ADM1_simplified.geojson",
-    "./data/geoBoundaries-XKX-ADM0_simplified.geojson",
-];
-const BESP_REGION_KEYS = new Set([
-    "BIH::federation of bosnia and herzegovina", "BIH::republika srpska", "BIH::brcko",
-    "MNE::coast", "MNE::inland", "SRB::belgrade", "SRB::vojvodina", "SRB::central serbia",
-    "SRB::south and east serbia", "SRB::kosovo and metohija",
-]);
+const GEOJSON_PATHS = {
+    country: ["BIH", "MNE", "SRB"].map(
+        (code) => `./data/geoBoundaries-${code}-ADM0_simplified.geojson`
+    ),
+    region: [
+        ...["BIH", "MNE", "SRB"].map(
+            (code) => `./data/geoBoundaries-${code}-ADM1_simplified.geojson`
+        ),
+        "./data/geoBoundaries-XKX-ADM0_simplified.geojson",
+    ],
+};
 const REGION_NAME_ALIASES = Object.fromEntries([
     ["federation of bosnia and herzegovina", "federation of bosnia and herzegovina"],
     ["federation of bosnia-herzegovina", "federation of bosnia and herzegovina"],
@@ -55,46 +50,34 @@ const REGION_NAME_ALIASES = Object.fromEntries([
     ["kosovo and metohija", "kosovo and metohija"], ["kosovo", "kosovo and metohija"],
     ["kosovo & metohija", "kosovo and metohija"], ["coast", "coast"], ["inland", "inland"],
 ]);
-function mapFeatureGroup(countryCode, names, targetKey) {
-    return names.map((name) => [`${countryCode}::${name}`, targetKey]);
-}
-const SRB_VOJVODINA_FEATURES = [
-    "autonomous province of vojvodina", "vojvodina", "syrmia district", "south banat district",
-    "north banat district", "north backa district", "central banat district", "west backa district",
-    "south backa district",
-];
-const SRB_SOUTH_EAST_FEATURES = [
-    "bor district", "pcinja district", "branicevo district", "zajecar district", "pirot district",
-    "jablanica district", "toplica district", "nisava district", "rasina district",
-    "pomoravlje district", "podunavlje district",
-];
-const SRB_CENTRAL_FEATURES = [
-    "kolubara district", "macva district", "sumadija district", "moravica district",
-    "zlatibor district", "raska district",
-];
-const MNE_COAST_FEATURES = [
-    "herceg novi municipality", "bar municipality", "budva municipality",
-    "kotor municipality", "tivat municipality", "ulcinj municipality",
-];
-const MNE_INLAND_FEATURES = [
-    "plav municipality", "rozaje municipality", "andrijevica municipality", "berane municipality",
-    "podgorica municipality", "bijelo polje municipality", "cetinje municipality",
-    "danilovgrad municipality", "kolasin municipality", "mojkovac municipality",
-    "niksic municipality", "pljevlja municipality", "pluzine municipality",
-    "savnik municipality", "zabljak municipality", "gusinje municipality", "petnjica municipality",
-];
-const REGION_FEATURE_TO_BESP = Object.fromEntries([
-    ["BIH::federation of bosnia and herzegovina", "BIH::federation of bosnia and herzegovina"],
-    ["BIH::republika srpska", "BIH::republika srpska"],
-    ["BIH::brcko", "BIH::republika srpska"],
-    ["SRB::belgrade", "SRB::belgrade"],
-    ...mapFeatureGroup("SRB", SRB_VOJVODINA_FEATURES, "SRB::vojvodina"),
-    ...mapFeatureGroup("SRB", SRB_SOUTH_EAST_FEATURES, "SRB::south and east serbia"),
-    ...mapFeatureGroup("SRB", SRB_CENTRAL_FEATURES, "SRB::central serbia"),
-    ["SRB::kosovo", "SRB::kosovo and metohija"],
-    ...mapFeatureGroup("MNE", MNE_COAST_FEATURES, "MNE::coast"),
-    ...mapFeatureGroup("MNE", MNE_INLAND_FEATURES, "MNE::inland"),
-]);
+const REGION_GROUPS = {
+    "SRB::vojvodina": [
+        "autonomous province of vojvodina", "vojvodina", "syrmia district",
+        "south banat district", "north banat district", "north backa district",
+        "central banat district", "west backa district", "south backa district",
+    ],
+    "SRB::south and east serbia": [
+        "bor district", "pcinja district", "branicevo district", "zajecar district",
+        "pirot district", "jablanica district", "toplica district", "nisava district",
+        "rasina district", "pomoravlje district", "podunavlje district",
+    ],
+    "SRB::central serbia": [
+        "kolubara district", "macva district", "sumadija district",
+        "moravica district", "zlatibor district", "raska district",
+    ],
+    "MNE::coast": [
+        "herceg novi municipality", "bar municipality", "budva municipality",
+        "kotor municipality", "tivat municipality", "ulcinj municipality",
+    ],
+    "MNE::inland": [
+        "plav municipality", "rozaje municipality", "andrijevica municipality",
+        "berane municipality", "podgorica municipality", "bijelo polje municipality",
+        "cetinje municipality", "danilovgrad municipality", "kolasin municipality",
+        "mojkovac municipality", "niksic municipality", "pljevlja municipality",
+        "pluzine municipality", "savnik municipality", "zabljak municipality",
+        "gusinje municipality", "petnjica municipality",
+    ],
+};
 const VISUAL_REGION_DEFINITIONS = {
     "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
     "BIH::rs": { label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c" },
@@ -111,25 +94,50 @@ const VISUAL_REGION_DEFINITIONS = {
     "MNE::brda": { label: "Brda", dataRegionKey: "MNE::inland", fill: "#5e98cf" },
     "MNE::stara-raska": { label: "Stara Raska", dataRegionKey: "MNE::inland", fill: "#c6964d" },
 };
-const FEATURE_TO_VISUAL_REGION = Object.fromEntries([
-    ["BIH::federation of bosnia and herzegovina", "BIH::fbih"],
-    ["BIH::republika srpska", "BIH::rs"],
-    ["BIH::brcko", "BIH::rs"],
-    ...mapFeatureGroup("SRB", SRB_VOJVODINA_FEATURES, "SRB::vojvodina"),
-    ["SRB::belgrade", "SRB::belgrade"],
-    ...mapFeatureGroup("SRB", SRB_CENTRAL_FEATURES, "SRB::sz-srb"),
-    ...mapFeatureGroup("SRB", SRB_SOUTH_EAST_FEATURES, "SRB::ji-srb"),
-    ["SRB::kosovo", "SRB::kosovo-metohija"],
-    ["SRB::kosovo and metohija", "SRB::kosovo-metohija"],
-    ...mapFeatureGroup("MNE", ["herceg novi municipality", "kotor municipality", "tivat municipality"], "MNE::boka"),
-    ...mapFeatureGroup("MNE", ["budva municipality", "bar municipality", "ulcinj municipality"], "MNE::primorje"),
-    ...mapFeatureGroup("MNE", ["podgorica municipality", "danilovgrad municipality"], "MNE::zeta"),
-    ...mapFeatureGroup("MNE", ["cetinje municipality"], "MNE::stara-crna-gora"),
-    ...mapFeatureGroup("MNE", ["niksic municipality", "pljevlja municipality", "pluzine municipality", "savnik municipality", "zabljak municipality"], "MNE::stara-hercegovina"),
-    ...mapFeatureGroup("MNE", ["kolasin municipality", "mojkovac municipality", "andrijevica municipality", "berane municipality"], "MNE::brda"),
-    ...mapFeatureGroup("MNE", ["bijelo polje municipality", "rozaje municipality", "plav municipality", "gusinje municipality", "petnjica municipality"], "MNE::stara-raska"),
-]);
-
+const STATE_METRICS = [
+    ["budget_balance_pct_gdp", "Avg budget balance"],
+    ["debt_to_gdp", "Avg debt-to-GDP"],
+    ["stability_index", "Avg stability"],
+    ["corruption_index", "Avg corruption"],
+    ["investment_climate_index", "Avg investment climate"],
+];
+function expandFeatureGroups(groups, targetMapper = (targetKey) => targetKey) {
+    return Object.fromEntries(
+        Object.entries(groups).flatMap(([targetKey, names]) => {
+            const countryCode = targetKey.split("::")[0];
+            return names.map((name) => [`${countryCode}::${name}`, targetMapper(targetKey)]);
+        })
+    );
+}
+const REGION_FEATURE_TO_BESP = {
+    "BIH::federation of bosnia and herzegovina": "BIH::federation of bosnia and herzegovina",
+    "BIH::republika srpska": "BIH::republika srpska",
+    "BIH::brcko": "BIH::republika srpska",
+    "SRB::belgrade": "SRB::belgrade",
+    "SRB::kosovo": "SRB::kosovo and metohija",
+    ...expandFeatureGroups(REGION_GROUPS),
+};
+const BESP_REGION_KEYS = new Set(Object.values(REGION_FEATURE_TO_BESP));
+const FEATURE_TO_VISUAL_REGION = {
+    "BIH::federation of bosnia and herzegovina": "BIH::fbih",
+    "BIH::republika srpska": "BIH::rs",
+    "BIH::brcko": "BIH::rs",
+    "SRB::belgrade": "SRB::belgrade",
+    "SRB::kosovo": "SRB::kosovo-metohija",
+    "SRB::kosovo and metohija": "SRB::kosovo-metohija",
+    ...expandFeatureGroups({
+        "SRB::vojvodina": REGION_GROUPS["SRB::vojvodina"],
+        "SRB::sz-srb": REGION_GROUPS["SRB::central serbia"],
+        "SRB::ji-srb": REGION_GROUPS["SRB::south and east serbia"],
+        "MNE::boka": ["herceg novi municipality", "kotor municipality", "tivat municipality"],
+        "MNE::primorje": ["budva municipality", "bar municipality", "ulcinj municipality"],
+        "MNE::zeta": ["podgorica municipality", "danilovgrad municipality"],
+        "MNE::stara-crna-gora": ["cetinje municipality"],
+        "MNE::stara-hercegovina": ["niksic municipality", "pljevlja municipality", "pluzine municipality", "savnik municipality", "zabljak municipality"],
+        "MNE::brda": ["kolasin municipality", "mojkovac municipality", "andrijevica municipality", "berane municipality"],
+        "MNE::stara-raska": ["bijelo polje municipality", "rozaje municipality", "plav municipality", "gusinje municipality", "petnjica municipality"],
+    }),
+};
 const integerFormatter = new Intl.NumberFormat("en-US");
 const decimalFormatter = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
@@ -140,11 +148,9 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
 });
-
 function clamp(value, minimum, maximum) {
     return Math.max(minimum, Math.min(value, maximum));
 }
-
 const mapDataCache = {
     countriesByCode: new Map(),
     regionsByKey: new Map(),
@@ -167,7 +173,6 @@ const dashboardState = {
     regionRowCount: 0,
 };
 let activeMapMode = "country";
-
 const elements = {
     metaCards: document.getElementById("meta-cards"),
     stateCards: document.getElementById("state-cards"),
@@ -195,29 +200,37 @@ const elements = {
     countryTableBody: document.getElementById("country-table-body"),
     regionTableBody: document.getElementById("region-table-body"),
 };
-
+const EMPTY_CARDS = {
+    map: buildEmptyCard("No country layer data", "Load export data to render the country map layer."),
+    meta: buildEmptyCard("No data loaded", "The dashboard is waiting for <code>output/latest.json</code>."),
+    state: buildEmptyCard("No state data loaded", "Run or load an export with Phase 8 state values."),
+    stateYear: buildEmptyCard("No state data loaded", "No country rows found for the selected year."),
+};
+const EMPTY_TABLE_ROWS = {
+    country: buildEmptyTableRow(7, "No country summary loaded yet."),
+    countryExport: buildEmptyTableRow(7, "No country year values found in the export."),
+    state: buildEmptyTableRow(7, "No state summary loaded yet."),
+    region: buildEmptyTableRow(8, "No region summary loaded yet."),
+    regionExport: buildEmptyTableRow(8, "No region year values found in the export."),
+};
 document.addEventListener("DOMContentLoaded", () => {
     bindMapModeEvents();
     bindPlaybackControls();
     renderEmptyState();
     void initializeDashboard();
 });
-
 function bindMapModeEvents() {
     elements.mapModeCountryButton.addEventListener("click", () => setMapMode("country"));
     elements.mapModeRegionButton.addEventListener("click", () => setMapMode("region"));
 }
-
 async function initializeDashboard() {
     await refreshRunServiceState({ includeScenarios: true });
     await loadDashboardData();
 }
-
 async function reloadDashboardAndServiceState() {
     await refreshRunServiceState({ includeScenarios: true });
     await loadDashboardData({ reason: "reload" });
 }
-
 function bindPlaybackControls() {
     elements.yearStepBackButton.addEventListener("click", () => stepTimeline(-1));
     elements.yearStepForwardButton.addEventListener("click", () => stepTimeline(1));
@@ -247,7 +260,6 @@ function bindPlaybackControls() {
         });
     }
 }
-
 function setMapMode(mode) {
     activeMapMode = mode === "region" ? "region" : "country";
     const countryActive = activeMapMode === "country";
@@ -256,7 +268,6 @@ function setMapMode(mode) {
     applyMapModeVisibility();
     resetMapHoverDetails();
 }
-
 function applyMapModeVisibility() {
     const showCountries = activeMapMode === "country";
     elements.countryLayer.classList.toggle("map-hidden", !showCountries);
@@ -264,39 +275,31 @@ function applyMapModeVisibility() {
     elements.regionLayer.classList.toggle("map-hidden", showCountries);
     elements.regionLabelLayer.classList.toggle("map-hidden", showCountries);
 }
-
 function initializeTimelineControls() {
     elements.yearSelect.innerHTML = dashboardState.yearKeys
         .map((yearKey) => `<option value="${escapeHtml(yearKey)}">${escapeHtml(yearKey)}</option>`)
         .join("");
     updatePlaybackControls();
 }
-
 function getActiveYearKey() {
     return dashboardState.yearKeys[dashboardState.currentYearIndex] ?? "";
 }
-
 function setCurrentYearIndex(nextIndex) {
     if (!dashboardState.yearKeys.length) {
         return;
     }
-
     dashboardState.currentYearIndex = clamp(nextIndex, 0, dashboardState.yearKeys.length - 1);
     renderActiveYearState();
-
     if (dashboardState.playbackTimer) {
         restartPlaybackTimer();
     }
 }
-
 function stepTimeline(step) {
     if (!dashboardState.yearKeys.length) {
         return;
     }
-
     setCurrentYearIndex(dashboardState.currentYearIndex + step);
 }
-
 function setPlaybackSpeed(nextSpeed) {
     dashboardState.playbackSpeed = nextSpeed;
     updatePlaybackControls();
@@ -304,21 +307,17 @@ function setPlaybackSpeed(nextSpeed) {
         restartPlaybackTimer();
     }
 }
-
 function startPlayback() {
     if (!dashboardState.yearKeys.length || dashboardState.playbackTimer) {
         return;
     }
-
     if (dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1) {
         dashboardState.currentYearIndex = 0;
         renderActiveYearState();
     }
-
     restartPlaybackTimer();
     updatePlaybackControls();
 }
-
 function stopPlayback() {
     if (dashboardState.playbackTimer) {
         window.clearInterval(dashboardState.playbackTimer);
@@ -326,7 +325,6 @@ function stopPlayback() {
     }
     updatePlaybackControls();
 }
-
 function restartPlaybackTimer() {
     stopPlayback();
     const interval = Math.max(240, Math.round(BASE_PLAYBACK_INTERVAL_MS / dashboardState.playbackSpeed));
@@ -340,7 +338,6 @@ function restartPlaybackTimer() {
     }, interval);
     updatePlaybackControls();
 }
-
 function updatePlaybackControls() {
     const hasYears = dashboardState.yearKeys.length > 0;
     const activeYearKey = getActiveYearKey();
@@ -368,18 +365,15 @@ function updatePlaybackControls() {
         button.disabled = dashboardState.isReloading || !hasYears;
     }
 }
-
 async function refreshRunServiceState({ includeScenarios = false } = {}) {
     try {
         const requests = [fetchJson(RUN_STATUS_PATH)];
         if (includeScenarios || !dashboardState.availableScenarios.length) {
             requests.push(fetchJson(RUN_SCENARIOS_PATH));
         }
-
         const [runStatus, scenarios] = await Promise.all(requests);
         dashboardState.runServiceAvailable = true;
         applyRunStatus(runStatus);
-
         if (Array.isArray(scenarios)) {
             dashboardState.availableScenarios = scenarios;
             renderScenarioOptions(scenarios);
@@ -397,7 +391,6 @@ async function refreshRunServiceState({ includeScenarios = false } = {}) {
         updatePlaybackControls();
     }
 }
-
 function renderScenarioOptions(scenarios) {
     const safeScenarios = Array.isArray(scenarios) ? scenarios : [];
     elements.runScenarioSelect.innerHTML = safeScenarios
@@ -405,16 +398,13 @@ function renderScenarioOptions(scenarios) {
             <option value="${escapeHtml(scenario.code)}">${escapeHtml(scenario.name)}</option>
         `)
         .join("");
-
     if (!safeScenarios.length) {
         elements.runScenarioSelect.innerHTML = '<option value="">Service offline</option>';
     }
 }
-
 function applyRunStatus(runStatus) {
     const state = String(runStatus?.state ?? "idle");
     dashboardState.isGeneratingRun = state === "running";
-
     if (state === "running") {
         const scenarioLabel = runStatus?.scenario_name || runStatus?.scenario_code || "simulation";
         const shocksLabel = runStatus?.shocks_enabled ? "shocks on" : "shocks off";
@@ -422,14 +412,12 @@ function applyRunStatus(runStatus) {
         startRunStatusPolling();
         return;
     }
-
     stopRunStatusPolling();
     if (state === "failed") {
         const detail = runStatus?.message ? ` ${runStatus.message}` : "";
         setExportStatus(`Local run failed.${detail}`.trim(), "error");
         return;
     }
-
     if (state === "success") {
         const scenarioLabel = runStatus?.scenario_name || runStatus?.scenario_code || "simulation";
         const shocksLabel = runStatus?.shocks_enabled ? "shocks on" : "shocks off";
@@ -437,7 +425,6 @@ function applyRunStatus(runStatus) {
         setExportStatus(`Latest ${scenarioLabel} run is ready (${shocksLabel}).${seedLabel}`.trim(), "success");
         return;
     }
-
     setExportStatus(
         dashboardState.runServiceAvailable
             ? "Use Generate Run for a fresh local simulation, Reload Export for the newest JSON, and Play for timeline playback."
@@ -445,16 +432,13 @@ function applyRunStatus(runStatus) {
         "muted"
     );
 }
-
 async function triggerGenerateRun() {
     if (!dashboardState.runServiceAvailable || dashboardState.isGeneratingRun) {
         return;
     }
-
     dashboardState.isGeneratingRun = true;
     updatePlaybackControls();
     setExportStatus("Starting a fresh local simulation run ...", "loading");
-
     try {
         const response = await fetch(RUN_TRIGGER_PATH, {
             method: "POST",
@@ -467,12 +451,10 @@ async function triggerGenerateRun() {
                 shocks_enabled: elements.runShocksEnabled.checked,
             }),
         });
-
         const payload = await response.json();
         if (!response.ok) {
             throw new Error(payload?.message || `HTTP ${response.status}`);
         }
-
         applyRunStatus(payload);
     } catch (error) {
         dashboardState.isGeneratingRun = false;
@@ -481,18 +463,15 @@ async function triggerGenerateRun() {
         updatePlaybackControls();
     }
 }
-
 function startRunStatusPolling() {
     if (dashboardState.runStatusPollTimer) {
         return;
     }
-
     dashboardState.runStatusPollTimer = window.setInterval(async () => {
         try {
             const runStatus = await fetchJson(RUN_STATUS_PATH);
             applyRunStatus(runStatus);
             updatePlaybackControls();
-
             if (runStatus?.state === "success") {
                 await loadDashboardData({ reason: "reload" });
                 const refreshedStatus = await fetchJson(RUN_STATUS_PATH);
@@ -511,14 +490,12 @@ function startRunStatusPolling() {
         }
     }, 1250);
 }
-
 function stopRunStatusPolling() {
     if (dashboardState.runStatusPollTimer) {
         window.clearInterval(dashboardState.runStatusPollTimer);
         dashboardState.runStatusPollTimer = null;
     }
 }
-
 async function loadDashboardData({ reason = "initial" } = {}) {
     const isReload = reason === "reload";
     stopPlayback();
@@ -528,13 +505,11 @@ async function loadDashboardData({ reason = "initial" } = {}) {
         "loading"
     );
     updatePlaybackControls();
-
     try {
         const exportData = await fetchJson(EXPORT_PATH);
         if (!isValidExport(exportData)) {
             throw new Error("Invalid BESP export shape");
         }
-
         let geoData = dashboardState.geoData;
         let geoWarning = dashboardState.geoWarning;
         if (!geoData) {
@@ -545,7 +520,6 @@ async function loadDashboardData({ reason = "initial" } = {}) {
                 geoWarning = error instanceof Error ? error.message : "GeoJSON load failed";
             }
         }
-
         renderDashboard(exportData, geoData, geoWarning);
         setExportStatus(
             isReload
@@ -569,63 +543,50 @@ async function loadDashboardData({ reason = "initial" } = {}) {
         updatePlaybackControls();
     }
 }
-
 async function fetchJson(path) {
     const response = await fetch(path, { cache: "no-store" });
     if (!response.ok) {
         throw new Error(`HTTP ${response.status} for ${path}`);
     }
-
     return response.json();
 }
-
 async function loadGeoBoundaryData() {
     const [countryCollections, regionCollections] = await Promise.all([
-        Promise.all(COUNTRY_GEOJSON_PATHS.map((path) => fetchJson(path))),
-        Promise.all(REGION_GEOJSON_PATHS.map((path) => fetchJson(path))),
+        Promise.all(GEOJSON_PATHS.country.map((path) => fetchJson(path))),
+        Promise.all(GEOJSON_PATHS.region.map((path) => fetchJson(path))),
     ]);
-
     const countryFeaturesRaw = countryCollections.flatMap((collection) => collection.features ?? []);
     const regionFeaturesRaw = regionCollections.flatMap((collection) => collection.features ?? []);
-
     const countryFeatures = countryFeaturesRaw
         .map((feature) => normalizeGeoFeature(feature, "country"))
         .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
-
     const regionFeatures = regionFeaturesRaw
         .map((feature) => normalizeGeoFeature(feature, "region"))
         .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
-
     const allGeometryFeatures = [...countryFeatures, ...regionFeatures];
     if (!allGeometryFeatures.length) {
         throw new Error("No usable GeoJSON features found");
     }
-
     const projection = createProjection(allGeometryFeatures);
-
     const projectedCountryFeatures = countryFeatures
         .map((feature) => projectFeature(feature, projection, "country"))
         .filter((feature) => feature !== null);
     const projectedRegionFeatures = regionFeatures
         .map((feature) => projectFeature(feature, projection, "region"))
         .filter((feature) => feature !== null);
-
     return {
         countryFeatures: projectedCountryFeatures,
         regionFeatures: projectedRegionFeatures,
     };
 }
-
 function normalizeGeoFeature(feature, layerType) {
     if (!feature || !feature.geometry || !feature.properties) {
         return null;
     }
-
     const properties = feature.properties;
     const rawCountryCode = normalizeCountryCode(properties.shapeGroup || properties.shapeISO);
     let countryCode = rawCountryCode;
     let name = String(properties.shapeName ?? "").trim();
-
     // BESP models Kosovo as part of SRB scope. We keep that mapping in the frontend layer only.
     if (rawCountryCode === "XKX") {
         countryCode = "SRB";
@@ -633,11 +594,9 @@ function normalizeGeoFeature(feature, layerType) {
             name = "Kosovo and Metohija";
         }
     }
-
     if (!countryCode || !name) {
         return null;
     }
-
     return {
         countryCode,
         rawCountryCode,
@@ -645,13 +604,11 @@ function normalizeGeoFeature(feature, layerType) {
         geometry: feature.geometry,
     };
 }
-
 function createProjection(features) {
     let minLon = Number.POSITIVE_INFINITY;
     let maxLon = Number.NEGATIVE_INFINITY;
     let minLat = Number.POSITIVE_INFINITY;
     let maxLat = Number.NEGATIVE_INFINITY;
-
     for (const feature of features) {
         const points = extractCoordinates(feature.geometry);
         for (const [lon, lat] of points) {
@@ -664,11 +621,9 @@ function createProjection(features) {
             maxLat = Math.max(maxLat, lat);
         }
     }
-
     if (!Number.isFinite(minLon) || !Number.isFinite(maxLon) || !Number.isFinite(minLat) || !Number.isFinite(maxLat)) {
         throw new Error("Could not compute map bounds");
     }
-
     const lonSpan = Math.max(maxLon - minLon, 1e-9);
     const latSpan = Math.max(maxLat - minLat, 1e-9);
     const usableWidth = MAP_VIEWBOX_WIDTH - MAP_PADDING * 2;
@@ -676,27 +631,23 @@ function createProjection(features) {
     const scale = Math.min(usableWidth / lonSpan, usableHeight / latSpan);
     const offsetX = (MAP_VIEWBOX_WIDTH - lonSpan * scale) / 2;
     const offsetY = (MAP_VIEWBOX_HEIGHT - latSpan * scale) / 2;
-
     return (lon, lat) => {
         const x = offsetX + (lon - minLon) * scale;
         const y = offsetY + (maxLat - lat) * scale;
         return [x, y];
     };
 }
-
 function projectFeature(feature, projection, kind) {
     const includeHoles = kind !== "country";
     const pathD = geometryToPath(feature.geometry, projection, includeHoles);
     if (!pathD) {
         return null;
     }
-
     const centroid = geometryCentroid(feature.geometry, projection);
     const projectedArea = geometryProjectedArea(feature.geometry, projection, includeHoles);
     const key = buildRegionKey(feature.countryCode, feature.name);
     const bespRegionKey = kind === "region" ? resolveBespRegionKey(feature.countryCode, feature.name) : null;
     const visualRegion = kind === "region" ? resolveVisualRegion(feature.countryCode, feature.name, bespRegionKey) : null;
-
     return {
         ...feature,
         key,
@@ -710,25 +661,20 @@ function projectFeature(feature, projection, kind) {
         projectedArea,
     };
 }
-
 function geometryToPath(geometry, projection, includeHoles = true) {
     const type = geometry?.type;
     const coordinates = geometry?.coordinates;
     if (!type || !coordinates) {
         return "";
     }
-
     if (type === "Polygon") {
         return polygonToPath(coordinates, projection, includeHoles);
     }
-
     if (type === "MultiPolygon") {
         return coordinates.map((polygon) => polygonToPath(polygon, projection, includeHoles)).join(" ");
     }
-
     return "";
 }
-
 function polygonToPath(polygonCoordinates, projection, includeHoles) {
     const rings = includeHoles ? polygonCoordinates : polygonCoordinates.slice(0, 1);
     return rings
@@ -744,43 +690,35 @@ function polygonToPath(polygonCoordinates, projection, includeHoles) {
         .filter((segment) => segment)
         .join(" ");
 }
-
 function geometryCentroid(geometry, projection) {
     const points = extractCoordinates(geometry);
     if (!points.length) {
         return [MAP_VIEWBOX_WIDTH / 2, MAP_VIEWBOX_HEIGHT / 2];
     }
-
     let lonSum = 0;
     let latSum = 0;
     for (const [lon, lat] of points) {
         lonSum += lon;
         latSum += lat;
     }
-
     const avgLon = lonSum / points.length;
     const avgLat = latSum / points.length;
     return projection(avgLon, avgLat);
 }
-
 function extractCoordinates(geometry) {
     const type = geometry?.type;
     const coordinates = geometry?.coordinates;
     if (!type || !coordinates) {
         return [];
     }
-
     if (type === "Polygon") {
         return coordinates.flat();
     }
-
     if (type === "MultiPolygon") {
         return coordinates.flat(2);
     }
-
     return [];
 }
-
 function isValidExport(exportData) {
     return Boolean(
         exportData
@@ -792,27 +730,9 @@ function isValidExport(exportData) {
         && typeof exportData.years === "object"
     );
 }
-
 function renderDashboard(exportData, geoData, geoWarning) {
-    const countryRows = [];
-    const regionRows = [];
-
-    for (const [yearKey, yearData] of Object.entries(exportData.years)) {
-        const countries = Array.isArray(yearData?.countries) ? yearData.countries : [];
-        const regions = Array.isArray(yearData?.regions) ? yearData.regions : [];
-
-        for (const country of countries) {
-            countryRows.push({ yearKey, ...country });
-        }
-
-        for (const region of regions) {
-            regionRows.push({ yearKey, ...region });
-        }
-    }
-
-    countryRows.sort(compareYearAndCountry);
-    regionRows.sort(compareYearCountryAndRegion);
-
+    const countryRows = flattenYearRows(exportData, "countries").sort(compareYearAndCountry);
+    const regionRows = flattenYearRows(exportData, "regions").sort(compareYearCountryAndRegion);
     dashboardState.exportData = exportData;
     dashboardState.geoData = geoData;
     dashboardState.geoWarning = geoWarning;
@@ -820,41 +740,35 @@ function renderDashboard(exportData, geoData, geoWarning) {
     dashboardState.currentYearIndex = 0;
     dashboardState.countryRowCount = countryRows.length;
     dashboardState.regionRowCount = regionRows.length;
-
     initializeTimelineControls();
     renderActiveYearState();
 }
-
 function renderMetaCards(exportData, countryRowCount, regionRowCount, activeYearKey, geoWarning = "") {
     const scenarioMeta = exportData.meta?.scenario ?? {};
     const shockMeta = exportData.meta?.shocks ?? {};
     elements.metaCards.innerHTML = [
-        buildMetaCard("Selected year", activeYearKey || "-"),
-        buildMetaCard("Start year", exportData.meta.start_year),
-        buildMetaCard("End year", exportData.meta.end_year),
-        scenarioMeta.name ? buildMetaCard("Scenario", scenarioMeta.name) : "",
-        scenarioMeta.variation_seed ? buildMetaCard("Variation seed", scenarioMeta.variation_seed) : "",
-        buildMetaCard("Shocks enabled", shockMeta.enabled ? "yes" : "no"),
-        buildMetaCard("Shock events", formatInteger(shockMeta.event_count ?? 0)),
-        buildMetaCard("Country year values", formatInteger(countryRowCount)),
-        buildMetaCard("Region year values", formatInteger(regionRowCount)),
-        buildMetaCard("Year buckets", formatInteger(Object.keys(exportData.years).length)),
-        buildMetaCard("Validation warnings", formatInteger(exportData.meta.warning_count ?? 0)),
-        geoWarning ? buildMetaCard("Map warning", geoWarning) : "",
-    ].join("");
+        ["Selected year", activeYearKey || "-"],
+        ["Start year", exportData.meta.start_year],
+        ["End year", exportData.meta.end_year],
+        ["Scenario", scenarioMeta.name],
+        ["Variation seed", scenarioMeta.variation_seed],
+        ["Shocks enabled", shockMeta.enabled ? "yes" : "no"],
+        ["Shock events", formatInteger(shockMeta.event_count ?? 0)],
+        ["Country year values", formatInteger(countryRowCount)],
+        ["Region year values", formatInteger(regionRowCount)],
+        ["Year buckets", formatInteger(Object.keys(exportData.years).length)],
+        ["Validation warnings", formatInteger(exportData.meta.warning_count ?? 0)],
+        ["Map warning", geoWarning],
+    ].map(([label, value]) => value ? buildMetaCard(label, value) : "").join("");
 }
-
 function renderActiveYearState() {
     if (!dashboardState.exportData) {
         return;
     }
-
     const activeYearKey = getActiveYearKey();
     const { countryRows, regionRows } = buildRowsForYear(dashboardState.exportData, activeYearKey);
-
     mapDataCache.countriesByCode = new Map(countryRows.map((row) => [normalizeCountryCode(row.country_code), row]));
     mapDataCache.regionsByKey = new Map(regionRows.map((row) => [buildRegionKey(row.country_code, row.region_name), row]));
-
     renderMetaCards(
         dashboardState.exportData,
         dashboardState.countryRowCount,
@@ -872,7 +786,6 @@ function renderActiveYearState() {
     applyMapModeVisibility();
     resetMapHoverDetails();
 }
-
 function renderLoadError(message) {
     stopPlayback();
     renderEmptyState();
@@ -885,7 +798,6 @@ function renderLoadError(message) {
         </article>
     `;
 }
-
 function buildRowsForYear(exportData, yearKey) {
     const yearData = exportData?.years?.[yearKey] ?? {};
     const countryRows = (Array.isArray(yearData.countries) ? yearData.countries : [])
@@ -896,7 +808,6 @@ function buildRowsForYear(exportData, yearKey) {
         .sort(compareYearCountryAndRegion);
     return { countryRows, regionRows };
 }
-
 function renderCountryLayer(geoData) {
     if (!geoData?.countryFeatures?.length) {
         elements.countryLayer.innerHTML = "";
@@ -910,12 +821,10 @@ function renderCountryLayer(geoData) {
         `;
         return;
     }
-
     const availableCountryRows = [...mapDataCache.countriesByCode.values()];
     const gdpValues = availableCountryRows.map((entry) => entry.gdp_per_capita_eur);
     const minGdpPerCapita = gdpValues.length ? Math.min(...gdpValues) : 0;
     const maxGdpPerCapita = gdpValues.length ? Math.max(...gdpValues) : 1;
-
     const groupedByCountry = new Map();
     for (const feature of geoData.countryFeatures) {
         const list = groupedByCountry.get(feature.countryCode) ?? [];
@@ -923,7 +832,6 @@ function renderCountryLayer(geoData) {
         groupedByCountry.set(feature.countryCode, list);
     }
     const groupedVisualRegions = buildVisualRegionGroups(geoData.regionFeatures ?? []);
-
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
             const syntheticCountryRegions = groupedVisualRegions.filter((group) => group.countryCode === countryCode);
@@ -947,7 +855,6 @@ function renderCountryLayer(geoData) {
             };
         })
         .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
-
     elements.countryLayer.innerHTML = groupedCountries
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
@@ -984,7 +891,6 @@ function renderCountryLayer(geoData) {
             `;
         })
         .join("");
-
     elements.countryLabelLayer.innerHTML = groupedCountries
         .map((country) => {
             const [offsetX, offsetY] = COUNTRY_LABEL_OFFSETS[country.countryCode] ?? [0, 0];
@@ -995,7 +901,6 @@ function renderCountryLayer(geoData) {
         `;
         })
         .join("");
-
     elements.mapSummaryCards.innerHTML = groupedCountries
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode);
@@ -1008,7 +913,6 @@ function renderCountryLayer(geoData) {
                     </article>
                 `;
             }
-
             return `
                 <article class="meta-card">
                     <span class="meta-label"><span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})</span>
@@ -1021,32 +925,26 @@ function renderCountryLayer(geoData) {
         })
         .join("");
 }
-
 function averageCentroid(features) {
     if (!features.length) {
         return [MAP_VIEWBOX_WIDTH / 2, MAP_VIEWBOX_HEIGHT / 2];
     }
-
     let x = 0;
     let y = 0;
     for (const feature of features) {
         x += feature.centroid[0];
         y += feature.centroid[1];
     }
-
     return [x / features.length, y / features.length];
 }
-
 function renderRegionLayer(geoData) {
     if (!geoData?.regionFeatures?.length) {
         elements.regionLayer.innerHTML = "";
         elements.regionLabelLayer.innerHTML = "";
         return;
     }
-
     const groupedRegions = buildVisualRegionGroups(geoData.regionFeatures);
     mapDataCache.visualRegionsByKey = new Map(groupedRegions.map((group) => [group.visualRegionKey, group]));
-
     elements.regionLayer.innerHTML = groupedRegions
         .map((group) => `
             <path
@@ -1060,7 +958,6 @@ function renderRegionLayer(geoData) {
             ></path>
         `)
         .join("");
-
     elements.regionLabelLayer.innerHTML = groupedRegions
         .map((group) => {
             const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
@@ -1072,28 +969,23 @@ function renderRegionLayer(geoData) {
         })
         .join("");
 }
-
 function geometryProjectedArea(geometry, projection, includeHoles = true) {
     const type = geometry?.type;
     const coordinates = geometry?.coordinates;
     if (!type || !coordinates) {
         return 0;
     }
-
     if (type === "Polygon") {
         return polygonProjectedArea(coordinates, projection, includeHoles);
     }
-
     if (type === "MultiPolygon") {
         return coordinates.reduce(
             (sum, polygon) => sum + polygonProjectedArea(polygon, projection, includeHoles),
             0
         );
     }
-
     return 0;
 }
-
 function polygonProjectedArea(polygonCoordinates, projection, includeHoles) {
     const rings = includeHoles ? polygonCoordinates : polygonCoordinates.slice(0, 1);
     return rings.reduce((sum, ring, index) => {
@@ -1105,7 +997,6 @@ function polygonProjectedArea(polygonCoordinates, projection, includeHoles) {
         return sum + (index === 0 ? ringArea : (includeHoles ? -ringArea : 0));
     }, 0);
 }
-
 function shoelaceArea(points) {
     let total = 0;
     for (let index = 0; index < points.length; index += 1) {
@@ -1115,10 +1006,8 @@ function shoelaceArea(points) {
     }
     return total / 2;
 }
-
 function buildVisualRegionGroups(regionFeatures) {
     const groups = new Map();
-
     for (const feature of regionFeatures) {
         if (!feature.visualRegionKey) {
             continue;
@@ -1127,7 +1016,6 @@ function buildVisualRegionGroups(regionFeatures) {
         list.push(feature);
         groups.set(feature.visualRegionKey, list);
     }
-
     const groupedVisualRegions = [...groups.entries()].map(([visualRegionKey, features]) => {
         const template = VISUAL_REGION_DEFINITIONS[visualRegionKey];
         const mergedPathD = features.map((feature) => feature.pathD).join(" ");
@@ -1142,13 +1030,11 @@ function buildVisualRegionGroups(regionFeatures) {
             pathD: mergedPathD,
         };
     });
-
     const areaTotalsByDataKey = new Map();
     for (const group of groupedVisualRegions) {
         const total = areaTotalsByDataKey.get(group.dataRegionKey) ?? 0;
         areaTotalsByDataKey.set(group.dataRegionKey, total + group.projectedArea);
     }
-
     return groupedVisualRegions.map((group) => {
         const totalArea = areaTotalsByDataKey.get(group.dataRegionKey) ?? 0;
         const areaShare = totalArea > 0 ? group.projectedArea / totalArea : 1;
@@ -1159,19 +1045,16 @@ function buildVisualRegionGroups(regionFeatures) {
         };
     });
 }
-
 function buildVisualRegionDisplayData(group, areaShare) {
     const source = group.dataRegionKey ? mapDataCache.regionsByKey.get(group.dataRegionKey) : null;
     if (!source) {
         return null;
     }
-
     const share = clamp(areaShare, 0.08, 1.0);
     const scaledPopulation = Math.max(1, Math.round(source.end_population * share));
     const scaledStartPopulation = Math.max(1, Math.round(source.start_population * share));
     const scaledEndGdp = source.end_gdp_billion_eur * share;
     const scaledStartGdp = source.start_gdp_billion_eur * share;
-
     return {
         ...source,
         region_name: group.label,
@@ -1189,31 +1072,31 @@ function buildVisualRegionDisplayData(group, areaShare) {
         is_visual_split: normalizeRegionName(group.label) !== normalizeRegionName(source.region_name),
     };
 }
-
 function bindMapHoverEvents() {
-    for (const node of elements.countryLayer.querySelectorAll(".map-country-shape")) {
+    bindMapHoverTargets(elements.countryLayer.querySelectorAll(".map-country-shape"), (node) => {
+        const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
+        renderCountryHover(countryCode, mapDataCache.countriesByCode.get(countryCode) ?? null);
+    });
+    bindMapHoverTargets(elements.regionLayer.querySelectorAll(".map-region-shape"), (node) => {
+        const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
+        const regionName = String(node.getAttribute("data-region-name") ?? "");
+        const visualRegionKey = String(node.getAttribute("data-visual-region-key") ?? "");
+        const regionData = visualRegionKey
+            ? mapDataCache.visualRegionsByKey.get(visualRegionKey)?.displayData ?? null
+            : null;
+        renderRegionHover(
+            countryCode,
+            regionName,
+            regionData,
+            mapDataCache.countriesByCode.get(countryCode) ?? null,
+        );
+    });
+}
+function bindMapHoverTargets(nodes, enterHandler) {
+    for (const node of nodes) {
         node.addEventListener("mouseenter", () => {
-            const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
-            const countryData = mapDataCache.countriesByCode.get(countryCode);
             node.classList.add("map-hover-target");
-            renderCountryHover(countryCode, countryData ?? null);
-        });
-        node.addEventListener("mouseleave", () => {
-            node.classList.remove("map-hover-target");
-            resetMapHoverDetails();
-        });
-    }
-
-    for (const node of elements.regionLayer.querySelectorAll(".map-region-shape")) {
-        node.addEventListener("mouseenter", () => {
-            const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
-            const regionName = String(node.getAttribute("data-region-name") ?? "");
-            const visualRegionKey = String(node.getAttribute("data-visual-region-key") ?? "");
-            const visualRegion = visualRegionKey ? mapDataCache.visualRegionsByKey.get(visualRegionKey) : null;
-            const regionData = visualRegion?.displayData ?? null;
-            const countryData = mapDataCache.countriesByCode.get(countryCode) ?? null;
-            node.classList.add("map-hover-target");
-            renderRegionHover(countryCode, regionName, regionData ?? null, countryData);
+            enterHandler(node);
         });
         node.addEventListener("mouseleave", () => {
             node.classList.remove("map-hover-target");
@@ -1221,18 +1104,15 @@ function bindMapHoverEvents() {
         });
     }
 }
-
 function renderCountryHover(countryCode, countryData) {
     if (!countryData) {
         elements.mapHoverTitle.textContent = `${countryCode} (no export row)`;
         elements.mapHoverBody.textContent = "No country-year row matched for this country boundary.";
         return;
     }
-
     elements.mapHoverTitle.textContent = `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`;
     elements.mapHoverBody.textContent = describeCountrySummary(countryData);
 }
-
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
         const aggregateNote = regionData.is_visual_split && regionData.source_region_name
@@ -1246,7 +1126,6 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
             + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.${aggregateNote}`;
         return;
     }
-
     if (countryData) {
         elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
         elements.mapHoverBody.textContent =
@@ -1254,11 +1133,9 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
             + `Fallback country context: ${countryData.country_name}, ${countryData.yearKey}, ${describeCountrySummary(countryData, false)}`;
         return;
     }
-
     elements.mapHoverTitle.textContent = `${regionName} (${countryCode})`;
     elements.mapHoverBody.textContent = "No matching export row for region or country fallback.";
 }
-
 function resetMapHoverDetails() {
     if (activeMapMode === "country") {
         elements.mapHoverTitle.textContent = "Country hover active";
@@ -1266,17 +1143,15 @@ function resetMapHoverDetails() {
             "Move over a country area to inspect the selected country-year values from the export.";
         return;
     }
-
     elements.mapHoverTitle.textContent = "Region hover active";
     elements.mapHoverBody.textContent =
         "Move over a region area to inspect region-year values when available; otherwise a country fallback is shown.";
 }
-
 function renderCountryTable(countryRows) {
     renderTable(
         elements.countryTableBody,
         countryRows,
-        '<tr><td colspan="7" class="table-empty">No country year values found in the export.</td></tr>',
+        EMPTY_TABLE_ROWS.countryExport,
         (country) => `
             <tr>
                 <td>${escapeHtml(country.yearKey)}</td>
@@ -1290,61 +1165,40 @@ function renderCountryTable(countryRows) {
         `
     );
 }
-
+function flattenYearRows(exportData, collectionKey) {
+    return Object.entries(exportData.years).flatMap(([yearKey, yearData]) =>
+        (Array.isArray(yearData?.[collectionKey]) ? yearData[collectionKey] : [])
+            .map((row) => ({ yearKey, ...row }))
+    );
+}
 function renderStatePanels(countryRows) {
     if (!countryRows.length) {
-        elements.stateCards.innerHTML = `
-            <article class="meta-card empty-card">
-                <span class="meta-label">No state data loaded</span>
-                <strong class="meta-value">-</strong>
-                <p class="meta-note">No country rows found for the selected year.</p>
-            </article>
-        `;
-        elements.stateTableBody.innerHTML =
-            '<tr><td colspan="7" class="table-empty">No state summary loaded yet.</td></tr>';
+        elements.stateCards.innerHTML = EMPTY_CARDS.stateYear;
+        elements.stateTableBody.innerHTML = EMPTY_TABLE_ROWS.state;
         return;
     }
-
-    const averages = {
-        budget_balance_pct_gdp: averageMetric(countryRows, "budget_balance_pct_gdp"),
-        debt_to_gdp: averageMetric(countryRows, "debt_to_gdp"),
-        stability_index: averageMetric(countryRows, "stability_index"),
-        corruption_index: averageMetric(countryRows, "corruption_index"),
-        investment_climate_index: averageMetric(countryRows, "investment_climate_index"),
-    };
     const activeYearKey = getActiveYearKey();
-
-    elements.stateCards.innerHTML = [
-        buildStateCard("Avg budget balance", averages.budget_balance_pct_gdp, activeYearKey),
-        buildStateCard("Avg debt-to-GDP", averages.debt_to_gdp, activeYearKey),
-        buildStateCard("Avg stability", averages.stability_index, activeYearKey),
-        buildStateCard("Avg corruption", averages.corruption_index, activeYearKey),
-        buildStateCard("Avg investment climate", averages.investment_climate_index, activeYearKey),
-    ].join("");
-
+    elements.stateCards.innerHTML = STATE_METRICS
+        .map(([metricKey, label]) => buildStateCard(label, averageMetric(countryRows, metricKey), activeYearKey))
+        .join("");
     renderTable(
         elements.stateTableBody,
         countryRows,
-        '<tr><td colspan="7" class="table-empty">No state summary loaded yet.</td></tr>',
+        EMPTY_TABLE_ROWS.state,
         (country) => `
             <tr>
                 <td>${escapeHtml(country.yearKey)}</td>
                 <td>${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})</td>
-                <td>${formatStateRatio(country.budget_balance_pct_gdp)}</td>
-                <td>${formatStateRatio(country.debt_to_gdp)}</td>
-                <td>${formatStateRatio(country.stability_index)}</td>
-                <td>${formatStateRatio(country.corruption_index)}</td>
-                <td>${formatStateRatio(country.investment_climate_index)}</td>
+                ${STATE_METRICS.map(([metricKey]) => `<td>${formatStateRatio(country[metricKey])}</td>`).join("")}
             </tr>
         `
     );
 }
-
 function renderRegionTable(regionRows) {
     renderTable(
         elements.regionTableBody,
         regionRows,
-        '<tr><td colspan="8" class="table-empty">No region year values found in the export.</td></tr>',
+        EMPTY_TABLE_ROWS.regionExport,
         (region) => `
             <tr>
                 <td>${escapeHtml(region.yearKey)}</td>
@@ -1359,7 +1213,6 @@ function renderRegionTable(regionRows) {
         `
     );
 }
-
 function renderEmptyState() {
     stopPlayback();
     stopRunStatusPolling();
@@ -1367,65 +1220,40 @@ function renderEmptyState() {
     elements.countryLabelLayer.innerHTML = "";
     elements.regionLayer.innerHTML = "";
     elements.regionLabelLayer.innerHTML = "";
-    elements.mapSummaryCards.innerHTML = `
-        <article class="meta-card empty-card">
-            <span class="meta-label">No country layer data</span>
-            <strong class="meta-value">-</strong>
-            <p class="meta-note">Load export data to render the country map layer.</p>
-        </article>
-    `;
+    elements.mapSummaryCards.innerHTML = EMPTY_CARDS.map;
     mapDataCache.countriesByCode = new Map();
     mapDataCache.regionsByKey = new Map();
     mapDataCache.visualRegionsByKey = new Map();
-    dashboardState.exportData = null;
-    dashboardState.geoData = null;
-    dashboardState.geoWarning = "";
-    dashboardState.yearKeys = [];
-    dashboardState.currentYearIndex = 0;
-    dashboardState.countryRowCount = 0;
-    dashboardState.regionRowCount = 0;
-    dashboardState.isReloading = false;
-    dashboardState.isGeneratingRun = false;
+    Object.assign(dashboardState, {
+        exportData: null,
+        geoData: null,
+        geoWarning: "",
+        yearKeys: [],
+        currentYearIndex: 0,
+        countryRowCount: 0,
+        regionRowCount: 0,
+        isReloading: false,
+        isGeneratingRun: false,
+    });
     elements.yearSelect.innerHTML = "";
     elements.currentYearPill.textContent = "No year loaded";
     updatePlaybackControls();
     setMapMode("country");
     resetMapHoverDetails();
-    elements.metaCards.innerHTML = `
-        <article class="meta-card empty-card">
-            <span class="meta-label">No data loaded</span>
-            <strong class="meta-value">-</strong>
-            <p class="meta-note">The dashboard is waiting for <code>output/latest.json</code>.</p>
-        </article>
-    `;
-    elements.stateCards.innerHTML = `
-        <article class="meta-card empty-card">
-            <span class="meta-label">No state data loaded</span>
-            <strong class="meta-value">-</strong>
-            <p class="meta-note">Run or load an export with Phase 8 state values.</p>
-        </article>
-    `;
-    elements.stateTableBody.innerHTML =
-        '<tr><td colspan="7" class="table-empty">No state summary loaded yet.</td></tr>';
-    elements.countryTableBody.innerHTML =
-        '<tr><td colspan="7" class="table-empty">No country summary loaded yet.</td></tr>';
-    elements.regionTableBody.innerHTML =
-        '<tr><td colspan="8" class="table-empty">No region summary loaded yet.</td></tr>';
-    setExportStatus(
-        "Start the local run service, then use Generate Run or Reload Export.",
-        "muted"
-    );
+    elements.metaCards.innerHTML = EMPTY_CARDS.meta;
+    elements.stateCards.innerHTML = EMPTY_CARDS.state;
+    elements.stateTableBody.innerHTML = EMPTY_TABLE_ROWS.state;
+    elements.countryTableBody.innerHTML = EMPTY_TABLE_ROWS.country;
+    elements.regionTableBody.innerHTML = EMPTY_TABLE_ROWS.region;
+    setExportStatus("Start the local run service, then use Generate Run or Reload Export.", "muted");
 }
-
 function setExportStatus(message, tone = "muted") {
     if (!elements.exportStatus) {
         return;
     }
-
     elements.exportStatus.textContent = message;
     elements.exportStatus.className = `export-status export-status-status-${tone}`;
 }
-
 function renderTable(targetElement, rows, emptyRowHtml, rowBuilder) {
     if (!rows.length) {
         targetElement.innerHTML = emptyRowHtml;
@@ -1433,7 +1261,18 @@ function renderTable(targetElement, rows, emptyRowHtml, rowBuilder) {
     }
     targetElement.innerHTML = rows.map(rowBuilder).join("");
 }
-
+function buildEmptyCard(label, note) {
+    return `
+        <article class="meta-card empty-card">
+            <span class="meta-label">${escapeHtml(label)}</span>
+            <strong class="meta-value">-</strong>
+            <p class="meta-note">${note}</p>
+        </article>
+    `;
+}
+function buildEmptyTableRow(colspan, message) {
+    return `<tr><td colspan="${colspan}" class="table-empty">${escapeHtml(message)}</td></tr>`;
+}
 function buildStateCard(label, value, activeYearKey) {
     const safeValue = value === null ? "-" : formatPercent(value);
     const note = activeYearKey ? `Selected year: ${escapeHtml(activeYearKey)}` : "No year selected";
@@ -1445,7 +1284,6 @@ function buildStateCard(label, value, activeYearKey) {
         </article>
     `;
 }
-
 function averageMetric(rows, metricKey) {
     let sum = 0;
     let count = 0;
@@ -1459,19 +1297,16 @@ function averageMetric(rows, metricKey) {
     }
     return count > 0 ? sum / count : null;
 }
-
 function formatStateRatio(value) {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? formatPercent(numeric) : "-";
 }
-
 function describeCountrySummary(countryData, includeUnemployment = true) {
     const base = `population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}`;
     return includeUnemployment
         ? `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}.`
         : `${base}.`;
 }
-
 function buildMetaCard(label, value) {
     return `
         <article class="meta-card">
@@ -1480,18 +1315,15 @@ function buildMetaCard(label, value) {
         </article>
     `;
 }
-
 function compareYearAndCountry(left, right) {
     return compareByYearThen(left, right, (row) => normalizeCountryCode(row.country_code));
 }
-
 function compareYearCountryAndRegion(left, right) {
     return compareByYearThen(left, right, (row) => [
         normalizeCountryCode(row.country_code),
         normalizeRegionName(row.region_name),
     ].join("::"));
 }
-
 function compareByYearThen(left, right, keyBuilder) {
     const yearDiff = extractStartYear(left) - extractStartYear(right);
     if (yearDiff !== 0) {
@@ -1499,21 +1331,17 @@ function compareByYearThen(left, right, keyBuilder) {
     }
     return keyBuilder(left).localeCompare(keyBuilder(right));
 }
-
 function compareYearKeys(left, right) {
     const leftYear = Number.parseInt(String(left).slice(0, 4), 10);
     const rightYear = Number.parseInt(String(right).slice(0, 4), 10);
     return leftYear - rightYear;
 }
-
 function buildRegionKey(countryCode, regionName) {
     return `${normalizeCountryCode(countryCode)}::${normalizeRegionName(regionName)}`;
 }
-
 function normalizeCountryCode(countryCode) {
     return String(countryCode ?? "").trim().toUpperCase();
 }
-
 function normalizeRegionName(regionName) {
     const compact = String(regionName ?? "")
         .normalize("NFKD")
@@ -1525,19 +1353,16 @@ function normalizeRegionName(regionName) {
         .replaceAll(/\s+/g, " ");
     return REGION_NAME_ALIASES[compact] ?? compact;
 }
-
 function resolveBespRegionKey(countryCode, featureRegionName) {
     const directKey = buildRegionKey(countryCode, featureRegionName);
     return REGION_FEATURE_TO_BESP[directKey] ?? (BESP_REGION_KEYS.has(directKey) ? directKey : null);
 }
-
 function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
     const featureKey = buildRegionKey(countryCode, featureRegionName);
     const visualRegionKey = FEATURE_TO_VISUAL_REGION[featureKey] ?? null;
     if (!visualRegionKey) {
         return null;
     }
-
     const definition = VISUAL_REGION_DEFINITIONS[visualRegionKey];
     return {
         visualRegionKey,
@@ -1546,12 +1371,10 @@ function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
         fill: definition?.fill ?? "rgba(126, 143, 161, 0.38)",
     };
 }
-
 function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
     if (!countryData) {
         return "rgba(127, 150, 173, 0.45)";
     }
-
     const span = maxGdpPerCapita - minGdpPerCapita;
     const ratio = span > 0 ? (countryData.gdp_per_capita_eur - minGdpPerCapita) / span : 0.5;
     const red = Math.round(75 + ratio * 120);
@@ -1559,32 +1382,25 @@ function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
     const blue = Math.round(145 + ratio * 35);
     return `rgba(${red}, ${green}, ${blue}, 0.88)`;
 }
-
 function extractStartYear(row) {
     if (typeof row.start_year === "number") {
         return row.start_year;
     }
-
     const yearFromKey = Number.parseInt(String(row.yearKey).slice(0, 4), 10);
     return Number.isFinite(yearFromKey) ? yearFromKey : 0;
 }
-
 function formatInteger(value) {
     return integerFormatter.format(value);
 }
-
 function formatDecimal(value) {
     return decimalFormatter.format(value);
 }
-
 function formatPercent(value) {
     return percentFormatter.format(value);
 }
-
 function countryFlag(countryCode) {
     return COUNTRY_FLAGS[normalizeCountryCode(countryCode)] ?? "\uD83C\uDFF3\uFE0F";
 }
-
 function escapeHtml(value) {
     return String(value)
         .replaceAll("&", "&amp;")

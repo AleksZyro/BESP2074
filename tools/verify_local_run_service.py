@@ -5,6 +5,8 @@ import sys
 import urllib.error
 import urllib.request
 
+DEFAULT_BASE_URL = "http://127.0.0.1:8011"
+
 
 def request_json(
     url: str,
@@ -38,19 +40,17 @@ def wait_for_run_completion(base_url: str, timeout_seconds: int) -> dict:
         if state in {"success", "failed", "idle"}:
             return payload
         time.sleep(0.5)
-    raise SystemExit(
-        f"Run status polling timed out after {timeout_seconds}s."
-    )
+    raise SystemExit(f"Run status polling timed out after {timeout_seconds}s.")
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Quick health check for tools/local_run_service.py."
     )
     parser.add_argument(
         "--base-url",
-        default="http://127.0.0.1:8011",
-        help="Local run service base URL (default: http://127.0.0.1:8011).",
+        default=DEFAULT_BASE_URL,
+        help=f"Local run service base URL (default: {DEFAULT_BASE_URL}).",
     )
     parser.add_argument(
         "--trigger-run",
@@ -68,7 +68,24 @@ def main() -> None:
         default=90,
         help="Polling timeout for --e2e mode (default: 90).",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def validate_base_payloads(scenarios: object, status: object) -> None:
+    if not isinstance(scenarios, list):
+        raise SystemExit("Unexpected scenarios payload. Expected a list.")
+    if not isinstance(status, dict):
+        raise SystemExit("Unexpected run-status payload. Expected an object.")
+    if not any(
+        str(item.get("code", "")) == "baseline"
+        for item in scenarios
+        if isinstance(item, dict)
+    ):
+        raise SystemExit("Baseline scenario not present in /api/scenarios.")
+
+
+def main() -> None:
+    args = parse_args()
 
     base_url = args.base_url.rstrip("/")
     try:
@@ -79,12 +96,7 @@ def main() -> None:
             f"Could not reach local run service at {base_url}. {error.reason}"
         )
 
-    if not isinstance(scenarios, list):
-        raise SystemExit("Unexpected scenarios payload. Expected a list.")
-    if not isinstance(status, dict):
-        raise SystemExit("Unexpected run-status payload. Expected an object.")
-    if not any(str(item.get("code", "")) == "baseline" for item in scenarios if isinstance(item, dict)):
-        raise SystemExit("Baseline scenario not present in /api/scenarios.")
+    validate_base_payloads(scenarios, status)
 
     print(f"Scenarios: {len(scenarios)} loaded")
     print(f"Run status: {status.get('state', 'unknown')}")
