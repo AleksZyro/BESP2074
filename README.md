@@ -23,6 +23,8 @@ Project status:
 - Phase 6 merged into 5.6: controls are delivered as part of timeline playback
 - Phase 7.1 complete: bounded shock core (economic + climate)
 - Phase 7.2 complete: shock calibration guardrails and testcase verifier
+- Phase 7.3 complete: shock validation and balancing pass
+- Phase 7.4 in progress: testcase expansion for export + dashboard flow
 
 Current scope:
 - Countries and regions as dataclasses
@@ -161,8 +163,16 @@ Map testcase fixture:
 - Fixture validation script: `tools/verify_map_fixture.py`
 - Run check with `py tools/verify_map_fixture.py`
 
+Export testcase verifiers:
+- Year-state consistency: `py tools/verify_export_year_state.py`
+- Scenario/seed meta consistency: `py tools/verify_export_meta.py`
+
 Shock testcase verifier:
 - Verify latest run with `py tools/verify_shock_events.py`
+
+Local run service verifier:
+- Basic API health: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011`
+- End-to-end run flow: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011 --e2e`
 
 Quick start:
 1. Run `py main.py` to generate `output/latest.json`.
@@ -170,8 +180,10 @@ Quick start:
 3. Open `http://localhost:8011/dashboard/index.html`.
 4. Use `Generate Run` for a new local simulation or `Reload Export` to re-read the newest JSON.
 5. Use `Play` only to replay the loaded years.
-6. Optional service health check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011`
-7. Optional shock integrity check after a run: `py tools/verify_shock_events.py`
+6. Optional export checks: `py tools/verify_export_year_state.py` and `py tools/verify_export_meta.py`
+7. Optional service health check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011`
+8. Optional local E2E run check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011 --e2e`
+9. Optional shock integrity check after a run: `py tools/verify_shock_events.py`
 
 Documentation:
 - See `PROJECT_PHASES.md` for the cleaned-up roadmap, workflow rules, and the new Phase 5.6 bridge phase.

@@ -28,15 +28,19 @@ def main() -> None:
 
     shock_events = export_data.get("shock_events", [])
     meta_shocks = export_data.get("meta", {}).get("shocks", {})
+    shocks_enabled = bool(meta_shocks.get("enabled", True))
     event_count = int(meta_shocks.get("event_count", -1))
 
     if event_count != len(shock_events):
         fail(
             f"meta.shocks.event_count mismatch: {event_count} vs {len(shock_events)}."
         )
+    if not shocks_enabled and shock_events:
+        fail("meta.shocks.enabled is false but shock_events are present.")
 
     by_country_year: dict[tuple[str, int], list[dict]] = {}
     by_country_shock_years: dict[tuple[str, str], list[int]] = {}
+    shock_definitions = {shock.code: shock for shock in load_shocks("data/shocks.json")}
 
     for event in shock_events:
         country_code = str(event.get("country_code"))
@@ -58,6 +62,25 @@ def main() -> None:
         if probability_applied < 0.0 or probability_applied > 0.75:
             fail(
                 f"Invalid probability_applied for {country_code}/{shock_code}/{start_year}: {probability_applied}"
+            )
+        shock_definition = shock_definitions.get(shock_code)
+        if shock_definition is None:
+            fail(f"Unknown shock_code in export: {shock_code}")
+        if category != shock_definition.category:
+            fail(
+                f"Category mismatch for {shock_code}: export={category}, "
+                f"definition={shock_definition.category}."
+            )
+        if probability_applied > min(shock_definition.annual_probability * 2.0, 0.75):
+            fail(
+                f"Unexpectedly high probability_applied for {shock_code}: {probability_applied}"
+            )
+        severity_min = min(shock_definition.severity_min, shock_definition.severity_max)
+        severity_max = max(shock_definition.severity_min, shock_definition.severity_max)
+        if not (severity_min <= severity <= severity_max):
+            fail(
+                f"Severity out of definition bounds for {shock_code}: {severity} "
+                f"not in [{severity_min}, {severity_max}]."
             )
 
         key = (country_code, start_year)
@@ -82,7 +105,10 @@ def main() -> None:
                 f"{len(events)} shocks."
             )
 
-    cooldown_map = {shock.code: max(shock.cooldown_years, 0) for shock in load_shocks("data/shocks.json")}
+    cooldown_map = {
+        shock.code: max(shock.cooldown_years, 0)
+        for shock in shock_definitions.values()
+    }
     for (country_code, shock_code), years in by_country_shock_years.items():
         cooldown = cooldown_map.get(shock_code, 0)
         if cooldown <= 0:
