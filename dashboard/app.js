@@ -3,9 +3,9 @@ const RUN_STATUS_PATH = "/api/run-status";
 const RUN_SCENARIOS_PATH = "/api/scenarios";
 const RUN_TRIGGER_PATH = "/api/run";
 const RUN_SERVICE_OFFLINE_MESSAGE =
-    "Local run service unavailable. Start the local run service or use py main.py and Reload Export.";
+    "Simulation service offline. Open Advanced and start the local run service to generate new runs.";
 const PLAYBACK_HELP_MESSAGE =
-    "Use Generate Run for a fresh local simulation, Reload Export for the newest JSON, and Play for timeline playback.";
+    "Play replays loaded years. Use Advanced if you want to generate and reload a fresh run.";
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 22;
@@ -23,8 +23,35 @@ const VISUAL_REGION_LABEL_OFFSETS = {
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
-const COUNTRY_FLAGS = { BIH: "🇧🇦", MNE: "🇲🇪", SRB: "🇷🇸" };
+const COUNTRY_FLAGS = {
+    BIH: "\uD83C\uDDE7\uD83C\uDDE6",
+    MNE: "\uD83C\uDDF2\uD83C\uDDEA",
+    SRB: "\uD83C\uDDF7\uD83C\uDDF8",
+};
 const BASE_PLAYBACK_INTERVAL_MS = 1400;
+const DEFAULT_FILL = "rgba(127, 150, 173, 0.50)";
+const METRIC_VIEWS = {
+    population: {
+        label: "Population",
+        colorLow: [188, 210, 236],
+        colorHigh: [34, 73, 122],
+    },
+    gdp_per_capita: {
+        label: "GDP per cap.",
+        colorLow: [233, 219, 176],
+        colorHigh: [130, 93, 36],
+    },
+    unemployment: {
+        label: "Unemployment",
+        colorLow: [234, 198, 190],
+        colorHigh: [138, 57, 47],
+    },
+    attractiveness: {
+        label: "Attractiveness",
+        colorLow: [175, 224, 207],
+        colorHigh: [31, 112, 92],
+    },
+};
 const GEOJSON_PATHS = {
     country: ["BIH", "MNE", "SRB"].map(
         (code) => `./data/geoBoundaries-${code}-ADM0_simplified.geojson`
@@ -167,6 +194,9 @@ const dashboardState = {
     availableScenarios: [],
     countryRowCount: 0,
     regionRowCount: 0,
+    activeMetric: "population",
+    currentCountryRows: [],
+    currentRegionRows: [],
 };
 let activeMapMode = "country";
 const elements = {
@@ -185,8 +215,15 @@ const elements = {
     currentYearPill: document.getElementById("current-year-pill"),
     exportStatus: document.getElementById("export-status"),
     speedButtons: Array.from(document.querySelectorAll(".speed-button")),
+    metricButtons: Array.from(document.querySelectorAll(".metric-button")),
     mapHoverTitle: document.getElementById("map-hover-title"),
     mapHoverBody: document.getElementById("map-hover-body"),
+    kpiScope: document.getElementById("kpi-scope"),
+    kpiScopeNote: document.getElementById("kpi-scope-note"),
+    kpiPopulation: document.getElementById("kpi-population"),
+    kpiGdp: document.getElementById("kpi-gdp"),
+    kpiUnemployment: document.getElementById("kpi-unemployment"),
+    kpiGrowth: document.getElementById("kpi-growth"),
     countryLayer: document.getElementById("country-layer"),
     countryLabelLayer: document.getElementById("country-label-layer"),
     regionLayer: document.getElementById("region-layer"),
@@ -255,6 +292,21 @@ function bindPlaybackControls() {
             setPlaybackSpeed(Number.isFinite(nextSpeed) ? nextSpeed : 1);
         });
     }
+    for (const button of elements.metricButtons) {
+        button.addEventListener("click", () => {
+            const nextMetric = button.dataset.metric;
+            if (nextMetric) {
+                setActiveMetric(nextMetric);
+            }
+        });
+    }
+}
+function setActiveMetric(metricKey) {
+    if (!METRIC_VIEWS[metricKey] || metricKey === dashboardState.activeMetric) {
+        return;
+    }
+    dashboardState.activeMetric = metricKey;
+    renderActiveYearState();
 }
 function setMapMode(mode) {
     activeMapMode = mode === "region" ? "region" : "country";
@@ -262,6 +314,7 @@ function setMapMode(mode) {
     elements.mapModeCountryButton.classList.toggle("map-mode-button-active", countryActive);
     elements.mapModeRegionButton.classList.toggle("map-mode-button-active", !countryActive);
     applyMapModeVisibility();
+    renderPublicSidebar();
     resetMapHoverDetails();
 }
 function applyMapModeVisibility() {
@@ -360,6 +413,11 @@ function updatePlaybackControls() {
         button.classList.toggle("speed-button-active", speed === dashboardState.playbackSpeed);
         button.disabled = dashboardState.isReloading || !hasYears;
     }
+    for (const button of elements.metricButtons) {
+        const metricKey = String(button.dataset.metric ?? "");
+        button.classList.toggle("metric-button-active", metricKey === dashboardState.activeMetric);
+        button.disabled = dashboardState.isReloading || !hasYears;
+    }
 }
 async function refreshRunServiceState({ includeScenarios = false } = {}) {
     try {
@@ -414,8 +472,7 @@ function applyRunStatus(runStatus) {
         return;
     }
     if (state === "success") {
-        const seedLabel = runStatus?.variation_seed ? ` Seed ${runStatus.variation_seed}.` : "";
-        setExportStatus(`Latest ${scenarioLabel} run is ready (${shocksLabel}).${seedLabel}`.trim(), "success");
+        setExportStatus(`Latest ${scenarioLabel} run is ready (${shocksLabel}).`, "success");
         return;
     }
     setExportStatus(dashboardState.runServiceAvailable ? PLAYBACK_HELP_MESSAGE : RUN_SERVICE_OFFLINE_MESSAGE, "muted");
@@ -486,7 +543,7 @@ async function loadDashboardData({ reason = "initial" } = {}) {
     stopPlayback();
     dashboardState.isReloading = true;
     setExportStatus(
-        isReload ? "Reloading output/latest.json ..." : "Loading output/latest.json ...",
+        isReload ? "Reloading latest simulation data ..." : "Loading latest simulation data ...",
         "loading"
     );
     updatePlaybackControls();
@@ -508,19 +565,19 @@ async function loadDashboardData({ reason = "initial" } = {}) {
         renderDashboard(exportData, geoData, geoWarning);
         setExportStatus(
             isReload
-                ? "Export reloaded. Generate Run creates a fresh local simulation; Play replays the loaded years."
-                : "Export loaded. Generate Run creates a fresh local simulation; Play replays the loaded years.",
+                ? "Export reloaded. You can now browse years and map views."
+                : "Export loaded. You can now browse years and map views.",
             "success"
         );
     } catch (error) {
         const detail = error instanceof Error ? ` (${error.message})` : "";
         setExportStatus(
-            "Could not load output/latest.json. Run py main.py, then use Reload Export."
+            "Could not load latest simulation data. Open Advanced, generate/reload, then try again."
             + detail,
             "error"
         );
         renderLoadError(
-            "Could not load output/latest.json. Run py main.py and serve the repository root before opening the dashboard."
+            "Could not load latest simulation data. Start the local run service from repository root and refresh."
             + detail
         );
     } finally {
@@ -752,6 +809,8 @@ function renderActiveYearState() {
     }
     const activeYearKey = getActiveYearKey();
     const { countryRows, regionRows } = buildRowsForYear(dashboardState.exportData, activeYearKey);
+    dashboardState.currentCountryRows = countryRows;
+    dashboardState.currentRegionRows = regionRows;
     mapDataCache.countriesByCode = new Map(countryRows.map((row) => [normalizeCountryCode(row.country_code), row]));
     mapDataCache.regionsByKey = new Map(regionRows.map((row) => [buildRegionKey(row.country_code, row.region_name), row]));
     renderMetaCards(
@@ -763,6 +822,7 @@ function renderActiveYearState() {
     );
     renderCountryLayer(dashboardState.geoData);
     renderRegionLayer(dashboardState.geoData);
+    renderPublicSidebar();
     bindMapHoverEvents();
     renderStatePanels(countryRows);
     renderCountryTable(countryRows);
@@ -801,9 +861,10 @@ function renderCountryLayer(geoData) {
         return;
     }
     const availableCountryRows = [...mapDataCache.countriesByCode.values()];
-    const gdpValues = availableCountryRows.map((entry) => entry.gdp_per_capita_eur);
-    const minGdpPerCapita = gdpValues.length ? Math.min(...gdpValues) : 0;
-    const maxGdpPerCapita = gdpValues.length ? Math.max(...gdpValues) : 1;
+    const countryMetricRange = calculateMetricRange(
+        availableCountryRows,
+        (row) => metricValueFromCountry(row, dashboardState.activeMetric)
+    );
     const groupedByCountry = groupBy(geoData.countryFeatures, (feature) => feature.countryCode);
     const groupedVisualRegions = buildVisualRegionGroups(geoData.regionFeatures ?? []);
     const groupedCountries = [...groupedByCountry.entries()]
@@ -832,7 +893,11 @@ function renderCountryLayer(geoData) {
     elements.countryLayer.innerHTML = groupedCountries
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
-            const fill = mapCountryFill(row, minGdpPerCapita, maxGdpPerCapita);
+            const fill = mapMetricFill(
+                metricValueFromCountry(row, dashboardState.activeMetric),
+                countryMetricRange,
+                dashboardState.activeMetric
+            );
             const kosovoSeamFix = country.countryCode === "SRB"
                 ? country.syntheticCountryRegions.find((group) => group.visualRegionKey === "SRB::kosovo-metohija")
                 : null;
@@ -901,6 +966,10 @@ function renderRegionLayer(geoData) {
         return;
     }
     const groupedRegions = buildVisualRegionGroups(geoData.regionFeatures);
+    const regionMetricRange = calculateMetricRange(
+        groupedRegions.map((group) => group.displayData).filter(Boolean),
+        (row) => metricValueFromRegion(row, dashboardState.activeMetric)
+    );
     mapDataCache.visualRegionsByKey = new Map(groupedRegions.map((group) => [group.visualRegionKey, group]));
     elements.regionLayer.innerHTML = groupedRegions
         .map((group) => `
@@ -911,7 +980,12 @@ function renderRegionLayer(geoData) {
                 data-visual-region-key="${escapeHtml(group.visualRegionKey)}"
                 data-data-region-key="${escapeHtml(group.dataRegionKey ?? "")}"
                 d="${escapeHtml(group.pathD)}"
-                fill="${escapeHtml(group.fill)}"
+                fill="${escapeHtml(mapMetricFill(
+                    metricValueFromRegion(group.displayData, dashboardState.activeMetric),
+                    regionMetricRange,
+                    dashboardState.activeMetric,
+                    group.fill
+                ))}"
             ></path>
         `)
         .join("");
@@ -1154,6 +1228,34 @@ function renderRegionTable(regionRows) {
         ])
     );
 }
+function renderPublicSidebar() {
+    const countryRows = dashboardState.currentCountryRows ?? [];
+    const regionRows = [...mapDataCache.visualRegionsByKey.values()]
+        .map((group) => group.displayData)
+        .filter(Boolean);
+    const useRegionScope = activeMapMode === "region";
+    const sourceRows = useRegionScope ? regionRows : countryRows;
+    const scopeLabel = useRegionScope ? "Regions" : "Countries";
+    elements.kpiScope.textContent = scopeLabel;
+    elements.kpiScopeNote.textContent = `${METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric"} view for ${scopeLabel.toLowerCase()} in selected year.`;
+    if (!sourceRows.length) {
+        elements.kpiPopulation.textContent = "-";
+        elements.kpiGdp.textContent = "-";
+        elements.kpiUnemployment.textContent = "-";
+        elements.kpiGrowth.textContent = "-";
+        return;
+    }
+    elements.kpiPopulation.textContent = formatInteger(sumMetric(sourceRows, "end_population"));
+    elements.kpiGdp.textContent = `${formatDecimal(sumMetric(sourceRows, "end_gdp_billion_eur"))} bn`;
+    elements.kpiUnemployment.textContent = formatMetricDisplay(
+        averageMetric(sourceRows, useRegionScope ? "unemployment_rate" : "average_unemployment_rate"),
+        "unemployment"
+    );
+    elements.kpiGrowth.textContent = formatMetricDisplay(
+        averageMetric(sourceRows, "gdp_growth_rate"),
+        "attractiveness"
+    );
+}
 function renderEmptyState() {
     stopPlayback();
     stopRunStatusPolling();
@@ -1170,6 +1272,8 @@ function renderEmptyState() {
         regionRowCount: 0,
         isReloading: false,
         isGeneratingRun: false,
+        currentCountryRows: [],
+        currentRegionRows: [],
     });
     elements.yearSelect.innerHTML = "";
     elements.currentYearPill.textContent = "No year loaded";
@@ -1181,7 +1285,8 @@ function renderEmptyState() {
     elements.stateTableBody.innerHTML = EMPTY_TABLE_ROWS.state;
     elements.countryTableBody.innerHTML = EMPTY_TABLE_ROWS.country;
     elements.regionTableBody.innerHTML = EMPTY_TABLE_ROWS.region;
-    setExportStatus("Start the local run service, then use Generate Run or Reload Export.", "muted");
+    renderPublicSidebar();
+    setExportStatus("Use Play to browse years. Open Advanced to generate or reload runs.", "muted");
 }
 function setExportStatus(message, tone = "muted") {
     if (!elements.exportStatus) {
@@ -1250,6 +1355,16 @@ function averageMetric(rows, metricKey) {
     }
     return count > 0 ? sum / count : null;
 }
+function sumMetric(rows, metricKey) {
+    let sum = 0;
+    for (const row of rows) {
+        const value = Number(row?.[metricKey]);
+        if (Number.isFinite(value)) {
+            sum += value;
+        }
+    }
+    return sum;
+}
 function formatStateRatio(value) {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? formatPercent(numeric) : "-";
@@ -1270,11 +1385,13 @@ function buildMetaCard(label, value) {
 }
 function buildCountrySummaryCard(country, row) {
     const label = `<span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})`;
-    const note = row ? `${escapeHtml(row.yearKey)} | GDP ${formatDecimal(row.end_gdp_billion_eur)} bn EUR` : "No matching country export row.";
+    const metricLabel = METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric";
+    const metricValue = row ? formatMetricDisplay(metricValueFromCountry(row, dashboardState.activeMetric), dashboardState.activeMetric) : "No data";
+    const note = row ? `${escapeHtml(row.yearKey)} | ${escapeHtml(metricLabel)}` : "No matching country export row.";
     return `
         <article class="meta-card">
             <span class="meta-label">${label}</span>
-            <strong class="meta-value">${row ? formatInteger(row.end_population) : "No data"}</strong>
+            <strong class="meta-value">${metricValue}</strong>
             <p class="meta-note">${note}</p>
         </article>
     `;
@@ -1348,16 +1465,65 @@ function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
         fill: definition?.fill ?? "rgba(126, 143, 161, 0.38)",
     };
 }
-function mapCountryFill(countryData, minGdpPerCapita, maxGdpPerCapita) {
+function metricValueFromCountry(countryData, metricKey) {
     if (!countryData) {
-        return "rgba(127, 150, 173, 0.45)";
+        return Number.NaN;
     }
-    const span = maxGdpPerCapita - minGdpPerCapita;
-    const ratio = span > 0 ? (countryData.gdp_per_capita_eur - minGdpPerCapita) / span : 0.5;
-    const red = Math.round(75 + ratio * 120);
-    const green = Math.round(113 + ratio * 90);
-    const blue = Math.round(145 + ratio * 35);
-    return `rgba(${red}, ${green}, ${blue}, 0.88)`;
+    switch (metricKey) {
+        case "population":
+            return Number(countryData.end_population);
+        case "gdp_per_capita":
+            return Number(countryData.gdp_per_capita_eur);
+        case "unemployment":
+            return Number(countryData.average_unemployment_rate);
+        case "attractiveness":
+            return Number(countryData.average_regional_attractiveness);
+        default:
+            return Number.NaN;
+    }
+}
+function metricValueFromRegion(regionData, metricKey) {
+    if (!regionData) {
+        return Number.NaN;
+    }
+    switch (metricKey) {
+        case "population":
+            return Number(regionData.end_population);
+        case "gdp_per_capita":
+            return Number(regionData.gdp_per_capita_eur);
+        case "unemployment":
+            return Number(regionData.unemployment_rate);
+        case "attractiveness":
+            return Number(regionData.regional_attractiveness);
+        default:
+            return Number.NaN;
+    }
+}
+function calculateMetricRange(rows, valueResolver) {
+    const values = rows
+        .map((row) => Number(valueResolver(row)))
+        .filter((value) => Number.isFinite(value));
+    if (!values.length) {
+        return { min: 0, max: 1 };
+    }
+    return {
+        min: Math.min(...values),
+        max: Math.max(...values),
+    };
+}
+function mapMetricFill(value, metricRange, metricKey, fallback = DEFAULT_FILL) {
+    if (!Number.isFinite(value) || !METRIC_VIEWS[metricKey]) {
+        return fallback;
+    }
+    const min = Number(metricRange?.min ?? 0);
+    const max = Number(metricRange?.max ?? 1);
+    const span = max - min;
+    const ratio = span > 0 ? clamp((value - min) / span, 0, 1) : 0.5;
+    const metricStyle = METRIC_VIEWS[metricKey];
+    const red = Math.round(metricStyle.colorLow[0] + (metricStyle.colorHigh[0] - metricStyle.colorLow[0]) * ratio);
+    const green = Math.round(metricStyle.colorLow[1] + (metricStyle.colorHigh[1] - metricStyle.colorLow[1]) * ratio);
+    const blue = Math.round(metricStyle.colorLow[2] + (metricStyle.colorHigh[2] - metricStyle.colorLow[2]) * ratio);
+    return `rgba(${red}, ${green}, ${blue}, 0.90)`;
 }
 function extractStartYear(row) {
     if (typeof row.start_year === "number") {
@@ -1368,6 +1534,19 @@ function extractStartYear(row) {
 }
 function formatInteger(value) {
     return integerFormatter.format(value);
+}
+function formatMetricDisplay(value, metricKey) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+        return "-";
+    }
+    if (metricKey === "population") {
+        return formatInteger(Math.round(numeric));
+    }
+    if (metricKey === "gdp_per_capita") {
+        return `${formatInteger(Math.round(numeric))} EUR`;
+    }
+    return formatPercent(numeric);
 }
 function formatDecimal(value) {
     return decimalFormatter.format(value);

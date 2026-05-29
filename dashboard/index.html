@@ -3,29 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BESP Dashboard 5.x Map v1</title>
+    <title>BESP Dashboard 8.4 Public View</title>
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
     <div class="page-shell">
         <header class="hero">
             <div>
-                <p class="eyebrow">BESP Phase 5.8</p>
-                <h1>Dashboard Timeline With Real Geodata Map</h1>
-                <p class="lead">This dashboard reads the existing simulation export, lets you step through precomputed years, and overlays them on real country and region geodata for BIH, MNE, and SRB.</p>
+                <p class="eyebrow">BESP Phase 8.4</p>
+                <h1>Balkan Economy Simulation</h1>
+                <p class="lead">Simple public view with year playback, map layers, and easy country/region indicators.</p>
             </div>
         </header>
         <main class="dashboard-grid">
-            <section class="panel">
+            <section class="panel map-panel">
                 <div class="section-heading">
-                    <div><p class="section-kicker">Phase 5.8 Export Reload</p><h2>Balkan Country Layer</h2></div>
+                    <div><p class="section-kicker">Map View</p><h2>Balkan Layer</h2></div>
                     <div class="section-actions">
-                        <div class="run-controls" role="group" aria-label="Simulation run controls">
-                            <label class="timeline-select-wrap" for="run-scenario-select"><span>Scenario</span><select id="run-scenario-select" class="timeline-select"></select></label>
-                            <label class="toggle-wrap" for="run-shocks-enabled"><input id="run-shocks-enabled" type="checkbox" checked><span>Shocks on</span></label>
-                            <button id="generate-run" class="timeline-button timeline-button-primary" type="button">Generate Run</button>
-                            <button id="reload-export" class="timeline-button" type="button">Reload Export</button>
-                        </div>
                         <div class="timeline-controls" role="group" aria-label="Timeline controls">
                             <button id="year-step-back" class="timeline-button" type="button">Prev</button>
                             <button id="playback-toggle" class="timeline-button timeline-button-primary" type="button">Play</button>
@@ -39,11 +33,17 @@
                             </div>
                             <span id="current-year-pill" class="year-pill">Waiting for data</span>
                         </div>
-                        <p class="timeline-note"><strong>Generate Run</strong> starts a fresh local simulation through the run service. <strong>Reload Export</strong> reloads the latest JSON. <strong>Play</strong> only replays the loaded years.</p>
-                        <p id="export-status" class="export-status" aria-live="polite">Waiting for export data.</p>
-                        <div class="map-mode-controls" role="group" aria-label="Map layer mode">
-                            <button id="map-mode-country" class="map-mode-button map-mode-button-active" type="button">Countries</button>
-                            <button id="map-mode-region" class="map-mode-button" type="button">Regions</button>
+                        <div class="view-strip">
+                            <div class="map-mode-controls" role="group" aria-label="Map layer mode">
+                                <button id="map-mode-country" class="map-mode-button map-mode-button-active" type="button">Countries</button>
+                                <button id="map-mode-region" class="map-mode-button" type="button">Regions</button>
+                            </div>
+                            <div class="metric-controls" role="group" aria-label="Map metric mode">
+                                <button class="metric-button metric-button-active" data-metric="population" type="button">👥 Population</button>
+                                <button class="metric-button" data-metric="gdp_per_capita" type="button">💶 GDP per cap.</button>
+                                <button class="metric-button" data-metric="unemployment" type="button">💼 Unemployment</button>
+                                <button class="metric-button" data-metric="attractiveness" type="button">📈 Attractiveness</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -54,10 +54,21 @@
                         </svg>
                     </div>
                     <div class="map-side-panel">
+                        <article class="meta-card kpi-card">
+                            <span class="meta-label">Selected scope</span>
+                            <strong id="kpi-scope" class="meta-value">Countries</strong>
+                            <p id="kpi-scope-note" class="meta-note">Year-based values for the active map view.</p>
+                            <div class="kpi-grid">
+                                <div class="kpi-item"><span>👥 Population</span><strong id="kpi-population">-</strong></div>
+                                <div class="kpi-item"><span>💶 GDP</span><strong id="kpi-gdp">-</strong></div>
+                                <div class="kpi-item"><span>💼 Unemployment</span><strong id="kpi-unemployment">-</strong></div>
+                                <div class="kpi-item"><span>📈 Growth</span><strong id="kpi-growth">-</strong></div>
+                            </div>
+                        </article>
                         <article class="meta-card">
                             <span class="meta-label">Hover details</span>
                             <strong id="map-hover-title" class="meta-value">No map target</strong>
-                            <p id="map-hover-body" class="meta-note">Move over a country or region area to inspect map-linked export values.</p>
+                            <p id="map-hover-body" class="meta-note">Move over a map area to inspect values for the selected year.</p>
                         </article>
                         <div id="map-summary-cards" class="map-summary-cards">
                             <article class="meta-card empty-card">
@@ -68,51 +79,69 @@
                         </div>
                     </div>
                 </div>
+                <details class="advanced-block">
+                    <summary>Erweitert: Simulation</summary>
+                    <div class="advanced-content">
+                        <div class="run-controls" role="group" aria-label="Simulation run controls">
+                            <label class="timeline-select-wrap" for="run-scenario-select"><span>Scenario</span><select id="run-scenario-select" class="timeline-select"></select></label>
+                            <label class="toggle-wrap" for="run-shocks-enabled"><input id="run-shocks-enabled" type="checkbox" checked><span>Shocks on</span></label>
+                            <button id="generate-run" class="timeline-button timeline-button-primary" type="button">Generate Run</button>
+                            <button id="reload-export" class="timeline-button" type="button">Reload Export</button>
+                        </div>
+                        <p class="timeline-note"><strong>Play</strong> replays loaded years. <strong>Generate Run</strong> creates a new local run. <strong>Reload Export</strong> loads newest JSON.</p>
+                        <p id="export-status" class="export-status" aria-live="polite">Waiting for export data.</p>
+                    </div>
+                </details>
             </section>
-            <section class="panel">
-                <div class="section-heading"><div><p class="section-kicker">Overview</p><h2>Export Metadata</h2></div></div>
-                <div id="meta-cards" class="card-grid">
-                    <article class="meta-card empty-card">
-                        <span class="meta-label">No data loaded</span>
-                        <strong class="meta-value">-</strong>
-                        <p class="meta-note">Run the simulation to generate <code>output/latest.json</code>.</p>
-                    </article>
+            <details class="panel details-panel">
+                <summary>Details & Data Tables</summary>
+                <div class="details-content">
+                    <section>
+                        <div class="section-heading"><div><p class="section-kicker">Overview</p><h2>Export Metadata</h2></div></div>
+                        <div id="meta-cards" class="card-grid">
+                            <article class="meta-card empty-card">
+                                <span class="meta-label">No data loaded</span>
+                                <strong class="meta-value">-</strong>
+                                <p class="meta-note">Run the simulation to generate <code>output/latest.json</code>.</p>
+                            </article>
+                        </div>
+                    </section>
+                    <section>
+                        <div class="section-heading"><div><p class="section-kicker">Phase 8.3 Politics/State v1</p><h2>State Year Values</h2></div></div>
+                        <div id="state-cards" class="card-grid">
+                            <article class="meta-card empty-card">
+                                <span class="meta-label">No state data loaded</span>
+                                <strong class="meta-value">-</strong>
+                                <p class="meta-note">Run or load an export with Phase 8 state values.</p>
+                            </article>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Year</th><th>Country</th><th>Budget balance (% GDP)</th><th>Debt (% GDP)</th><th>Stability</th><th>Corruption</th><th>Investment climate</th></tr></thead>
+                                <tbody id="state-table-body"><tr><td colspan="7" class="table-empty">No state summary loaded yet.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </section>
+                    <section>
+                        <div class="section-heading"><div><p class="section-kicker">Country Summary</p><h2>Country Year Values</h2></div></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Year</th><th>Country</th><th>Population</th><th>GDP</th><th>GDP growth</th><th>GDP per capita</th><th>Unemployment</th></tr></thead>
+                                <tbody id="country-table-body"><tr><td colspan="7" class="table-empty">No country summary loaded yet.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </section>
+                    <section>
+                        <div class="section-heading"><div><p class="section-kicker">Region Summary</p><h2>Region Year Values</h2></div></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Year</th><th>Country</th><th>Region</th><th>Population</th><th>GDP</th><th>GDP growth</th><th>Unemployment</th><th>Attractiveness</th></tr></thead>
+                                <tbody id="region-table-body"><tr><td colspan="8" class="table-empty">No region summary loaded yet.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </section>
                 </div>
-            </section>
-            <section class="panel">
-                <div class="section-heading"><div><p class="section-kicker">Phase 8.3 Politics/State v1</p><h2>State Year Values</h2></div></div>
-                <div id="state-cards" class="card-grid">
-                    <article class="meta-card empty-card">
-                        <span class="meta-label">No state data loaded</span>
-                        <strong class="meta-value">-</strong>
-                        <p class="meta-note">Run or load an export with Phase 8 state values.</p>
-                    </article>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Year</th><th>Country</th><th>Budget balance (% GDP)</th><th>Debt (% GDP)</th><th>Stability</th><th>Corruption</th><th>Investment climate</th></tr></thead>
-                        <tbody id="state-table-body"><tr><td colspan="7" class="table-empty">No state summary loaded yet.</td></tr></tbody>
-                    </table>
-                </div>
-            </section>
-            <section class="panel">
-                <div class="section-heading"><div><p class="section-kicker">Country Summary</p><h2>Country Year Values</h2></div></div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Year</th><th>Country</th><th>Population</th><th>GDP</th><th>GDP growth</th><th>GDP per capita</th><th>Unemployment</th></tr></thead>
-                        <tbody id="country-table-body"><tr><td colspan="7" class="table-empty">No country summary loaded yet.</td></tr></tbody>
-                    </table>
-                </div>
-            </section>
-            <section class="panel">
-                <div class="section-heading"><div><p class="section-kicker">Region Summary</p><h2>Region Year Values</h2></div></div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Year</th><th>Country</th><th>Region</th><th>Population</th><th>GDP</th><th>GDP growth</th><th>Unemployment</th><th>Attractiveness</th></tr></thead>
-                        <tbody id="region-table-body"><tr><td colspan="8" class="table-empty">No region summary loaded yet.</td></tr></tbody>
-                    </table>
-                </div>
-            </section>
+            </details>
         </main>
     </div>
     <script src="./app.js"></script>

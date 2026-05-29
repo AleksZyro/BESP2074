@@ -29,6 +29,7 @@ Project status:
 - Phase 8.1 complete: politics/state v1 core model and export wiring
 - Phase 8.2 complete: yearly tick integration + state validation pass
 - Phase 8.3 complete: dashboard state-value panels with timeline year sync
+- Phase 8.4 complete: public UI simplification with metric-based map views
 
 Current scope:
 - Countries and regions as dataclasses
@@ -68,6 +69,9 @@ Dashboard 5.x (map v1):
 - Region labels are grouped by BESP region keys to avoid district-label clutter
 - Bosnia map mapping currently assigns Brcko to RS rendering scope
 - Keeps hover details export-driven with country fallback where region mapping is not available
+- Public-facing layout now prioritizes simple timeline + map usage with Advanced controls collapsed by default
+- Map metric buttons (Population, GDP per capita, Unemployment, Attractiveness) recolor country/region layers by selected year values
+- Sidebar KPI cards summarize active scope (Countries/Regions) for selected year in simpler language
 
 Current dashboard limitations:
 - No live simulation runs in the browser; the dashboard reads exported JSON data

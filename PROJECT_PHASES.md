@@ -219,6 +219,16 @@ Contains:
 ### Phase 8.3 - Dashboard Panels for Politics/State v1
 Status: complete
 
+### Phase 8.4 - Public UI Simplification + Metric Views
+Status: complete
+
+Contains:
+- Cleaner public dashboard hierarchy with focus on timeline + map usage
+- Advanced simulation controls moved into a collapsible section
+- Sidebar KPI cards for simple user-facing indicators (population, GDP, unemployment, growth)
+- Metric-based map view toggles (population, GDP per capita, unemployment, attractiveness)
+- Year-synced country/region map coloring without changing simulation logic
+
 Contains:
 - State cards (year-synced averages)
 - State table by active year and country
