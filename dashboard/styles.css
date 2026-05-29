@@ -163,12 +163,11 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke-linejoin: round;
 }
 .map-country-shape, .map-region-shape {
-    transition: stroke 130ms ease, stroke-width 130ms ease, fill-opacity 130ms ease;
+    transition: filter 120ms ease, fill-opacity 120ms ease;
 }
 .map-country-shape.map-hover-target,
 .map-region-shape.map-hover-target {
-    stroke: rgba(10, 15, 24, 0.88);
-    stroke-width: 2.3;
+    filter: brightness(0.97) drop-shadow(0 0 1px rgba(8, 14, 22, 0.85));
     fill-opacity: 0.92;
 }
 .map-hidden { display: none; }

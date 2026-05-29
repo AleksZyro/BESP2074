@@ -886,14 +886,13 @@ function renderCountryLayer(geoData) {
     const groupedVisualRegions = buildVisualRegionGroups(geoData.regionFeatures ?? []);
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
-            const syntheticCountryRegions = groupedVisualRegions.filter((group) => group.countryCode === countryCode);
-            const mergedPathD = countryCode === "SRB" && syntheticCountryRegions.length
-                ? syntheticCountryRegions.map((group) => group.pathD).join(" ")
-                : features.map((feature) => feature.pathD).join(" ");
+            const countryPath = features.map((feature) => feature.pathD).join(" ");
+            const kosovoRegion = countryCode === "SRB"
+                ? groupedVisualRegions.find((group) => group.visualRegionKey === "SRB::kosovo-metohija")
+                : null;
+            const mergedPathD = kosovoRegion ? `${countryPath} ${kosovoRegion.pathD}` : countryPath;
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
-            const centroid = countryCode === "SRB" && syntheticCountryRegions.length
-                ? averageCentroid(syntheticCountryRegions)
-                : (labelFeature?.centroid ?? averageCentroid(features));
+            const centroid = labelFeature?.centroid ?? averageCentroid(features);
             const displayName = labelFeature?.countryCode === "SRB"
                 ? "Serbia"
                 : (labelFeature?.name ?? countryCode);
@@ -903,7 +902,7 @@ function renderCountryLayer(geoData) {
                 mergedPathD,
                 centroid,
                 features,
-                syntheticCountryRegions,
+                kosovoRegion,
             };
         })
         .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
@@ -917,9 +916,7 @@ function renderCountryLayer(geoData) {
                     countryMetricRange,
                     dashboardState.activeMetric
                 );
-            const kosovoSeamFix = country.countryCode === "SRB"
-                ? country.syntheticCountryRegions.find((group) => group.visualRegionKey === "SRB::kosovo-metohija")
-                : null;
+            const kosovoSeamFix = country.kosovoRegion;
             return `
                 <path
                     class="map-country-shape"
