@@ -1079,7 +1079,7 @@ function shoelaceArea(points) {
     }
     return total / 2;
 }
-function buildVisualRegionGroups(regionFeatures, regionSourceMap) {
+function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.regionsByKey) {
     const groups = groupBy(
         regionFeatures.filter((feature) => feature.visualRegionKey),
         (feature) => feature.visualRegionKey
