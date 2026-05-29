@@ -31,6 +31,11 @@ const COUNTRY_FLAGS = {
 const BASE_PLAYBACK_INTERVAL_MS = 1400;
 const DEFAULT_FILL = "rgba(127, 150, 173, 0.50)";
 const METRIC_VIEWS = {
+    classic: {
+        label: "Standard",
+        colorLow: [0, 0, 0],
+        colorHigh: [0, 0, 0],
+    },
     population: {
         label: "Population",
         colorLow: [188, 210, 236],
@@ -194,12 +199,12 @@ const dashboardState = {
     availableScenarios: [],
     countryRowCount: 0,
     regionRowCount: 0,
-    activeMetric: "population",
+    activeMetric: "classic",
     currentCountryRows: [],
     currentRegionRows: [],
 };
 let activeMapMode = "country";
-let hoverResetTimer = null;
+let activeHoverNode = null;
 const elements = {
     metaCards: document.getElementById("meta-cards"),
     stateCards: document.getElementById("state-cards"),
@@ -219,6 +224,7 @@ const elements = {
     metricButtons: Array.from(document.querySelectorAll(".metric-button")),
     mapHoverTitle: document.getElementById("map-hover-title"),
     mapHoverBody: document.getElementById("map-hover-body"),
+    mapRoot: document.getElementById("country-map"),
     kpiScope: document.getElementById("kpi-scope"),
     kpiScopeNote: document.getElementById("kpi-scope-note"),
     kpiPopulation: document.getElementById("kpi-population"),
@@ -250,6 +256,7 @@ const EMPTY_TABLE_ROWS = {
 document.addEventListener("DOMContentLoaded", () => {
     bindMapModeEvents();
     bindPlaybackControls();
+    bindMapRootReset();
     renderEmptyState();
     void initializeDashboard();
 });
@@ -301,6 +308,15 @@ function bindPlaybackControls() {
             }
         });
     }
+}
+function bindMapRootReset() {
+    elements.mapRoot.addEventListener("mouseleave", () => {
+        if (activeHoverNode) {
+            activeHoverNode.classList.remove("map-hover-target");
+            activeHoverNode = null;
+        }
+        resetMapHoverDetails();
+    });
 }
 function setActiveMetric(metricKey) {
     if (!METRIC_VIEWS[metricKey] || metricKey === dashboardState.activeMetric) {
@@ -894,11 +910,13 @@ function renderCountryLayer(geoData) {
     elements.countryLayer.innerHTML = groupedCountries
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
-            const fill = mapMetricFill(
-                metricValueFromCountry(row, dashboardState.activeMetric),
-                countryMetricRange,
-                dashboardState.activeMetric
-            );
+            const fill = dashboardState.activeMetric === "classic"
+                ? baseCountryFill(country.countryCode)
+                : mapMetricFill(
+                    metricValueFromCountry(row, dashboardState.activeMetric),
+                    countryMetricRange,
+                    dashboardState.activeMetric
+                );
             const kosovoSeamFix = country.countryCode === "SRB"
                 ? country.syntheticCountryRegions.find((group) => group.visualRegionKey === "SRB::kosovo-metohija")
                 : null;
@@ -981,12 +999,14 @@ function renderRegionLayer(geoData) {
                 data-visual-region-key="${escapeHtml(group.visualRegionKey)}"
                 data-data-region-key="${escapeHtml(group.dataRegionKey ?? "")}"
                 d="${escapeHtml(group.pathD)}"
-                fill="${escapeHtml(mapMetricFill(
-                    metricValueFromRegion(group.displayData, dashboardState.activeMetric),
-                    regionMetricRange,
-                    dashboardState.activeMetric,
-                    group.fill
-                ))}"
+                fill="${escapeHtml(dashboardState.activeMetric === "classic"
+                    ? group.fill
+                    : mapMetricFill(
+                        metricValueFromRegion(group.displayData, dashboardState.activeMetric),
+                        regionMetricRange,
+                        dashboardState.activeMetric,
+                        group.fill
+                    ))}"
             ></path>
         `)
         .join("");
@@ -1122,28 +1142,17 @@ function bindMapHoverEvents() {
 function bindMapHoverTargets(nodes, enterHandler) {
     for (const node of nodes) {
         node.addEventListener("mouseenter", () => {
-            clearHoverResetTimer();
-            node.classList.add("map-hover-target");
+            setActiveHoverNode(node);
             enterHandler(node);
         });
-        node.addEventListener("mouseleave", () => {
-            node.classList.remove("map-hover-target");
-            queueHoverReset();
-        });
     }
 }
-function queueHoverReset() {
-    clearHoverResetTimer();
-    hoverResetTimer = window.setTimeout(() => {
-        hoverResetTimer = null;
-        resetMapHoverDetails();
-    }, 90);
-}
-function clearHoverResetTimer() {
-    if (hoverResetTimer) {
-        window.clearTimeout(hoverResetTimer);
-        hoverResetTimer = null;
+function setActiveHoverNode(node) {
+    if (activeHoverNode && activeHoverNode !== node) {
+        activeHoverNode.classList.remove("map-hover-target");
     }
+    activeHoverNode = node;
+    activeHoverNode.classList.add("map-hover-target");
 }
 function renderCountryHover(countryCode, countryData) {
     if (!countryData) {
@@ -1539,6 +1548,14 @@ function mapMetricFill(value, metricRange, metricKey, fallback = DEFAULT_FILL) {
     const green = Math.round(metricStyle.colorLow[1] + (metricStyle.colorHigh[1] - metricStyle.colorLow[1]) * ratio);
     const blue = Math.round(metricStyle.colorLow[2] + (metricStyle.colorHigh[2] - metricStyle.colorLow[2]) * ratio);
     return `rgba(${red}, ${green}, ${blue}, 0.90)`;
+}
+function baseCountryFill(countryCode) {
+    const palette = {
+        BIH: "rgba(83, 122, 158, 0.90)",
+        MNE: "rgba(115, 149, 176, 0.90)",
+        SRB: "rgba(184, 195, 173, 0.90)",
+    };
+    return palette[normalizeCountryCode(countryCode)] ?? DEFAULT_FILL;
 }
 function extractStartYear(row) {
     if (typeof row.start_year === "number") {

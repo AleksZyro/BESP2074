@@ -162,8 +162,15 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke-width: 2px;
     stroke-linejoin: round;
 }
-.map-country-shape, .map-region-shape { transition: filter 160ms ease; }
-.map-country-shape:hover, .map-region-shape:hover, .map-hover-target { filter: brightness(1.16); }
+.map-country-shape, .map-region-shape {
+    transition: stroke 130ms ease, stroke-width 130ms ease, fill-opacity 130ms ease;
+}
+.map-country-shape.map-hover-target,
+.map-region-shape.map-hover-target {
+    stroke: rgba(10, 15, 24, 0.88);
+    stroke-width: 2.3;
+    fill-opacity: 0.92;
+}
 .map-hidden { display: none; }
 .map-side-panel, .map-summary-cards { display: grid; gap: 12px; }
 .kpi-card { display: grid; gap: 12px; }
