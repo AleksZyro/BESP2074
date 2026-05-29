@@ -140,11 +140,12 @@ code { font-family: Consolas, "Courier New", monospace; }
     border-radius: 16px;
     min-height: 390px;
     padding: 14px;
+    overflow: hidden;
     background:
         radial-gradient(circle at 20% 20%, rgba(118, 183, 214, 0.13), transparent 35%),
         linear-gradient(180deg, rgba(22, 40, 61, 0.92), rgba(13, 28, 45, 0.95));
 }
-#country-map { width: 100%; height: 100%; }
+#country-map { width: 100%; height: 100%; overflow: hidden; }
 .map-country-shape { stroke: none; stroke-width: 0; vector-effect: non-scaling-stroke; }
 .map-region-shape { stroke: rgba(8, 14, 24, 0.7); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .map-country-label, .map-region-label {
@@ -163,12 +164,11 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke-linejoin: round;
 }
 .map-country-shape, .map-region-shape {
-    transition: filter 120ms ease, fill-opacity 120ms ease;
+    transition: fill-opacity 120ms ease;
 }
 .map-country-shape.map-hover-target,
 .map-region-shape.map-hover-target {
-    filter: brightness(0.97) drop-shadow(0 0 1px rgba(8, 14, 22, 0.85));
-    fill-opacity: 0.92;
+    fill-opacity: 0.84;
 }
 .map-hidden { display: none; }
 .map-side-panel, .map-summary-cards { display: grid; gap: 12px; }
