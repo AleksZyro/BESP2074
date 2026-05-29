@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BESP Dashboard 8.4 Public View</title>
-    <link rel="stylesheet" href="./styles.css?v=8.4.5">
+    <link rel="stylesheet" href="./styles.css?v=8.4.6">
 </head>
 <body>
     <div class="page-shell">
@@ -39,11 +39,11 @@
                                 <button id="map-mode-region" class="map-mode-button" type="button">Regions</button>
                             </div>
                             <div class="metric-controls" role="group" aria-label="Map metric mode">
-                                <button class="metric-button metric-button-active" data-metric="classic" type="button">🗺️ Standard</button>
-                                <button class="metric-button" data-metric="population" type="button">👥 Population</button>
-                                <button class="metric-button" data-metric="gdp_per_capita" type="button">💶 GDP per cap.</button>
-                                <button class="metric-button" data-metric="unemployment" type="button">💼 Unemployment</button>
-                                <button class="metric-button" data-metric="attractiveness" type="button">📈 Attractiveness</button>
+                                <button class="metric-button metric-button-active" data-metric="classic" type="button">&#128506;&#65039; Standard</button>
+                                <button class="metric-button" data-metric="population" type="button">&#128101; Population</button>
+                                <button class="metric-button" data-metric="gdp_per_capita" type="button">&#128182; GDP per cap.</button>
+                                <button class="metric-button" data-metric="unemployment" type="button">&#128188; Unemployment</button>
+                                <button class="metric-button" data-metric="attractiveness" type="button">&#128200; Attractiveness</button>
                             </div>
                         </div>
                     </div>
@@ -55,15 +55,15 @@
                         </svg>
                     </div>
                     <div class="map-side-panel">
-                        <article class="meta-card kpi-card">
+                        <article id="kpi-card" class="meta-card kpi-card">
                             <span class="meta-label">Selected scope</span>
                             <strong id="kpi-scope" class="meta-value">Countries</strong>
                             <p id="kpi-scope-note" class="meta-note">Year-based values for the active map view.</p>
-                            <div class="kpi-grid">
-                                <div class="kpi-item"><span>👥 Population</span><strong id="kpi-population">-</strong></div>
-                                <div class="kpi-item"><span>💶 GDP</span><strong id="kpi-gdp">-</strong></div>
-                                <div class="kpi-item"><span>💼 Unemployment</span><strong id="kpi-unemployment">-</strong></div>
-                                <div class="kpi-item"><span>📈 Growth</span><strong id="kpi-growth">-</strong></div>
+                            <div id="kpi-grid" class="kpi-grid">
+                                <div class="kpi-item" data-kpi="population"><span id="kpi-label-population">&#128101; Population</span><strong id="kpi-population">-</strong></div>
+                                <div class="kpi-item" data-kpi="gdp_per_capita"><span id="kpi-label-gdp">&#128182; GDP</span><strong id="kpi-gdp">-</strong></div>
+                                <div class="kpi-item" data-kpi="unemployment"><span id="kpi-label-unemployment">&#128188; Unemployment</span><strong id="kpi-unemployment">-</strong></div>
+                                <div class="kpi-item" data-kpi="attractiveness"><span id="kpi-label-growth">&#128200; Growth</span><strong id="kpi-growth">-</strong></div>
                             </div>
                         </article>
                         <article class="meta-card">
@@ -145,6 +145,6 @@
             </details>
         </main>
     </div>
-    <script src="./app.js?v=8.4.5"></script>
+    <script src="./app.js?v=8.4.6"></script>
 </body>
 </html>

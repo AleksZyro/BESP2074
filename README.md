@@ -72,6 +72,7 @@ Dashboard 5.x (map v1):
 - Public-facing layout now prioritizes simple timeline + map usage with Advanced controls collapsed by default
 - Map metric buttons (Population, GDP per capita, Unemployment, Attractiveness) recolor country/region layers by selected year values
 - Sidebar KPI cards summarize active scope (Countries/Regions) for selected year in simpler language
+- Standard mode keeps the mixed overview visible, while metric overlays now switch the right column to a single-category view with year-to-year direction arrows
 
 Current dashboard limitations:
 - No live simulation runs in the browser; the dashboard reads exported JSON data

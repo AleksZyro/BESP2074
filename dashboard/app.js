@@ -181,8 +181,11 @@ function clamp(value, minimum, maximum) {
 }
 const mapDataCache = {
     countriesByCode: new Map(),
+    previousCountriesByCode: new Map(),
     regionsByKey: new Map(),
+    previousRegionsByKey: new Map(),
     visualRegionsByKey: new Map(),
+    previousVisualRegionsByKey: new Map(),
 };
 const dashboardState = {
     exportData: null,
@@ -225,8 +228,15 @@ const elements = {
     mapHoverTitle: document.getElementById("map-hover-title"),
     mapHoverBody: document.getElementById("map-hover-body"),
     mapRoot: document.getElementById("country-map"),
+    kpiCard: document.getElementById("kpi-card"),
+    kpiGrid: document.getElementById("kpi-grid"),
     kpiScope: document.getElementById("kpi-scope"),
     kpiScopeNote: document.getElementById("kpi-scope-note"),
+    kpiItems: Array.from(document.querySelectorAll(".kpi-item")),
+    kpiLabelPopulation: document.getElementById("kpi-label-population"),
+    kpiLabelGdp: document.getElementById("kpi-label-gdp"),
+    kpiLabelUnemployment: document.getElementById("kpi-label-unemployment"),
+    kpiLabelGrowth: document.getElementById("kpi-label-growth"),
     kpiPopulation: document.getElementById("kpi-population"),
     kpiGdp: document.getElementById("kpi-gdp"),
     kpiUnemployment: document.getElementById("kpi-unemployment"),
@@ -825,11 +835,21 @@ function renderActiveYearState() {
         return;
     }
     const activeYearKey = getActiveYearKey();
+    const previousYearKey = dashboardState.yearKeys[dashboardState.currentYearIndex - 1] ?? "";
     const { countryRows, regionRows } = buildRowsForYear(dashboardState.exportData, activeYearKey);
+    const previousRows = previousYearKey
+        ? buildRowsForYear(dashboardState.exportData, previousYearKey)
+        : { countryRows: [], regionRows: [] };
     dashboardState.currentCountryRows = countryRows;
     dashboardState.currentRegionRows = regionRows;
     mapDataCache.countriesByCode = new Map(countryRows.map((row) => [normalizeCountryCode(row.country_code), row]));
+    mapDataCache.previousCountriesByCode = new Map(
+        previousRows.countryRows.map((row) => [normalizeCountryCode(row.country_code), row])
+    );
     mapDataCache.regionsByKey = new Map(regionRows.map((row) => [buildRegionKey(row.country_code, row.region_name), row]));
+    mapDataCache.previousRegionsByKey = new Map(
+        previousRows.regionRows.map((row) => [buildRegionKey(row.country_code, row.region_name), row])
+    );
     renderMetaCards(
         dashboardState.exportData,
         dashboardState.countryRowCount,
@@ -840,6 +860,7 @@ function renderActiveYearState() {
     renderCountryLayer(dashboardState.geoData);
     renderRegionLayer(dashboardState.geoData);
     renderPublicSidebar();
+    renderMapSummaryCards();
     bindMapHoverEvents();
     renderStatePanels(countryRows);
     renderCountryTable(countryRows);
@@ -956,12 +977,6 @@ function renderCountryLayer(geoData) {
         `;
         })
         .join("");
-    elements.mapSummaryCards.innerHTML = groupedCountries
-        .map((country) => {
-            const row = mapDataCache.countriesByCode.get(country.countryCode);
-            return buildCountrySummaryCard(country, row);
-        })
-        .join("");
 }
 function averageCentroid(features) {
     if (!features.length) {
@@ -981,12 +996,21 @@ function renderRegionLayer(geoData) {
         elements.regionLabelLayer.innerHTML = "";
         return;
     }
-    const groupedRegions = buildVisualRegionGroups(geoData.regionFeatures);
+    const groupedRegions = buildVisualRegionGroups(geoData.regionFeatures, mapDataCache.regionsByKey);
+    const previousGroupedRegions = buildVisualRegionGroups(
+        geoData.regionFeatures,
+        mapDataCache.previousRegionsByKey
+    );
     const regionMetricRange = calculateMetricRange(
         groupedRegions.map((group) => group.displayData).filter(Boolean),
         (row) => metricValueFromRegion(row, dashboardState.activeMetric)
     );
     mapDataCache.visualRegionsByKey = new Map(groupedRegions.map((group) => [group.visualRegionKey, group]));
+    mapDataCache.previousVisualRegionsByKey = new Map(
+        previousGroupedRegions
+            .filter((group) => group.displayData)
+            .map((group) => [group.visualRegionKey, group.displayData])
+    );
     elements.regionLayer.innerHTML = groupedRegions
         .map((group) => `
             <path
@@ -1055,7 +1079,7 @@ function shoelaceArea(points) {
     }
     return total / 2;
 }
-function buildVisualRegionGroups(regionFeatures) {
+function buildVisualRegionGroups(regionFeatures, regionSourceMap) {
     const groups = groupBy(
         regionFeatures.filter((feature) => feature.visualRegionKey),
         (feature) => feature.visualRegionKey
@@ -1085,12 +1109,12 @@ function buildVisualRegionGroups(regionFeatures) {
         return {
             ...group,
             areaShare,
-            displayData: buildVisualRegionDisplayData(group, areaShare),
+            displayData: buildVisualRegionDisplayData(group, areaShare, regionSourceMap),
         };
     });
 }
-function buildVisualRegionDisplayData(group, areaShare) {
-    const source = group.dataRegionKey ? mapDataCache.regionsByKey.get(group.dataRegionKey) : null;
+function buildVisualRegionDisplayData(group, areaShare, regionSourceMap) {
+    const source = group.dataRegionKey ? regionSourceMap.get(group.dataRegionKey) : null;
     if (!source) {
         return null;
     }
@@ -1159,6 +1183,18 @@ function renderCountryHover(countryCode, countryData) {
         );
         return;
     }
+    if (!isClassicMetricView()) {
+        const previousCountryData = mapDataCache.previousCountriesByCode.get(countryCode) ?? null;
+        setMapHoverDetails(
+            `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`,
+            describeMetricFocus(
+                dashboardState.activeMetric,
+                metricValueFromCountry(countryData, dashboardState.activeMetric),
+                previousCountryData ? metricValueFromCountry(previousCountryData, dashboardState.activeMetric) : Number.NaN
+            )
+        );
+        return;
+    }
     setMapHoverDetails(
         `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`,
         describeCountrySummary(countryData)
@@ -1166,6 +1202,19 @@ function renderCountryHover(countryCode, countryData) {
 }
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
+        if (!isClassicMetricView()) {
+            const visualRegionKey = buildVisualRegionKey(countryCode, regionName);
+            const previousRegionData = mapDataCache.previousVisualRegionsByKey.get(visualRegionKey) ?? null;
+            setMapHoverDetails(
+                `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`,
+                describeMetricFocus(
+                    dashboardState.activeMetric,
+                    metricValueFromRegion(regionData, dashboardState.activeMetric),
+                    previousRegionData ? metricValueFromRegion(previousRegionData, dashboardState.activeMetric) : Number.NaN
+                )
+            );
+            return;
+        }
         const aggregateNote = regionData.is_visual_split && regionData.source_region_name
             ? ` Split from aggregate: ${regionData.source_region_name}.`
             : "";
@@ -1178,6 +1227,18 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
         return;
     }
     if (countryData) {
+        if (!isClassicMetricView()) {
+            const previousCountryData = mapDataCache.previousCountriesByCode.get(countryCode) ?? null;
+            setMapHoverDetails(
+                `${regionName} (${countryCode})`,
+                describeMetricFocus(
+                    dashboardState.activeMetric,
+                    metricValueFromCountry(countryData, dashboardState.activeMetric),
+                    previousCountryData ? metricValueFromCountry(previousCountryData, dashboardState.activeMetric) : Number.NaN
+                )
+            );
+            return;
+        }
         setMapHoverDetails(
             `${regionName} (${countryCode})`,
             "No direct BESP region mapping for this geoboundary. "
@@ -1188,6 +1249,13 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
     setMapHoverDetails(`${regionName} (${countryCode})`, "No matching export row for region or country fallback.");
 }
 function resetMapHoverDetails() {
+    if (!isClassicMetricView()) {
+        setMapHoverDetails(
+            `${METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric"} overlay active`,
+            "Move over a map area to compare the selected metric with the previous year."
+        );
+        return;
+    }
     if (activeMapMode === "country") {
         setMapHoverDetails(
             "Country hover active",
@@ -1254,18 +1322,66 @@ function renderPublicSidebar() {
     const regionRows = [...mapDataCache.visualRegionsByKey.values()]
         .map((group) => group.displayData)
         .filter(Boolean);
+    const previousCountryRows = [...mapDataCache.previousCountriesByCode.values()];
+    const previousRegionRows = [...mapDataCache.previousVisualRegionsByKey.values()];
     const useRegionScope = activeMapMode === "region";
     const sourceRows = useRegionScope ? regionRows : countryRows;
+    const previousRows = useRegionScope ? previousRegionRows : previousCountryRows;
     const scopeLabel = useRegionScope ? "Regions" : "Countries";
-    elements.kpiScope.textContent = scopeLabel;
-    elements.kpiScopeNote.textContent = `${METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric"} view for ${scopeLabel.toLowerCase()} in selected year.`;
+    const isClassic = isClassicMetricView();
+    elements.kpiGrid.classList.toggle("kpi-grid-metric", !isClassic);
+    for (const item of elements.kpiItems) {
+        const itemMetric = item.dataset.kpi ?? "";
+        item.classList.toggle("kpi-item-active", !isClassic && itemMetric === dashboardState.activeMetric);
+    }
+    elements.kpiScope.textContent = isClassic
+        ? scopeLabel
+        : `${scopeLabel} | ${METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric"}`;
+    elements.kpiScopeNote.textContent = isClassic
+        ? "Standard view keeps the mixed summary visible for the selected year."
+        : "Overlay mode focuses on one category at a time with a calm year-to-year trend.";
     if (!sourceRows.length) {
+        elements.kpiLabelPopulation.textContent = "\u{1F465} Population";
+        elements.kpiLabelGdp.textContent = "\u{1F4B6} GDP";
+        elements.kpiLabelUnemployment.textContent = "\u{1F4BC} Unemployment";
+        elements.kpiLabelGrowth.textContent = "\u{1F4C8} Growth";
         elements.kpiPopulation.textContent = "-";
         elements.kpiGdp.textContent = "-";
         elements.kpiUnemployment.textContent = "-";
         elements.kpiGrowth.textContent = "-";
         return;
     }
+    if (!isClassic) {
+        const metricKey = dashboardState.activeMetric;
+        const currentAggregate = aggregateMetricForScope(sourceRows, metricKey);
+        const previousAggregate = aggregateMetricForScope(previousRows, metricKey);
+        const trend = metricTrend(metricKey, currentAggregate, previousAggregate);
+        elements.kpiLabelPopulation.textContent = "\u{1F465} Population";
+        elements.kpiLabelGdp.textContent = "\u{1F4B6} GDP per cap.";
+        elements.kpiLabelUnemployment.textContent = "\u{1F4BC} Unemployment";
+        elements.kpiLabelGrowth.textContent = "\u{1F4C8} Attractiveness";
+        elements.kpiPopulation.textContent = metricKey === "population" ? formatMetricDisplay(currentAggregate, metricKey) : "-";
+        elements.kpiGdp.textContent = metricKey === "gdp_per_capita" ? formatMetricDisplay(currentAggregate, metricKey) : "-";
+        elements.kpiUnemployment.textContent = metricKey === "unemployment" ? formatMetricDisplay(currentAggregate, metricKey) : "-";
+        elements.kpiGrowth.textContent = metricKey === "attractiveness"
+            ? `${formatMetricDisplay(currentAggregate, metricKey)} ${trend.arrow}`
+            : "-";
+        if (metricKey !== "attractiveness") {
+            const activeValue = `${formatMetricDisplay(currentAggregate, metricKey)} ${trend.arrow}`.trim();
+            if (metricKey === "population") {
+                elements.kpiPopulation.textContent = activeValue;
+            } else if (metricKey === "gdp_per_capita") {
+                elements.kpiGdp.textContent = activeValue;
+            } else if (metricKey === "unemployment") {
+                elements.kpiUnemployment.textContent = activeValue;
+            }
+        }
+        return;
+    }
+    elements.kpiLabelPopulation.textContent = "\u{1F465} Population";
+    elements.kpiLabelGdp.textContent = "\u{1F4B6} GDP";
+    elements.kpiLabelUnemployment.textContent = "\u{1F4BC} Unemployment";
+    elements.kpiLabelGrowth.textContent = "\u{1F4C8} Growth";
     elements.kpiPopulation.textContent = formatInteger(sumMetric(sourceRows, "end_population"));
     elements.kpiGdp.textContent = `${formatDecimal(sumMetric(sourceRows, "end_gdp_billion_eur"))} bn`;
     elements.kpiUnemployment.textContent = formatMetricDisplay(
@@ -1276,6 +1392,67 @@ function renderPublicSidebar() {
         averageMetric(sourceRows, "gdp_growth_rate"),
         "attractiveness"
     );
+}
+function renderMapSummaryCards() {
+    const isClassic = isClassicMetricView();
+    if (activeMapMode === "country") {
+        const cards = [...mapDataCache.countriesByCode.values()]
+            .sort((left, right) => normalizeCountryCode(left.country_code).localeCompare(normalizeCountryCode(right.country_code)))
+            .map((countryRow) => {
+                const countryCode = normalizeCountryCode(countryRow.country_code);
+                const previousCountryRow = mapDataCache.previousCountriesByCode.get(countryCode) ?? null;
+                return isClassic
+                    ? buildClassicSummaryCard(
+                        `${countryFlag(countryCode)} ${countryRow.country_name} (${countryCode})`,
+                        [
+                            `Population ${formatInteger(countryRow.end_population)}`,
+                            `GDP ${formatDecimal(countryRow.end_gdp_billion_eur)} bn EUR`,
+                            `Unemployment ${formatPercent(countryRow.average_unemployment_rate)}`,
+                        ],
+                        countryRow.yearKey
+                    )
+                    : buildMetricSummaryCard(
+                        `${countryFlag(countryCode)} ${countryRow.country_name} (${countryCode})`,
+                        dashboardState.activeMetric,
+                        metricValueFromCountry(countryRow, dashboardState.activeMetric),
+                        previousCountryRow ? metricValueFromCountry(previousCountryRow, dashboardState.activeMetric) : Number.NaN,
+                        countryRow.yearKey
+                    );
+            });
+        elements.mapSummaryCards.innerHTML = cards.length
+            ? cards.join("")
+            : buildEmptyCard("No country layer data", "Load export data to render the country map layer.");
+        return;
+    }
+    const cards = [...mapDataCache.visualRegionsByKey.values()]
+        .sort((left, right) => {
+            const countryDiff = left.countryCode.localeCompare(right.countryCode);
+            return countryDiff !== 0 ? countryDiff : left.label.localeCompare(right.label);
+        })
+        .map((group) => {
+            const currentRegion = group.displayData;
+            const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
+            return isClassic
+                ? buildClassicSummaryCard(
+                    `${group.label} (${group.countryCode})`,
+                    currentRegion ? [
+                        `Population ${formatInteger(currentRegion.end_population)}`,
+                        `GDP ${formatDecimal(currentRegion.end_gdp_billion_eur)} bn EUR`,
+                        `Unemployment ${formatPercent(currentRegion.unemployment_rate)}`,
+                    ] : ["No mapped BESP data"],
+                    currentRegion?.yearKey ?? getActiveYearKey()
+                )
+                : buildMetricSummaryCard(
+                    `${group.label} (${group.countryCode})`,
+                    dashboardState.activeMetric,
+                    metricValueFromRegion(currentRegion, dashboardState.activeMetric),
+                    previousRegion ? metricValueFromRegion(previousRegion, dashboardState.activeMetric) : Number.NaN,
+                    currentRegion?.yearKey ?? getActiveYearKey()
+                );
+        });
+    elements.mapSummaryCards.innerHTML = cards.length
+        ? cards.join("")
+        : buildEmptyCard("No region layer data", "Load export data to render the region map layer.");
 }
 function renderEmptyState() {
     stopPlayback();
@@ -1337,8 +1514,11 @@ function clearMapLayers() {
 }
 function resetMapCaches() {
     mapDataCache.countriesByCode = new Map();
+    mapDataCache.previousCountriesByCode = new Map();
     mapDataCache.regionsByKey = new Map();
+    mapDataCache.previousRegionsByKey = new Map();
     mapDataCache.visualRegionsByKey = new Map();
+    mapDataCache.previousVisualRegionsByKey = new Map();
 }
 function buildEmptyCard(label, note) {
     return `
@@ -1396,6 +1576,11 @@ function describeCountrySummary(countryData, includeUnemployment = true) {
         ? `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}.`
         : `${base}.`;
 }
+function describeMetricFocus(metricKey, currentValue, previousValue) {
+    const metricLabel = METRIC_VIEWS[metricKey]?.label ?? "Metric";
+    const trend = metricTrend(metricKey, currentValue, previousValue);
+    return `${metricLabel} ${formatMetricDisplay(currentValue, metricKey)}. ${trend.summary}`;
+}
 function buildMetaCard(label, value) {
     return `
         <article class="meta-card">
@@ -1403,6 +1588,111 @@ function buildMetaCard(label, value) {
             <strong class="meta-value">${escapeHtml(String(value))}</strong>
         </article>
     `;
+}
+function buildClassicSummaryCard(title, lines, yearKey) {
+    return `
+        <article class="meta-card metric-summary-card">
+            <span class="meta-label">${title}</span>
+            <strong class="meta-value">${escapeHtml(yearKey || "No year")}</strong>
+            <p class="metric-summary-subtitle">${escapeHtml(lines.join(" | "))}</p>
+        </article>
+    `;
+}
+function buildMetricSummaryCard(title, metricKey, currentValue, previousValue, yearKey) {
+    const trend = metricTrend(metricKey, currentValue, previousValue);
+    return `
+        <article class="meta-card metric-summary-card">
+            <span class="meta-label">${title}</span>
+            <div class="metric-summary-row">
+                <strong>${escapeHtml(formatMetricDisplay(currentValue, metricKey))}</strong>
+                <span class="metric-trend metric-trend-${trend.tone}">
+                    <span class="metric-trend-arrow">${trend.arrow}</span>
+                    <span>${escapeHtml(trend.label)}</span>
+                </span>
+            </div>
+            <p class="metric-summary-subtitle">${escapeHtml(yearKey || "No year")} | ${escapeHtml(METRIC_VIEWS[metricKey]?.label ?? "Metric")}</p>
+        </article>
+    `;
+}
+function aggregateMetricForScope(rows, metricKey) {
+    if (!rows.length) {
+        return Number.NaN;
+    }
+    if (metricKey === "population") {
+        return sumMetric(rows, "end_population");
+    }
+    const values = rows
+        .map((row) => metricRowValue(row, metricKey))
+        .filter((value) => Number.isFinite(value));
+    if (!values.length) {
+        return Number.NaN;
+    }
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+function metricRowValue(row, metricKey) {
+    if (!row) {
+        return Number.NaN;
+    }
+    if (Object.hasOwn(row, "average_unemployment_rate")) {
+        return metricValueFromCountry(row, metricKey);
+    }
+    return metricValueFromRegion(row, metricKey);
+}
+function metricTrend(metricKey, currentValue, previousValue) {
+    const current = Number(currentValue);
+    const previous = Number(previousValue);
+    if (!Number.isFinite(current) || !Number.isFinite(previous)) {
+        return {
+            tone: "neutral",
+            arrow: "→",
+            label: "no prior year",
+            summary: "No prior year comparison is available yet.",
+        };
+    }
+    const delta = current - previous;
+    const magnitude = metricTrendMagnitude(metricKey, current, previous, delta);
+    const isPositiveDirection = metricKey === "unemployment" ? delta < 0 : delta > 0;
+    if (magnitude === "neutral") {
+        return {
+            tone: "neutral",
+            arrow: "→",
+            label: "steady",
+            summary: "Change versus the previous year stays fairly neutral.",
+        };
+    }
+    return isPositiveDirection
+        ? {
+            tone: "positive",
+            arrow: "↗",
+            label: "upbeat",
+            summary: "Direction versus the previous year is clearly positive.",
+        }
+        : {
+            tone: "negative",
+            arrow: "↘",
+            label: "weaker",
+            summary: "Direction versus the previous year is clearly negative.",
+        };
+}
+function metricTrendMagnitude(metricKey, current, previous, delta) {
+    if (metricKey === "population") {
+        const ratio = previous !== 0 ? delta / previous : 0;
+        return Math.abs(ratio) >= 0.01 ? "strong" : Math.abs(ratio) >= 0.003 ? "soft" : "neutral";
+    }
+    if (metricKey === "gdp_per_capita") {
+        const ratio = previous !== 0 ? delta / previous : 0;
+        return Math.abs(ratio) >= 0.02 ? "strong" : Math.abs(ratio) >= 0.008 ? "soft" : "neutral";
+    }
+    if (metricKey === "attractiveness") {
+        return Math.abs(delta) >= 0.015 ? "strong" : Math.abs(delta) >= 0.006 ? "soft" : "neutral";
+    }
+    return Math.abs(delta) >= 0.01 ? "strong" : Math.abs(delta) >= 0.004 ? "soft" : "neutral";
+}
+function buildVisualRegionKey(countryCode, regionName) {
+    return `${normalizeCountryCode(countryCode)}::${normalizeRegionName(regionName)}`;
+}
+function isClassicMetricView() {
+    return dashboardState.activeMetric === "classic";
 }
 function buildCountrySummaryCard(country, row) {
     const label = `<span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})`;
