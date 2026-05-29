@@ -70,6 +70,8 @@ code { font-family: Consolas, "Courier New", monospace; }
     accent-color: var(--accent);
 }
 .timeline-button, .speed-button, .timeline-select, .map-mode-button, .metric-button {
+    appearance: none;
+    -webkit-appearance: none;
     border: 1px solid rgba(173, 198, 224, 0.34);
     border-radius: 999px;
     background: rgba(28, 50, 73, 0.72);

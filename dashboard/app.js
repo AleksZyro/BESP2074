@@ -199,6 +199,7 @@ const dashboardState = {
     currentRegionRows: [],
 };
 let activeMapMode = "country";
+let hoverResetTimer = null;
 const elements = {
     metaCards: document.getElementById("meta-cards"),
     stateCards: document.getElementById("state-cards"),
@@ -1121,13 +1122,27 @@ function bindMapHoverEvents() {
 function bindMapHoverTargets(nodes, enterHandler) {
     for (const node of nodes) {
         node.addEventListener("mouseenter", () => {
+            clearHoverResetTimer();
             node.classList.add("map-hover-target");
             enterHandler(node);
         });
         node.addEventListener("mouseleave", () => {
             node.classList.remove("map-hover-target");
-            resetMapHoverDetails();
+            queueHoverReset();
         });
+    }
+}
+function queueHoverReset() {
+    clearHoverResetTimer();
+    hoverResetTimer = window.setTimeout(() => {
+        hoverResetTimer = null;
+        resetMapHoverDetails();
+    }, 90);
+}
+function clearHoverResetTimer() {
+    if (hoverResetTimer) {
+        window.clearTimeout(hoverResetTimer);
+        hoverResetTimer = null;
     }
 }
 function renderCountryHover(countryCode, countryData) {
