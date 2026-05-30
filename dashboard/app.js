@@ -30,6 +30,26 @@ const VISUAL_REGION_LABEL_OFFSETS = {
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
+const REGION_LABEL_SHORT = {
+    "ALB::central-coast": "Central Coast",
+    "ALB::north": "N Albania",
+    "ALB::south": "S Albania",
+    "BGR::black-sea": "Black Sea",
+    "BGR::north": "N Bulgaria",
+    "BGR::south": "S Bulgaria",
+    "HUN::central": "Central HUN",
+    "HUN::east": "East HUN",
+    "HUN::west": "West HUN",
+    "MKD::east": "East MKD",
+    "MKD::south": "South MKD",
+    "MKD::west": "West MKD",
+    "MNE::stara-crna-gora": "Stara C. Gora",
+    "MNE::stara-hercegovina": "St. Hercegovina",
+    "MNE::stara-raska": "Stara Raska",
+    "SRB::ji-srb": "JI SRB",
+    "SRB::kosovo-metohija": "Kosovo i Met.",
+    "SRB::sz-srb": "SZ SRB",
+};
 const COUNTRY_FLAGS = {
     ALB: "\uD83C\uDDE6\uD83C\uDDF1",
     BGR: "\uD83C\uDDE7\uD83C\uDDEC",
@@ -1044,8 +1064,7 @@ function renderCountryLayer(geoData) {
             `;
         })
         .join("");
-    elements.countryLabelLayer.innerHTML = groupedCountries
-        .map((country) => {
+    const labelCandidates = groupedCountries.map((country) => {
             const [offsetX, offsetY] = COUNTRY_LABEL_OFFSETS[country.countryCode] ?? [0, 0];
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
             const previousRow = mapDataCache.previousCountriesByCode.get(country.countryCode) ?? null;
@@ -1055,7 +1074,23 @@ function renderCountryLayer(geoData) {
                 dashboardState.activeMetric,
                 "country"
             );
-            return `
+            const x = country.centroid[0] + offsetX;
+            const y = country.centroid[1] + offsetY;
+            const detailText = metricDetail?.text ?? "";
+            const box = estimateLabelBounds({
+                x,
+                y,
+                labelText: country.countryCode,
+                detailText,
+                labelFontPx: 15,
+                detailFontPx: 11,
+                showDetail: Boolean(metricDetail),
+            });
+            return {
+                key: country.countryCode,
+                priority: country.features.length * 1000 + (metricDetail ? 50 : 0),
+                box,
+                html: `
             <text class="map-country-label" x="${(country.centroid[0] + offsetX).toFixed(1)}" y="${(country.centroid[1] + offsetY).toFixed(1)}">
                 ${escapeHtml(country.countryCode)}
             </text>
@@ -1064,8 +1099,11 @@ function renderCountryLayer(geoData) {
                 ${escapeHtml(metricDetail.text)}
             </text>
             ` : ""}
-        `;
-        })
+        `,
+            };
+        });
+    elements.countryLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 4)
+        .map((entry) => entry.html)
         .join("");
 }
 function averageCentroid(features) {
@@ -1121,28 +1159,109 @@ function renderRegionLayer(geoData) {
             ></path>
         `)
         .join("");
-    elements.regionLabelLayer.innerHTML = groupedRegions
-        .map((group) => {
-            const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
-            const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
-            const metricDetail = buildMapMetricDetail(
-                metricValueFromRegion(group.displayData, dashboardState.activeMetric),
-                previousRegion ? metricValueFromRegion(previousRegion, dashboardState.activeMetric) : Number.NaN,
-                dashboardState.activeMetric,
-                "region"
-            );
-            return `
-            <text class="map-region-label" x="${(group.centroid[0] + offsetX).toFixed(1)}" y="${(group.centroid[1] + offsetY).toFixed(1)}">
-                ${escapeHtml(group.label)}
-            </text>
-            ${metricDetail ? `
-            <text class="map-region-label-detail map-label-detail-${metricDetail.tone}" x="${(group.centroid[0] + offsetX).toFixed(1)}" y="${(group.centroid[1] + offsetY + 14).toFixed(1)}">
-                ${escapeHtml(metricDetail.text)}
-            </text>
-            ` : ""}
-        `;
-        })
+    const labelCandidates = groupedRegions.map((group) => {
+        const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
+        const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
+        const metricDetailRaw = buildMapMetricDetail(
+            metricValueFromRegion(group.displayData, dashboardState.activeMetric),
+            previousRegion ? metricValueFromRegion(previousRegion, dashboardState.activeMetric) : Number.NaN,
+            dashboardState.activeMetric,
+            "region"
+        );
+        const view = chooseRegionLabelView(group);
+        const labelText = view.abbreviate ? abbreviateRegionLabel(group) : group.label;
+        const metricDetail = view.showDetail ? metricDetailRaw : null;
+        const x = group.centroid[0] + offsetX;
+        const y = group.centroid[1] + offsetY;
+        const box = estimateLabelBounds({
+            x,
+            y,
+            labelText,
+            detailText: metricDetail?.text ?? "",
+            labelFontPx: view.labelFontPx,
+            detailFontPx: view.detailFontPx,
+            showDetail: Boolean(metricDetail),
+        });
+        const labelClass = view.compact ? "map-region-label map-region-label-compact" : "map-region-label";
+        const detailClass = view.compact
+            ? "map-region-label-detail map-region-label-detail-compact"
+            : "map-region-label-detail";
+        return {
+            key: group.visualRegionKey,
+            priority: computeRegionLabelPriority(group, view),
+            box,
+            html: `
+            <g data-visual-region-key="${escapeHtml(group.visualRegionKey)}">
+                <text class="${labelClass}" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${escapeHtml(labelText)}</text>
+                ${metricDetail ? `<text class="${detailClass} map-label-detail-${metricDetail.tone}" x="${x.toFixed(1)}" y="${(y + 14).toFixed(1)}">${escapeHtml(metricDetail.text)}</text>` : ""}
+            </g>
+        `,
+        };
+    });
+    elements.regionLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 2)
+        .map((entry) => entry.html)
         .join("");
+}
+function chooseRegionLabelView(group) {
+    const isMetric = !isClassicMetricView();
+    const area = Number(group.projectedArea ?? 0);
+    const share = Number(group.areaShare ?? 0);
+    const tiny = area < 900;
+    const compact = area < 1500 || share < 0.22;
+    return {
+        abbreviate: compact || area < 2200,
+        showDetail: isMetric && !tiny,
+        compact,
+        labelFontPx: compact ? 10.5 : 12,
+        detailFontPx: compact ? 8.4 : 9.5,
+    };
+}
+function abbreviateRegionLabel(group) {
+    return REGION_LABEL_SHORT[group.visualRegionKey] ?? group.label;
+}
+function computeRegionLabelPriority(group, view) {
+    const area = Number(group.projectedArea ?? 0);
+    const share = Number(group.areaShare ?? 0);
+    return area + (view.showDetail ? 800 : 0) + share * 500;
+}
+function estimateLabelBounds({
+    x,
+    y,
+    labelText,
+    detailText,
+    labelFontPx,
+    detailFontPx,
+    showDetail,
+}) {
+    const labelWidth = Math.max(18, labelText.length * labelFontPx * 0.56);
+    const detailWidth = showDetail ? Math.max(10, detailText.length * detailFontPx * 0.54) : 0;
+    const width = Math.max(labelWidth, detailWidth) + 8;
+    const height = showDetail ? (labelFontPx + detailFontPx + 7) : (labelFontPx + 3);
+    const top = y - labelFontPx;
+    return {
+        left: x - width / 2,
+        right: x + width / 2,
+        top,
+        bottom: top + height,
+    };
+}
+function selectNonOverlappingLabels(candidates, padding = 2) {
+    const sorted = [...candidates].sort((a, b) => b.priority - a.priority);
+    const accepted = [];
+    for (const candidate of sorted) {
+        if (!accepted.some((entry) => boxesOverlap(entry.box, candidate.box, padding))) {
+            accepted.push(candidate);
+        }
+    }
+    return accepted;
+}
+function boxesOverlap(left, right, padding = 0) {
+    return !(
+        left.right + padding < right.left
+        || right.right + padding < left.left
+        || left.bottom + padding < right.top
+        || right.bottom + padding < left.top
+    );
 }
 function geometryProjectedArea(geometry, projection, includeHoles = true) {
     const type = geometry?.type;

@@ -250,6 +250,14 @@ Contains:
 - Adds coarse ADM1-to-BESP grouping for the new countries where the geometry maps cleanly enough
 - Preserves fallback behavior where capital/region geometry is only approximate (for example Budapest using a metro-area proxy rather than pretending to be a perfect fine-grained city polygon)
 
+### Phase 9.2.1 - Region Label Deconfliction Pass
+Status: complete
+
+Contains:
+- Priority-based label placement to reduce overlap in dense clusters
+- Compact-label mode for small regions and reduced on-map delta text where space is constrained
+- Hover channel kept as the authoritative full-detail readout for crowded areas
+
 Contains:
 - State cards (year-synced averages)
 - State table by active year and country

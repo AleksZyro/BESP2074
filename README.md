@@ -79,6 +79,7 @@ Dashboard 5.x (map v1):
 - Simulation/export scope and public map country coverage now both include ALB, MKD, BGR, and HUN
 - Country view renders SRB as one continuous block (Kosovo included in SRB scope, no separate country marker)
 - Region view now includes coarse ADM1-to-BESP groupings for ALB, MKD, BGR, and HUN where the geometry can be mapped reasonably
+- Region labels now use deconfliction and priority-based compact mode in dense clusters (name kept first; delta reduced where space is too tight, full detail on hover)
 - Region labels are grouped by BESP region keys to avoid district-label clutter
 - Bosnia map mapping currently assigns Brcko to RS rendering scope
 - Keeps hover details export-driven with country fallback where region mapping is not available

@@ -181,6 +181,10 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke-width: 2px;
     stroke-linejoin: round;
 }
+.map-region-label-compact {
+    font-size: 10.5px;
+    stroke-width: 1.8px;
+}
 .map-region-label-detail {
     font-size: 9.5px;
     fill: #eef4fa;
@@ -188,6 +192,10 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke: rgba(8, 14, 24, 0.88);
     stroke-width: 1.8px;
     stroke-linejoin: round;
+}
+.map-region-label-detail-compact {
+    font-size: 8.4px;
+    stroke-width: 1.6px;
 }
 .map-label-detail-positive { fill: var(--success); }
 .map-label-detail-neutral { fill: #f4f8fc; }
