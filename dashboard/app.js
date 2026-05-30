@@ -61,6 +61,12 @@ const COUNTRY_FLAGS = {
 };
 const BASE_PLAYBACK_INTERVAL_MS = 1400;
 const DEFAULT_FILL = "rgba(127, 150, 173, 0.50)";
+const ADM1_PROVINCE_VIEW_COUNTRIES = new Set(["ALB", "BGR", "HUN"]);
+const ADM1_PROVINCE_FILLS = {
+    ALB: "rgba(146, 118, 102, 0.88)",
+    BGR: "rgba(116, 146, 91, 0.88)",
+    HUN: "rgba(163, 128, 97, 0.88)",
+};
 const METRIC_VIEWS = {
     classic: {
         label: "Standard",
@@ -169,6 +175,28 @@ const REGION_GROUPS = {
         "csongrã¡d csanã¡d", "hajdãº bihar", "szabolcs szatmã¡r bereg",
     ],
 };
+const REGION_GROUP_OVERRIDES = {
+    "ALB::tirana": ["tirane"],
+    "ALB::northern albania": ["shkoder", "kukes", "lezhe", "diber"],
+    "ALB::central coast albania": ["durres", "elbasan", "fier", "berat"],
+    "ALB::southern albania": ["vlore", "gjirokaster", "korce"],
+    "HUN::budapest": ["budapest", "pest"],
+    "HUN::western hungary": [
+        "baranya", "fejer", "gyor moson sopron", "komarom esztergom",
+        "somogy", "tolna", "vas", "veszprem", "zala",
+    ],
+    "HUN::central hungary": [
+        "heves", "jasz nagykun szolnok", "nograd",
+    ],
+    "HUN::eastern hungary": [
+        "bacs kiskun", "bekes", "borsod abauj zemplen",
+        "csongrad csanad", "hajdu bihar", "szabolcs szatmar bereg",
+    ],
+};
+const REGION_GROUPS_RESOLVED = {
+    ...REGION_GROUPS,
+    ...REGION_GROUP_OVERRIDES,
+};
 const VISUAL_REGION_DEFINITIONS = {
     "ALB::tirana": { label: "Tirana", dataRegionKey: "ALB::tirana", fill: "#8b7d6c" },
     "ALB::north": { label: "North Albania", dataRegionKey: "ALB::northern albania", fill: "#9c8d7b" },
@@ -222,27 +250,15 @@ const REGION_FEATURE_TO_BESP = {
     "BIH::brcko": "BIH::republika srpska",
     "SRB::belgrade": "SRB::belgrade",
     "SRB::kosovo": "SRB::kosovo and metohija",
-    ...expandFeatureGroups(REGION_GROUPS),
+    ...expandFeatureGroups(REGION_GROUPS_RESOLVED),
 };
 const BESP_REGION_KEYS = new Set(Object.values(REGION_FEATURE_TO_BESP));
 const FEATURE_TO_VISUAL_REGION = {
     ...expandFeatureGroups({
-        "ALB::tirana": REGION_GROUPS["ALB::tirana"],
-        "ALB::north": REGION_GROUPS["ALB::northern albania"],
-        "ALB::central-coast": REGION_GROUPS["ALB::central coast albania"],
-        "ALB::south": REGION_GROUPS["ALB::southern albania"],
-        "BGR::sofia": REGION_GROUPS["BGR::sofia"],
-        "BGR::north": REGION_GROUPS["BGR::northern bulgaria"],
-        "BGR::south": REGION_GROUPS["BGR::southern bulgaria"],
-        "BGR::black-sea": REGION_GROUPS["BGR::black sea bulgaria"],
-        "HUN::budapest": REGION_GROUPS["HUN::budapest"],
-        "HUN::west": REGION_GROUPS["HUN::western hungary"],
-        "HUN::central": REGION_GROUPS["HUN::central hungary"],
-        "HUN::east": REGION_GROUPS["HUN::eastern hungary"],
-        "MKD::skopje": REGION_GROUPS["MKD::skopje"],
-        "MKD::west": REGION_GROUPS["MKD::western north macedonia"],
-        "MKD::east": REGION_GROUPS["MKD::eastern north macedonia"],
-        "MKD::south": REGION_GROUPS["MKD::southern north macedonia"],
+        "MKD::skopje": REGION_GROUPS_RESOLVED["MKD::skopje"],
+        "MKD::west": REGION_GROUPS_RESOLVED["MKD::western north macedonia"],
+        "MKD::east": REGION_GROUPS_RESOLVED["MKD::eastern north macedonia"],
+        "MKD::south": REGION_GROUPS_RESOLVED["MKD::southern north macedonia"],
     }),
     "BIH::federation of bosnia and herzegovina": "BIH::fbih",
     "BIH::republika srpska": "BIH::rs",
@@ -251,9 +267,9 @@ const FEATURE_TO_VISUAL_REGION = {
     "SRB::kosovo": "SRB::kosovo-metohija",
     "SRB::kosovo and metohija": "SRB::kosovo-metohija",
     ...expandFeatureGroups({
-        "SRB::vojvodina": REGION_GROUPS["SRB::vojvodina"],
-        "SRB::sz-srb": REGION_GROUPS["SRB::central serbia"],
-        "SRB::ji-srb": REGION_GROUPS["SRB::south and east serbia"],
+        "SRB::vojvodina": REGION_GROUPS_RESOLVED["SRB::vojvodina"],
+        "SRB::sz-srb": REGION_GROUPS_RESOLVED["SRB::central serbia"],
+        "SRB::ji-srb": REGION_GROUPS_RESOLVED["SRB::south and east serbia"],
         "MNE::boka": ["herceg novi municipality", "kotor municipality", "tivat municipality"],
         "MNE::primorje": ["budva municipality", "bar municipality", "ulcinj municipality"],
         "MNE::zeta": ["podgorica municipality", "danilovgrad municipality"],
@@ -1310,7 +1326,7 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
         const mergedPathD = features.map((feature) => feature.pathD).join(" ");
         return {
             visualRegionKey,
-            label: template?.label ?? visualRegionKey,
+            label: template?.label ?? features[0]?.visualRegionLabel ?? visualRegionKey,
             dataRegionKey: template?.dataRegionKey ?? features[0]?.visualRegionDataKey ?? null,
             countryCode: features[0]?.countryCode ?? "",
             fill: template?.fill ?? "rgba(126, 143, 161, 0.5)",
@@ -1992,7 +2008,15 @@ function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
     const featureKey = buildRegionKey(countryCode, featureRegionName);
     const visualRegionKey = FEATURE_TO_VISUAL_REGION[featureKey] ?? null;
     if (!visualRegionKey) {
-        return null;
+        if (!bespRegionKey || !ADM1_PROVINCE_VIEW_COUNTRIES.has(countryCode)) {
+            return null;
+        }
+        return {
+            visualRegionKey: featureKey,
+            label: featureRegionName,
+            dataRegionKey: bespRegionKey,
+            fill: ADM1_PROVINCE_FILLS[countryCode] ?? "rgba(126, 143, 161, 0.38)",
+        };
     }
     const definition = VISUAL_REGION_DEFINITIONS[visualRegionKey];
     return {

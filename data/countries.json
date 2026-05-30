@@ -41,9 +41,9 @@
   {
     "name": "Albania",
     "code": "ALB",
-    "base_birth_rate": 0.0103,
-    "base_death_rate": 0.0084,
-    "base_net_migration_rate": -0.0025,
+    "base_birth_rate": 0.0092,
+    "base_death_rate": 0.0093,
+    "base_net_migration_rate": -0.004,
     "stability": 0.58,
     "eu_integration": 0.43,
     "corruption": 0.61,
