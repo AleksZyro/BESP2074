@@ -201,6 +201,7 @@ code { font-family: Consolas, "Courier New", monospace; }
 }
 .map-hidden { display: none; }
 .map-side-panel, .map-summary-cards { display: grid; gap: 12px; }
+.map-summary-cards { display: none; }
 .kpi-card { display: grid; gap: 12px; }
 .kpi-grid { display: grid; gap: 8px; }
 .kpi-grid.kpi-grid-metric .kpi-item { display: none; }
