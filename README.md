@@ -32,6 +32,7 @@ Project status:
 - Phase 8.4 complete: public UI simplification with metric-based map views
 - Phase 9.1 complete: scope expansion v1 with four additional Balkan-adjacent countries
 - Phase 9.2 complete: public map coverage expanded to the new country scope
+- Phase 9.3 complete: HRV/ROU scope expansion with unified regional color families
 
 Current scope:
 - Countries and regions as dataclasses
@@ -49,6 +50,8 @@ Current simulation country scope:
 - North Macedonia
 - Bulgaria
 - Hungary
+- Croatia
+- Romania
 
 Current simulation behavior:
 - Births and deaths by country base rates and regional modifiers
@@ -77,8 +80,11 @@ Dashboard 5.x (map v1):
 - Renders real geodata country boundaries (BIH, MNE, SRB) and ADM1 region boundaries
 - Renders Kosovo geodata in the SRB scope to match BESP region data (`Kosovo and Metohija`)
 - Simulation/export scope and public map country coverage now both include ALB, MKD, BGR, and HUN
+- Simulation/export scope and public map country coverage now also include HRV and ROU
 - Country view renders SRB as one continuous block (Kosovo included in SRB scope, no separate country marker)
 - Region view now includes coarse ADM1-to-BESP groupings for ALB, MKD, BGR, and HUN where the geometry can be mapped reasonably
+- Region view now also includes coarse macroregion groupings for HRV and ROU with export-driven hover and metric overlay support
+- Province-style countries now use country-specific color families in region view so ALB/BGR/HUN no longer collapse into near-identical tones
 - Region labels now use deconfliction and priority-based compact mode in dense clusters (name kept first; delta reduced where space is too tight, full detail on hover)
 - Region labels are grouped by BESP region keys to avoid district-label clutter
 - Bosnia map mapping currently assigns Brcko to RS rendering scope
@@ -182,9 +188,10 @@ Current data-selection behavior:
 - Map cards, hover details, and summary tables follow the currently selected export year
 - State cards and state table (Phase 8.3) also follow the currently selected export year
 - Country and region tables now also include ALB, MKD, BGR, and HUN rows after simulation runs
+- Country and region tables now also include HRV and ROU rows after simulation runs
 
 Map data source:
-- Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for ALB, BGR, BIH, HUN, MKD, MNE, SRB, plus XKX (mapped into SRB scope for BESP consistency).
+- Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for ALB, BGR, BIH, HRV, HUN, MKD, MNE, ROU, SRB, plus XKX (mapped into SRB scope for BESP consistency).
 
 Phase 9.1 - Scope expansion v1:
 - Adds Albania, North Macedonia, Bulgaria, and Hungary to the simulation/export scope
@@ -196,6 +203,12 @@ Phase 9.2 - Expanded map/data coverage:
 - Extends public map country coverage to the expanded simulation scope
 - Adds coarse, explainable region grouping for the newly mapped countries
 - Keeps fallback behavior intact where a capital/region split cannot be represented perfectly by the underlying ADM1 geometry
+
+Phase 9.3 - HRV/ROU scope expansion and color unification:
+- Adds Croatia and Romania to the simulation/export scope with realistic 2020 baseline values and plausibly declining long-run population trends
+- Adds coarse macroregions for HRV and ROU instead of pretending to model every small province
+- Extends public map coverage to HRV and ROU using ADM0/ADM1 geodata and clean export-driven grouping
+- Unifies region-view color logic so province-style countries use consistent country-specific color families instead of random one-off fills
 
 Map testcase fixture:
 - Stable fixture: `dashboard/fixtures/map_fixture_latest.json`

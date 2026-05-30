@@ -258,6 +258,16 @@ Contains:
 - Compact-label mode for small regions and reduced on-map delta text where space is constrained
 - Hover channel kept as the authoritative full-detail readout for crowded areas
 
+### Phase 9.3 - Region Color Differentiation + Scope Expansion (HRV/ROU)
+Status: complete
+
+Contains:
+- Adds Croatia and Romania to `data/countries.json` with realistic 2020 starter baselines and plausible medium-term decline/stagnation trends
+- Adds coarse macroregions for HRV and ROU in `data/regions.json` instead of overclaiming fake microprovince fidelity
+- Extends dashboard ADM0/ADM1 map coverage to HRV and ROU
+- Unifies region-view color logic so each country now reads as its own color family rather than a set of random standout provinces
+- Preserves export-driven hover, metric overlays, and fallback behavior across the expanded map scope
+
 Contains:
 - State cards (year-synced averages)
 - State table by active year and country
@@ -275,6 +285,8 @@ Contains:
   - North Macedonia
   - Bulgaria
   - Hungary
+  - Croatia
+  - Romania
 - Export files:
   - `output/simulation_2020_2030.json`
   - `output/latest.json`
@@ -284,14 +296,15 @@ Contains:
 - Scenarios + seeds produce bounded, reproducible variation
 - Shocks are bounded and export-auditable
 - State values are integrated, bounded, validated, and visible in dashboard (Phase 8.3)
-- Public map geodata coverage is still narrower than the full simulation scope and currently focuses on BIH/MNE/SRB (+ XKX stitched into SRB logic)
 - Public map geodata coverage now spans:
   - Albania
   - North Macedonia
   - Bulgaria
+  - Croatia
   - Hungary
   - Bosnia and Herzegovina
   - Montenegro
+  - Romania
   - Serbia
   - plus XKX stitched into SRB country logic for BESP consistency
 
@@ -308,6 +321,6 @@ Contains:
 
 ## Next Planned Blocks
 
-1. Phase 9.3 - Longer time horizon pass (20+ years, drift/balance validation)
-2. Phase 9.4 - Run-flow simplification (`Play again` replacing separate generate-first workflow)
-3. Phase 9.5 - Additional Balkan scope expansion beyond the current seven-country set
+1. Phase 9.4 - Longer time horizon pass (20+ years, drift/balance validation)
+2. Phase 9.5 - Run-flow simplification (`Play again` replacing separate generate-first workflow)
+3. Phase 9.6 - Additional Balkan scope expansion beyond the current nine-country set

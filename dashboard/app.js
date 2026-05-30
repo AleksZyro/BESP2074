@@ -9,23 +9,34 @@ const PLAYBACK_HELP_MESSAGE =
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 22;
-const MAP_COUNTRY_CODES = ["ALB", "BGR", "BIH", "HUN", "MKD", "MNE", "SRB"];
+const MAP_COUNTRY_CODES = ["ALB", "BGR", "BIH", "HRV", "HUN", "MKD", "MNE", "ROU", "SRB"];
 const TARGET_COUNTRIES = new Set(MAP_COUNTRY_CODES);
 const COUNTRY_LABEL_OFFSETS = {
     ALB: [-12, 10],
     BGR: [18, 4],
+    HRV: [-20, -6],
     HUN: [-6, -18],
     MKD: [22, 0],
+    ROU: [18, -12],
     SRB: [0, -26],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
+    "HRV::zagreb-central": [12, -4],
+    "HRV::slavonia": [12, 10],
+    "HRV::dalmatia": [10, 18],
+    "HRV::istria-kvarner": [-10, -4],
     "MNE::boka": [-26, 2],
     "MNE::primorje": [8, 16],
     "MNE::zeta": [26, 0],
     "MNE::stara-crna-gora": [8, -14],
     "MNE::brda": [-8, 10],
+    "ROU::bucharest-ilfov": [10, 8],
+    "ROU::transylvania-banat": [-6, -6],
+    "ROU::moldavia": [10, -6],
+    "ROU::wallachia-oltenia": [0, 10],
+    "ROU::dobruja-lower-danube": [10, 12],
 };
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
@@ -40,12 +51,18 @@ const REGION_LABEL_SHORT = {
     "HUN::central": "Central HUN",
     "HUN::east": "East HUN",
     "HUN::west": "West HUN",
+    "HRV::zagreb-central": "Central HRV",
+    "HRV::istria-kvarner": "Istria/Kvarner",
     "MKD::east": "East MKD",
     "MKD::south": "South MKD",
     "MKD::west": "West MKD",
     "MNE::stara-crna-gora": "Stara C. Gora",
     "MNE::stara-hercegovina": "St. Hercegovina",
     "MNE::stara-raska": "Stara Raska",
+    "ROU::bucharest-ilfov": "Bucharest",
+    "ROU::transylvania-banat": "Transylvania",
+    "ROU::wallachia-oltenia": "Wallachia",
+    "ROU::dobruja-lower-danube": "Dobruja",
     "SRB::ji-srb": "JI SRB",
     "SRB::kosovo-metohija": "Kosovo i Met.",
     "SRB::sz-srb": "SZ SRB",
@@ -54,18 +71,20 @@ const COUNTRY_FLAGS = {
     ALB: "\uD83C\uDDE6\uD83C\uDDF1",
     BGR: "\uD83C\uDDE7\uD83C\uDDEC",
     BIH: "\uD83C\uDDE7\uD83C\uDDE6",
+    HRV: "\uD83C\uDDED\uD83C\uDDF7",
     HUN: "\uD83C\uDDED\uD83C\uDDFA",
     MKD: "\uD83C\uDDF2\uD83C\uDDF0",
     MNE: "\uD83C\uDDF2\uD83C\uDDEA",
+    ROU: "\uD83C\uDDF7\uD83C\uDDF4",
     SRB: "\uD83C\uDDF7\uD83C\uDDF8",
 };
 const BASE_PLAYBACK_INTERVAL_MS = 1400;
 const DEFAULT_FILL = "rgba(127, 150, 173, 0.50)";
 const ADM1_PROVINCE_VIEW_COUNTRIES = new Set(["ALB", "BGR", "HUN"]);
-const ADM1_PROVINCE_FILLS = {
-    ALB: "rgba(146, 118, 102, 0.88)",
-    BGR: "rgba(116, 146, 91, 0.88)",
-    HUN: "rgba(163, 128, 97, 0.88)",
+const ADM1_PROVINCE_PALETTES = {
+    ALB: ["#856d57", "#947b61", "#a38a6b", "#b39a78", "#c3ab86", "#d3bc95"],
+    BGR: ["#597855", "#688861", "#77996d", "#89ab7b", "#9abd8a", "#afcf9a"],
+    HUN: ["#5a6980", "#69798f", "#77889e", "#8897ad", "#99a8bd", "#acbbcf"],
 };
 const METRIC_VIEWS = {
     classic: {
@@ -115,7 +134,7 @@ const REGION_NAME_ALIASES = Object.fromEntries([
     ["kosovo and metohija", "kosovo and metohija"], ["kosovo", "kosovo and metohija"],
     ["kosovo & metohija", "kosovo and metohija"], ["coast", "coast"], ["inland", "inland"],
     ["tirane", "tirana"], ["skopje", "skopje"], ["sofia city", "sofia"], ["sofia", "sofia"],
-    ["budapest", "budapest"],
+    ["budapest", "budapest"], ["bucharest ilfov", "bucharest ilfov"],
 ]);
 const REGION_GROUPS = {
     "SRB::vojvodina": [
@@ -180,6 +199,19 @@ const REGION_GROUP_OVERRIDES = {
     "ALB::northern albania": ["shkoder", "kukes", "lezhe", "diber"],
     "ALB::central coast albania": ["durres", "elbasan", "fier", "berat"],
     "ALB::southern albania": ["vlore", "gjirokaster", "korce"],
+    "HRV::zagreb and central croatia": [
+        "city of zagreb", "zagreb county", "krapina zagorje", "varazdin",
+        "me imurje", "bjelovar bilogora", "koprivnica krizevci",
+        "sisak moslavina", "karlovac",
+    ],
+    "HRV::slavonia": [
+        "brod posavina", "osijek baranja", "pozega slavonia",
+        "virovitica podravina", "vukovar syrmia",
+    ],
+    "HRV::dalmatia": [
+        "zadar county", "sibenik knin", "split dalmatia", "dubrovnik neretva",
+    ],
+    "HRV::istria and kvarner": ["istria", "primorje gorski kotar", "lika senj"],
     "HUN::budapest": ["budapest", "pest"],
     "HUN::western hungary": [
         "baranya", "fejer", "gyor moson sopron", "komarom esztergom",
@@ -192,6 +224,20 @@ const REGION_GROUP_OVERRIDES = {
         "bacs kiskun", "bekes", "borsod abauj zemplen",
         "csongrad csanad", "hajdu bihar", "szabolcs szatmar bereg",
     ],
+    "ROU::bucharest ilfov": ["bucuresti", "ilfov"],
+    "ROU::transylvania and banat": [
+        "alba", "arad", "bihor", "bistrita nasaud", "brasov", "caras severin",
+        "cluj", "covasna", "harghita", "hunedoara", "maramures",
+        "mures", "salaj", "satu mare", "sibiu", "timis",
+    ],
+    "ROU::moldavia": [
+        "bacau", "botosani", "iasi", "neamt", "suceava", "vaslui", "vrancea",
+    ],
+    "ROU::wallachia and oltenia": [
+        "arges", "buzau", "calarasi", "dambovita", "dolj", "giurgiu",
+        "gorj", "ialomita", "mehedinti", "olt", "prahova", "teleorman", "valcea",
+    ],
+    "ROU::dobruja and lower danube": ["braila", "galati", "constanta", "tulcea"],
 };
 const REGION_GROUPS_RESOLVED = {
     ...REGION_GROUPS,
@@ -208,6 +254,10 @@ const VISUAL_REGION_DEFINITIONS = {
     "BGR::black-sea": { label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#5e88a9" },
     "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
     "BIH::rs": { label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c" },
+    "HRV::zagreb-central": { label: "Central Croatia", dataRegionKey: "HRV::zagreb and central croatia", fill: "#9a7c5a" },
+    "HRV::slavonia": { label: "Slavonia", dataRegionKey: "HRV::slavonia", fill: "#7d6247" },
+    "HRV::dalmatia": { label: "Dalmatia", dataRegionKey: "HRV::dalmatia", fill: "#b18e68" },
+    "HRV::istria-kvarner": { label: "Istria/Kvarner", dataRegionKey: "HRV::istria and kvarner", fill: "#c9a97d" },
     "HUN::budapest": { label: "Budapest*", dataRegionKey: "HUN::budapest", fill: "#a76e60" },
     "HUN::west": { label: "West Hungary", dataRegionKey: "HUN::western hungary", fill: "#b58f71" },
     "HUN::central": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#9b856c" },
@@ -228,6 +278,11 @@ const VISUAL_REGION_DEFINITIONS = {
     "MNE::stara-hercegovina": { label: "Stara Hercegovina", dataRegionKey: "MNE::inland", fill: "#2c8f81" },
     "MNE::brda": { label: "Brda", dataRegionKey: "MNE::inland", fill: "#5e98cf" },
     "MNE::stara-raska": { label: "Stara Raska", dataRegionKey: "MNE::inland", fill: "#c6964d" },
+    "ROU::bucharest-ilfov": { label: "Bucharest", dataRegionKey: "ROU::bucharest ilfov", fill: "#87606f" },
+    "ROU::transylvania-banat": { label: "Transylvania", dataRegionKey: "ROU::transylvania and banat", fill: "#9b7485" },
+    "ROU::moldavia": { label: "Moldavia", dataRegionKey: "ROU::moldavia", fill: "#b48993" },
+    "ROU::wallachia-oltenia": { label: "Wallachia", dataRegionKey: "ROU::wallachia and oltenia", fill: "#a27d69" },
+    "ROU::dobruja-lower-danube": { label: "Dobruja", dataRegionKey: "ROU::dobruja and lower danube", fill: "#6e8fa7" },
 };
 const STATE_METRICS = [
     ["budget_balance_pct_gdp", "Avg budget balance"],
@@ -255,10 +310,19 @@ const REGION_FEATURE_TO_BESP = {
 const BESP_REGION_KEYS = new Set(Object.values(REGION_FEATURE_TO_BESP));
 const FEATURE_TO_VISUAL_REGION = {
     ...expandFeatureGroups({
+        "HRV::zagreb-central": REGION_GROUPS_RESOLVED["HRV::zagreb and central croatia"],
+        "HRV::slavonia": REGION_GROUPS_RESOLVED["HRV::slavonia"],
+        "HRV::dalmatia": REGION_GROUPS_RESOLVED["HRV::dalmatia"],
+        "HRV::istria-kvarner": REGION_GROUPS_RESOLVED["HRV::istria and kvarner"],
         "MKD::skopje": REGION_GROUPS_RESOLVED["MKD::skopje"],
         "MKD::west": REGION_GROUPS_RESOLVED["MKD::western north macedonia"],
         "MKD::east": REGION_GROUPS_RESOLVED["MKD::eastern north macedonia"],
         "MKD::south": REGION_GROUPS_RESOLVED["MKD::southern north macedonia"],
+        "ROU::bucharest-ilfov": REGION_GROUPS_RESOLVED["ROU::bucharest ilfov"],
+        "ROU::transylvania-banat": REGION_GROUPS_RESOLVED["ROU::transylvania and banat"],
+        "ROU::moldavia": REGION_GROUPS_RESOLVED["ROU::moldavia"],
+        "ROU::wallachia-oltenia": REGION_GROUPS_RESOLVED["ROU::wallachia and oltenia"],
+        "ROU::dobruja-lower-danube": REGION_GROUPS_RESOLVED["ROU::dobruja and lower danube"],
     }),
     "BIH::federation of bosnia and herzegovina": "BIH::fbih",
     "BIH::republika srpska": "BIH::rs",
@@ -1222,18 +1286,44 @@ function chooseRegionLabelView(group) {
     const isMetric = !isClassicMetricView();
     const area = Number(group.projectedArea ?? 0);
     const share = Number(group.areaShare ?? 0);
+    const fallbackProvince = !VISUAL_REGION_DEFINITIONS[group.visualRegionKey];
     const tiny = area < 900;
-    const compact = area < 1500 || share < 0.22;
+    const compact = fallbackProvince
+        ? area < 1700 || share < 0.16
+        : area < 1500 || share < 0.22;
     return {
-        abbreviate: compact || area < 2200,
+        abbreviate: compact || area < 2200 || fallbackProvince,
         showDetail: isMetric && !tiny,
         compact,
-        labelFontPx: compact ? 10.5 : 12,
-        detailFontPx: compact ? 8.4 : 9.5,
+        labelFontPx: fallbackProvince ? 10.2 : (compact ? 10.5 : 12),
+        detailFontPx: fallbackProvince ? 8.2 : (compact ? 8.4 : 9.5),
     };
 }
 function abbreviateRegionLabel(group) {
-    return REGION_LABEL_SHORT[group.visualRegionKey] ?? group.label;
+    if (REGION_LABEL_SHORT[group.visualRegionKey]) {
+        return REGION_LABEL_SHORT[group.visualRegionKey];
+    }
+    if (!VISUAL_REGION_DEFINITIONS[group.visualRegionKey]) {
+        return group.label
+            .replace(/^City of /i, "")
+            .replace(/ County$/i, "")
+            .replace(/ and /gi, " & ")
+            .replace(/-Neretva/i, "-Ner.")
+            .replace(/-Bilogora/i, "-Bil.")
+            .replace(/-Krisevci/i, "-Kriz.")
+            .replace(/-Moslavina/i, "-Mos.")
+            .replace(/-Baranja/i, "-Bar.")
+            .replace(/-Slavonia/i, "-Slav.")
+            .replace(/-Podravina/i, "-Pod.")
+            .replace(/-Syrmia/i, "-Syr.")
+            .replace(/-Zagorje/i, "-Zag.")
+            .replace(/-Esztergom/i, "-Eszt.")
+            .replace(/-Szatmar/i, "-Szat.")
+            .replace(/-Bihor/i, "-Bih.")
+            .replace(/-Nasaud/i, "-Nas.")
+            .replace(/-Severin/i, "-Sev.");
+    }
+    return group.label;
 }
 function computeRegionLabelPriority(group, view) {
     const area = Number(group.projectedArea ?? 0);
@@ -1329,7 +1419,7 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
             label: template?.label ?? features[0]?.visualRegionLabel ?? visualRegionKey,
             dataRegionKey: template?.dataRegionKey ?? features[0]?.visualRegionDataKey ?? null,
             countryCode: features[0]?.countryCode ?? "",
-            fill: template?.fill ?? "rgba(126, 143, 161, 0.5)",
+            fill: template?.fill ?? features[0]?.visualRegionFill ?? "rgba(126, 143, 161, 0.5)",
             centroid: averageCentroid(features),
             projectedArea: features.reduce((sum, feature) => sum + (feature.projectedArea ?? 0), 0),
             pathD: mergedPathD,
@@ -2004,6 +2094,21 @@ function resolveBespRegionKey(countryCode, featureRegionName) {
     const directKey = buildRegionKey(countryCode, featureRegionName);
     return REGION_FEATURE_TO_BESP[directKey] ?? (BESP_REGION_KEYS.has(directKey) ? directKey : null);
 }
+function hashText(text) {
+    let hash = 0;
+    for (const char of String(text ?? "")) {
+        hash = ((hash << 5) - hash) + char.charCodeAt(0);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+function provinceFallbackFill(countryCode, featureKey) {
+    const palette = ADM1_PROVINCE_PALETTES[countryCode];
+    if (!palette?.length) {
+        return "rgba(126, 143, 161, 0.38)";
+    }
+    return palette[hashText(featureKey) % palette.length];
+}
 function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
     const featureKey = buildRegionKey(countryCode, featureRegionName);
     const visualRegionKey = FEATURE_TO_VISUAL_REGION[featureKey] ?? null;
@@ -2015,7 +2120,7 @@ function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
             visualRegionKey: featureKey,
             label: featureRegionName,
             dataRegionKey: bespRegionKey,
-            fill: ADM1_PROVINCE_FILLS[countryCode] ?? "rgba(126, 143, 161, 0.38)",
+            fill: provinceFallbackFill(countryCode, featureKey),
         };
     }
     const definition = VISUAL_REGION_DEFINITIONS[visualRegionKey];
@@ -2091,9 +2196,11 @@ function baseCountryFill(countryCode) {
         ALB: "rgba(139, 121, 106, 0.90)",
         BGR: "rgba(137, 161, 104, 0.90)",
         BIH: "rgba(83, 122, 158, 0.90)",
+        HRV: "rgba(155, 126, 92, 0.90)",
         HUN: "rgba(158, 127, 105, 0.90)",
         MKD: "rgba(150, 111, 124, 0.90)",
         MNE: "rgba(115, 149, 176, 0.90)",
+        ROU: "rgba(154, 120, 133, 0.90)",
         SRB: "rgba(184, 195, 173, 0.90)",
     };
     return palette[normalizeCountryCode(countryCode)] ?? DEFAULT_FILL;

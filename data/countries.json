@@ -89,5 +89,31 @@
     "base_budget_balance_pct_gdp": -0.055,
     "base_debt_to_gdp": 0.81,
     "base_investment_climate_index": 0.61
+  },
+  {
+    "name": "Croatia",
+    "code": "HRV",
+    "base_birth_rate": 0.0089,
+    "base_death_rate": 0.0145,
+    "base_net_migration_rate": -0.0006,
+    "stability": 0.68,
+    "eu_integration": 0.80,
+    "corruption": 0.47,
+    "base_budget_balance_pct_gdp": -0.052,
+    "base_debt_to_gdp": 0.88,
+    "base_investment_climate_index": 0.60
+  },
+  {
+    "name": "Romania",
+    "code": "ROU",
+    "base_birth_rate": 0.0092,
+    "base_death_rate": 0.0137,
+    "base_net_migration_rate": -0.0014,
+    "stability": 0.62,
+    "eu_integration": 0.76,
+    "corruption": 0.53,
+    "base_budget_balance_pct_gdp": -0.048,
+    "base_debt_to_gdp": 0.49,
+    "base_investment_climate_index": 0.58
   }
 ]
