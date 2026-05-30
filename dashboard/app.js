@@ -24,7 +24,11 @@ const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
 const COUNTRY_FLAGS = {
+    ALB: "\uD83C\uDDE6\uD83C\uDDF1",
+    BGR: "\uD83C\uDDE7\uD83C\uDDEC",
     BIH: "\uD83C\uDDE7\uD83C\uDDE6",
+    HUN: "\uD83C\uDDED\uD83C\uDDFA",
+    MKD: "\uD83C\uDDF2\uD83C\uDDF0",
     MNE: "\uD83C\uDDF2\uD83C\uDDEA",
     SRB: "\uD83C\uDDF7\uD83C\uDDF8",
 };
@@ -1868,7 +1872,11 @@ function mapMetricFill(value, metricRange, metricKey, fallback = DEFAULT_FILL) {
 }
 function baseCountryFill(countryCode) {
     const palette = {
+        ALB: "rgba(139, 121, 106, 0.90)",
+        BGR: "rgba(137, 161, 104, 0.90)",
         BIH: "rgba(83, 122, 158, 0.90)",
+        HUN: "rgba(158, 127, 105, 0.90)",
+        MKD: "rgba(150, 111, 124, 0.90)",
         MNE: "rgba(115, 149, 176, 0.90)",
         SRB: "rgba(184, 195, 173, 0.90)",
     };

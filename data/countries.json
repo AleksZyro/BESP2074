@@ -37,5 +37,57 @@
     "base_budget_balance_pct_gdp": -0.036,
     "base_debt_to_gdp": 0.34,
     "base_investment_climate_index": 0.43
+  },
+  {
+    "name": "Albania",
+    "code": "ALB",
+    "base_birth_rate": 0.0103,
+    "base_death_rate": 0.0084,
+    "base_net_migration_rate": -0.0025,
+    "stability": 0.58,
+    "eu_integration": 0.43,
+    "corruption": 0.61,
+    "base_budget_balance_pct_gdp": -0.038,
+    "base_debt_to_gdp": 0.67,
+    "base_investment_climate_index": 0.47
+  },
+  {
+    "name": "North Macedonia",
+    "code": "MKD",
+    "base_birth_rate": 0.0098,
+    "base_death_rate": 0.0104,
+    "base_net_migration_rate": -0.0031,
+    "stability": 0.57,
+    "eu_integration": 0.46,
+    "corruption": 0.59,
+    "base_budget_balance_pct_gdp": -0.032,
+    "base_debt_to_gdp": 0.50,
+    "base_investment_climate_index": 0.49
+  },
+  {
+    "name": "Bulgaria",
+    "code": "BGR",
+    "base_birth_rate": 0.0085,
+    "base_death_rate": 0.0154,
+    "base_net_migration_rate": -0.0018,
+    "stability": 0.64,
+    "eu_integration": 0.74,
+    "corruption": 0.52,
+    "base_budget_balance_pct_gdp": -0.025,
+    "base_debt_to_gdp": 0.27,
+    "base_investment_climate_index": 0.58
+  },
+  {
+    "name": "Hungary",
+    "code": "HUN",
+    "base_birth_rate": 0.0096,
+    "base_death_rate": 0.0135,
+    "base_net_migration_rate": -0.0002,
+    "stability": 0.69,
+    "eu_integration": 0.72,
+    "corruption": 0.49,
+    "base_budget_balance_pct_gdp": -0.055,
+    "base_debt_to_gdp": 0.81,
+    "base_investment_climate_index": 0.61
   }
 ]

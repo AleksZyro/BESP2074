@@ -192,7 +192,7 @@ Contains:
 - Net-negative line count while preserving behavior
 
 ### Phase 8 - Politics/State v1
-Status: active
+Status: complete (baseline v1)
 
 ### Phase 8.1 - Core Model
 Status: complete
@@ -229,6 +229,19 @@ Contains:
 - Metric-based map view toggles (population, GDP per capita, unemployment, attractiveness)
 - Year-synced country/region map coloring without changing simulation logic
 
+### Phase 9 - Scope Expansion
+Status: active
+
+### Phase 9.1 - Country Scope Expansion v1
+Status: complete
+
+Contains:
+- Adds Albania, North Macedonia, Bulgaria, and Hungary to `data/countries.json`
+- Adds coarse starter regions for the four new countries in `data/regions.json`
+- Keeps capital pull explicit where it matters (`Tirana`, `Skopje`, `Sofia`, `Budapest`)
+- Updates dashboard country flags so expanded scope is readable in cards/tables
+- Leaves current public map geodata coverage intentionally limited to BIH/MNE/SRB until a separate map-scope block adds vetted shapes and mappings for the wider region set
+
 Contains:
 - State cards (year-synced averages)
 - State table by active year and country
@@ -238,6 +251,14 @@ Contains:
 ## Current Actual State (Codebase)
 
 - Simulation years: `2020 -> 2030`
+- Simulation/export country scope:
+  - Serbia
+  - Montenegro
+  - Bosnia and Herzegovina
+  - Albania
+  - North Macedonia
+  - Bulgaria
+  - Hungary
 - Export files:
   - `output/simulation_2020_2030.json`
   - `output/latest.json`
@@ -247,6 +268,7 @@ Contains:
 - Scenarios + seeds produce bounded, reproducible variation
 - Shocks are bounded and export-auditable
 - State values are integrated, bounded, validated, and visible in dashboard (Phase 8.3)
+- Public map geodata coverage is still narrower than the full simulation scope and currently focuses on BIH/MNE/SRB (+ XKX stitched into SRB logic)
 
 ## Verify Commands (Current)
 
@@ -261,6 +283,6 @@ Contains:
 
 ## Next Planned Blocks
 
-1. Phase 8.4 - State balancing pass (parameter-level tuning, no feature creep)
-2. Phase 8.5 - State/dashboard testcase expansion
-3. Phase 8.6 - Refactor/bloat-reduction pass (net-negative, behavior-preserving)
+1. Phase 9.2 - Expanded map/data coverage for ALB, MKD, BGR, and HUN
+2. Phase 9.3 - Longer time horizon pass (20+ years, drift/balance validation)
+3. Phase 9.4 - Run-flow simplification (`Play again` replacing separate generate-first workflow)

@@ -30,6 +30,7 @@ Project status:
 - Phase 8.2 complete: yearly tick integration + state validation pass
 - Phase 8.3 complete: dashboard state-value panels with timeline year sync
 - Phase 8.4 complete: public UI simplification with metric-based map views
+- Phase 9.1 complete: scope expansion v1 with four additional Balkan-adjacent countries
 
 Current scope:
 - Countries and regions as dataclasses
@@ -38,6 +39,15 @@ Current scope:
 - Multi-year annual simulation
 - JSON export for a lightweight dashboard
 - Terminal output plus dashboard with real geodata map layer
+
+Current simulation country scope:
+- Serbia
+- Montenegro
+- Bosnia and Herzegovina
+- Albania
+- North Macedonia
+- Bulgaria
+- Hungary
 
 Current simulation behavior:
 - Births and deaths by country base rates and regional modifiers
@@ -65,6 +75,7 @@ Dashboard 5.x (map v1):
 - Shows export metadata plus simple country and region summary tables
 - Renders real geodata country boundaries (BIH, MNE, SRB) and ADM1 region boundaries
 - Renders Kosovo geodata in the SRB scope to match BESP region data (`Kosovo and Metohija`)
+- Simulation/export scope is now broader than the current geodata coverage; ALB, MKD, BGR, and HUN already participate in the simulation/export layer, while map geodata coverage still remains focused on BIH/MNE/SRB for now
 - Country view renders SRB as one continuous block (Kosovo included in SRB scope, no separate country marker)
 - Region labels are grouped by BESP region keys to avoid district-label clutter
 - Bosnia map mapping currently assigns Brcko to RS rendering scope
@@ -167,9 +178,16 @@ Current data-selection behavior:
 - `dashboard/app.js` now starts from the earliest available year bucket and can step/play through later buckets
 - Map cards, hover details, and summary tables follow the currently selected export year
 - State cards and state table (Phase 8.3) also follow the currently selected export year
+- Country and region tables now also include ALB, MKD, BGR, and HUN rows after simulation runs
 
 Map data source:
 - Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for BIH, MNE, SRB, plus XKX (mapped into SRB scope for BESP consistency).
+
+Phase 9.1 - Scope expansion v1:
+- Adds Albania, North Macedonia, Bulgaria, and Hungary to the simulation/export scope
+- Adds coarse starter regions for each new country with capital pull preserved where useful
+- Keeps the expansion intentionally moderate: more playable country breadth first, no premature province explosion
+- Leaves the public geodata map on BIH/MNE/SRB until the next map/data expansion block adds vetted geometry and mapping for the wider scope
 
 Map testcase fixture:
 - Stable fixture: `dashboard/fixtures/map_fixture_latest.json`

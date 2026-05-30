@@ -2,14 +2,24 @@ from verify_common import (
     fail,
     load_latest_export,
     parse_year_bucket_start,
+    read_json_file,
 )
+from pathlib import Path
 
 
-EXPECTED_COUNTRY_CODES = {"BIH", "MNE", "SRB"}
+def expected_country_codes() -> set[str]:
+    country_data = read_json_file(Path("data/countries.json"))
+    if not isinstance(country_data, list) or not country_data:
+        fail("data/countries.json must contain a non-empty list.")
+    codes = {str(entry.get("code", "")).upper() for entry in country_data}
+    if "" in codes:
+        fail("data/countries.json contains a country entry without a code.")
+    return codes
 
 
 def main() -> None:
     export_data = load_latest_export()
+    expected_codes = expected_country_codes()
     years = export_data.get("years")
     if not isinstance(years, dict) or not years:
         fail("Export has no year buckets.")
@@ -44,10 +54,10 @@ def main() -> None:
             code = str(row.get("country_code"))
             seen_country_codes.add(code)
 
-        if seen_country_codes != EXPECTED_COUNTRY_CODES:
+        if seen_country_codes != expected_codes:
             fail(
                 f"{year_key}: country code set mismatch. "
-                f"Got {seen_country_codes}, expected {EXPECTED_COUNTRY_CODES}."
+                f"Got {seen_country_codes}, expected {expected_codes}."
             )
 
         for row in regions:
