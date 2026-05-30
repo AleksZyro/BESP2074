@@ -970,10 +970,23 @@ function renderCountryLayer(geoData) {
     elements.countryLabelLayer.innerHTML = groupedCountries
         .map((country) => {
             const [offsetX, offsetY] = COUNTRY_LABEL_OFFSETS[country.countryCode] ?? [0, 0];
+            const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
+            const previousRow = mapDataCache.previousCountriesByCode.get(country.countryCode) ?? null;
+            const metricDetail = buildMapMetricDetail(
+                row ? metricValueFromCountry(row, dashboardState.activeMetric) : Number.NaN,
+                previousRow ? metricValueFromCountry(previousRow, dashboardState.activeMetric) : Number.NaN,
+                dashboardState.activeMetric,
+                "country"
+            );
             return `
             <text class="map-country-label" x="${(country.centroid[0] + offsetX).toFixed(1)}" y="${(country.centroid[1] + offsetY).toFixed(1)}">
                 ${escapeHtml(country.countryCode)}
             </text>
+            ${metricDetail ? `
+            <text class="map-country-label-detail map-label-detail-${metricDetail.tone}" x="${(country.centroid[0] + offsetX).toFixed(1)}" y="${(country.centroid[1] + offsetY + 18).toFixed(1)}">
+                ${escapeHtml(metricDetail.text)}
+            </text>
+            ` : ""}
         `;
         })
         .join("");
@@ -1034,10 +1047,22 @@ function renderRegionLayer(geoData) {
     elements.regionLabelLayer.innerHTML = groupedRegions
         .map((group) => {
             const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
+            const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
+            const metricDetail = buildMapMetricDetail(
+                metricValueFromRegion(group.displayData, dashboardState.activeMetric),
+                previousRegion ? metricValueFromRegion(previousRegion, dashboardState.activeMetric) : Number.NaN,
+                dashboardState.activeMetric,
+                "region"
+            );
             return `
             <text class="map-region-label" x="${(group.centroid[0] + offsetX).toFixed(1)}" y="${(group.centroid[1] + offsetY).toFixed(1)}">
                 ${escapeHtml(group.label)}
             </text>
+            ${metricDetail ? `
+            <text class="map-region-label-detail map-label-detail-${metricDetail.tone}" x="${(group.centroid[0] + offsetX).toFixed(1)}" y="${(group.centroid[1] + offsetY + 14).toFixed(1)}">
+                ${escapeHtml(metricDetail.text)}
+            </text>
+            ` : ""}
         `;
         })
         .join("");
@@ -1648,6 +1673,36 @@ function metricTrend(metricKey, currentValue, previousValue) {
             label: "weaker",
             summary: "Direction versus the previous year is clearly negative.",
         };
+}
+function buildMapMetricDetail(currentValue, previousValue, metricKey, labelScale) {
+    if (isClassicMetricView()) {
+        return null;
+    }
+    const trend = metricTrend(metricKey, currentValue, previousValue);
+    const deltaText = formatMetricDelta(currentValue, previousValue, metricKey, labelScale);
+    return {
+        tone: trend.tone,
+        text: deltaText ? `${trend.arrow} ${deltaText}` : `${trend.arrow} ${trend.label}`,
+    };
+}
+function formatMetricDelta(currentValue, previousValue, metricKey, labelScale) {
+    const current = Number(currentValue);
+    const previous = Number(previousValue);
+    if (!Number.isFinite(current) || !Number.isFinite(previous)) {
+        return "no prev";
+    }
+    const delta = current - previous;
+    if (metricKey === "population") {
+        return `${delta >= 0 ? "+" : ""}${formatInteger(Math.round(delta))}`;
+    }
+    if (metricKey === "gdp_per_capita") {
+        return `${delta >= 0 ? "+" : ""}${formatInteger(Math.round(delta))} EUR`;
+    }
+    if (metricKey === "unemployment") {
+        return `${delta >= 0 ? "+" : ""}${formatPercent(delta)}`;
+    }
+    const precision = labelScale === "country" ? 3 : 2;
+    return `${delta >= 0 ? "+" : ""}${Number(delta).toFixed(precision)}`;
 }
 function metricTrendMagnitude(metricKey, current, previous, delta) {
     if (metricKey === "population") {

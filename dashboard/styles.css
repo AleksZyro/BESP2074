@@ -158,13 +158,21 @@ code { font-family: Consolas, "Courier New", monospace; }
 }
 .map-country-shape { stroke: none; stroke-width: 0; vector-effect: non-scaling-stroke; }
 .map-region-shape { stroke: rgba(8, 14, 24, 0.7); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
-.map-country-label, .map-region-label {
+.map-country-label, .map-region-label, .map-country-label-detail, .map-region-label-detail {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     font-weight: 600;
     text-anchor: middle;
     pointer-events: none;
 }
 .map-country-label { font-size: 15px; fill: #f4f8fc; }
+.map-country-label-detail {
+    font-size: 11px;
+    fill: #eef4fa;
+    paint-order: stroke fill;
+    stroke: rgba(8, 14, 24, 0.88);
+    stroke-width: 2px;
+    stroke-linejoin: round;
+}
 .map-region-label {
     font-size: 12px;
     fill: #eef4fa;
@@ -173,6 +181,17 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke-width: 2px;
     stroke-linejoin: round;
 }
+.map-region-label-detail {
+    font-size: 9.5px;
+    fill: #eef4fa;
+    paint-order: stroke fill;
+    stroke: rgba(8, 14, 24, 0.88);
+    stroke-width: 1.8px;
+    stroke-linejoin: round;
+}
+.map-label-detail-positive { fill: var(--success); }
+.map-label-detail-neutral { fill: #f4f8fc; }
+.map-label-detail-negative { fill: var(--danger); }
 .map-country-shape, .map-region-shape {
     transition: fill-opacity 120ms ease;
 }
