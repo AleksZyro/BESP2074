@@ -31,6 +31,7 @@ Project status:
 - Phase 8.3 complete: dashboard state-value panels with timeline year sync
 - Phase 8.4 complete: public UI simplification with metric-based map views
 - Phase 9.1 complete: scope expansion v1 with four additional Balkan-adjacent countries
+- Phase 9.2 complete: public map coverage expanded to the new country scope
 
 Current scope:
 - Countries and regions as dataclasses
@@ -75,8 +76,9 @@ Dashboard 5.x (map v1):
 - Shows export metadata plus simple country and region summary tables
 - Renders real geodata country boundaries (BIH, MNE, SRB) and ADM1 region boundaries
 - Renders Kosovo geodata in the SRB scope to match BESP region data (`Kosovo and Metohija`)
-- Simulation/export scope is now broader than the current geodata coverage; ALB, MKD, BGR, and HUN already participate in the simulation/export layer, while map geodata coverage still remains focused on BIH/MNE/SRB for now
+- Simulation/export scope and public map country coverage now both include ALB, MKD, BGR, and HUN
 - Country view renders SRB as one continuous block (Kosovo included in SRB scope, no separate country marker)
+- Region view now includes coarse ADM1-to-BESP groupings for ALB, MKD, BGR, and HUN where the geometry can be mapped reasonably
 - Region labels are grouped by BESP region keys to avoid district-label clutter
 - Bosnia map mapping currently assigns Brcko to RS rendering scope
 - Keeps hover details export-driven with country fallback where region mapping is not available
@@ -181,13 +183,18 @@ Current data-selection behavior:
 - Country and region tables now also include ALB, MKD, BGR, and HUN rows after simulation runs
 
 Map data source:
-- Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for BIH, MNE, SRB, plus XKX (mapped into SRB scope for BESP consistency).
+- Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for ALB, BGR, BIH, HUN, MKD, MNE, SRB, plus XKX (mapped into SRB scope for BESP consistency).
 
 Phase 9.1 - Scope expansion v1:
 - Adds Albania, North Macedonia, Bulgaria, and Hungary to the simulation/export scope
 - Adds coarse starter regions for each new country with capital pull preserved where useful
 - Keeps the expansion intentionally moderate: more playable country breadth first, no premature province explosion
-- Leaves the public geodata map on BIH/MNE/SRB until the next map/data expansion block adds vetted geometry and mapping for the wider scope
+
+Phase 9.2 - Expanded map/data coverage:
+- Adds ADM0 and ADM1 geodata coverage for ALB, MKD, BGR, and HUN
+- Extends public map country coverage to the expanded simulation scope
+- Adds coarse, explainable region grouping for the newly mapped countries
+- Keeps fallback behavior intact where a capital/region split cannot be represented perfectly by the underlying ADM1 geometry
 
 Map testcase fixture:
 - Stable fixture: `dashboard/fixtures/map_fixture_latest.json`

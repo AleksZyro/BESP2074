@@ -9,8 +9,15 @@ const PLAYBACK_HELP_MESSAGE =
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 22;
-const TARGET_COUNTRIES = new Set(["BIH", "MNE", "SRB"]);
-const COUNTRY_LABEL_OFFSETS = { SRB: [0, -26] };
+const MAP_COUNTRY_CODES = ["ALB", "BGR", "BIH", "HUN", "MKD", "MNE", "SRB"];
+const TARGET_COUNTRIES = new Set(MAP_COUNTRY_CODES);
+const COUNTRY_LABEL_OFFSETS = {
+    ALB: [-12, 10],
+    BGR: [18, 4],
+    HUN: [-6, -18],
+    MKD: [22, 0],
+    SRB: [0, -26],
+};
 const VISUAL_REGION_LABEL_OFFSETS = {
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
@@ -62,11 +69,11 @@ const METRIC_VIEWS = {
     },
 };
 const GEOJSON_PATHS = {
-    country: ["BIH", "MNE", "SRB"].map(
+    country: MAP_COUNTRY_CODES.map(
         (code) => `./data/geoBoundaries-${code}-ADM0_simplified.geojson`
     ),
     region: [
-        ...["BIH", "MNE", "SRB"].map(
+        ...MAP_COUNTRY_CODES.map(
             (code) => `./data/geoBoundaries-${code}-ADM1_simplified.geojson`
         ),
         "./data/geoBoundaries-XKX-ADM0_simplified.geojson",
@@ -81,6 +88,8 @@ const REGION_NAME_ALIASES = Object.fromEntries([
     ["central serbia", "central serbia"], ["south and east serbia", "south and east serbia"],
     ["kosovo and metohija", "kosovo and metohija"], ["kosovo", "kosovo and metohija"],
     ["kosovo & metohija", "kosovo and metohija"], ["coast", "coast"], ["inland", "inland"],
+    ["tirane", "tirana"], ["skopje", "skopje"], ["sofia city", "sofia"], ["sofia", "sofia"],
+    ["budapest", "budapest"],
 ]);
 const REGION_GROUPS = {
     "SRB::vojvodina": [
@@ -109,10 +118,56 @@ const REGION_GROUPS = {
         "pluzine municipality", "savnik municipality", "zabljak municipality",
         "gusinje municipality", "petnjica municipality",
     ],
+    "ALB::tirana": ["tiranã«", "tirane"],
+    "ALB::northern albania": ["shkodã«r", "kukã«s", "lezhã«", "dibã«r"],
+    "ALB::central coast albania": ["durrã«s", "elbasan", "fier", "berat"],
+    "ALB::southern albania": ["vlorã«", "gjirokastã«r", "korã§ã«"],
+    "MKD::skopje": ["skopje"],
+    "MKD::western north macedonia": ["polog", "southwest"],
+    "MKD::eastern north macedonia": ["east", "northeast", "southeast"],
+    "MKD::southern north macedonia": ["pelagonia", "vardar"],
+    "BGR::sofia": ["sofia city", "sofia"],
+    "BGR::northern bulgaria": [
+        "vidin", "vratsa", "montana", "pleven", "lovech", "veliko tarnovo",
+        "gabrovo", "ruse", "razgrad", "silistra", "shumen", "targovishte",
+    ],
+    "BGR::southern bulgaria": [
+        "blagoevgrad", "kyustendil", "pernik", "pazardzhik", "plovdiv",
+        "smolyan", "kardzhali", "haskovo", "stara zagora", "sliven", "yambol",
+    ],
+    "BGR::black sea bulgaria": ["dobrich", "varna", "burgas"],
+    "HUN::budapest": ["pest"],
+    "HUN::western hungary": [
+        "baranya", "fejã©r", "gyå‘r moson sopron", "komã¡rom esztergom",
+        "somogy", "tolna", "vas", "veszprã©m", "zala",
+    ],
+    "HUN::central hungary": [
+        "heves", "jã¡sz nagykun szolnok", "nã³grã¡d",
+    ],
+    "HUN::eastern hungary": [
+        "bã¡cs kiskun", "bã©kã©s", "borsod abaãºj zemplã©n",
+        "csongrã¡d csanã¡d", "hajdãº bihar", "szabolcs szatmã¡r bereg",
+    ],
 };
 const VISUAL_REGION_DEFINITIONS = {
+    "ALB::tirana": { label: "Tirana", dataRegionKey: "ALB::tirana", fill: "#8b7d6c" },
+    "ALB::north": { label: "North Albania", dataRegionKey: "ALB::northern albania", fill: "#9c8d7b" },
+    "ALB::central-coast": { label: "Central Coast", dataRegionKey: "ALB::central coast albania", fill: "#b39a77" },
+    "ALB::south": { label: "South Albania", dataRegionKey: "ALB::southern albania", fill: "#8b6e63" },
+    "BGR::sofia": { label: "Sofia", dataRegionKey: "BGR::sofia", fill: "#7f9961" },
+    "BGR::north": { label: "North Bulgaria", dataRegionKey: "BGR::northern bulgaria", fill: "#94ae71" },
+    "BGR::south": { label: "South Bulgaria", dataRegionKey: "BGR::southern bulgaria", fill: "#73945c" },
+    "BGR::black-sea": { label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#5e88a9" },
     "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
     "BIH::rs": { label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c" },
+    "HUN::budapest": { label: "Budapest*", dataRegionKey: "HUN::budapest", fill: "#a76e60" },
+    "HUN::west": { label: "West Hungary", dataRegionKey: "HUN::western hungary", fill: "#b58f71" },
+    "HUN::central": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#9b856c" },
+    "HUN::east": { label: "East Hungary", dataRegionKey: "HUN::eastern hungary", fill: "#c29c7b" },
+    "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#916b7c" },
+    "MKD::west": { label: "West MKD", dataRegionKey: "MKD::western north macedonia", fill: "#a47c8e" },
+    "MKD::east": { label: "East MKD", dataRegionKey: "MKD::eastern north macedonia", fill: "#7d5868" },
+    "MKD::south": { label: "South MKD", dataRegionKey: "MKD::southern north macedonia", fill: "#b38f9d" },
     "SRB::vojvodina": { label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
     "SRB::belgrade": { label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
     "SRB::sz-srb": { label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
@@ -151,6 +206,24 @@ const REGION_FEATURE_TO_BESP = {
 };
 const BESP_REGION_KEYS = new Set(Object.values(REGION_FEATURE_TO_BESP));
 const FEATURE_TO_VISUAL_REGION = {
+    ...expandFeatureGroups({
+        "ALB::tirana": REGION_GROUPS["ALB::tirana"],
+        "ALB::north": REGION_GROUPS["ALB::northern albania"],
+        "ALB::central-coast": REGION_GROUPS["ALB::central coast albania"],
+        "ALB::south": REGION_GROUPS["ALB::southern albania"],
+        "BGR::sofia": REGION_GROUPS["BGR::sofia"],
+        "BGR::north": REGION_GROUPS["BGR::northern bulgaria"],
+        "BGR::south": REGION_GROUPS["BGR::southern bulgaria"],
+        "BGR::black-sea": REGION_GROUPS["BGR::black sea bulgaria"],
+        "HUN::budapest": REGION_GROUPS["HUN::budapest"],
+        "HUN::west": REGION_GROUPS["HUN::western hungary"],
+        "HUN::central": REGION_GROUPS["HUN::central hungary"],
+        "HUN::east": REGION_GROUPS["HUN::eastern hungary"],
+        "MKD::skopje": REGION_GROUPS["MKD::skopje"],
+        "MKD::west": REGION_GROUPS["MKD::western north macedonia"],
+        "MKD::east": REGION_GROUPS["MKD::eastern north macedonia"],
+        "MKD::south": REGION_GROUPS["MKD::southern north macedonia"],
+    }),
     "BIH::federation of bosnia and herzegovina": "BIH::fbih",
     "BIH::republika srpska": "BIH::rs",
     "BIH::brcko": "BIH::rs",

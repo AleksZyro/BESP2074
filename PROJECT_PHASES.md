@@ -240,7 +240,15 @@ Contains:
 - Adds coarse starter regions for the four new countries in `data/regions.json`
 - Keeps capital pull explicit where it matters (`Tirana`, `Skopje`, `Sofia`, `Budapest`)
 - Updates dashboard country flags so expanded scope is readable in cards/tables
-- Leaves current public map geodata coverage intentionally limited to BIH/MNE/SRB until a separate map-scope block adds vetted shapes and mappings for the wider region set
+
+### Phase 9.2 - Expanded Map/Data Coverage
+Status: complete
+
+Contains:
+- Adds geoBoundaries ADM0 + ADM1 files for Albania, North Macedonia, Bulgaria, and Hungary
+- Extends public country-map coverage from the original BIH/MNE/SRB core to the expanded seven-country scope
+- Adds coarse ADM1-to-BESP grouping for the new countries where the geometry maps cleanly enough
+- Preserves fallback behavior where capital/region geometry is only approximate (for example Budapest using a metro-area proxy rather than pretending to be a perfect fine-grained city polygon)
 
 Contains:
 - State cards (year-synced averages)
@@ -269,6 +277,15 @@ Contains:
 - Shocks are bounded and export-auditable
 - State values are integrated, bounded, validated, and visible in dashboard (Phase 8.3)
 - Public map geodata coverage is still narrower than the full simulation scope and currently focuses on BIH/MNE/SRB (+ XKX stitched into SRB logic)
+- Public map geodata coverage now spans:
+  - Albania
+  - North Macedonia
+  - Bulgaria
+  - Hungary
+  - Bosnia and Herzegovina
+  - Montenegro
+  - Serbia
+  - plus XKX stitched into SRB country logic for BESP consistency
 
 ## Verify Commands (Current)
 
@@ -283,6 +300,6 @@ Contains:
 
 ## Next Planned Blocks
 
-1. Phase 9.2 - Expanded map/data coverage for ALB, MKD, BGR, and HUN
-2. Phase 9.3 - Longer time horizon pass (20+ years, drift/balance validation)
-3. Phase 9.4 - Run-flow simplification (`Play again` replacing separate generate-first workflow)
+1. Phase 9.3 - Longer time horizon pass (20+ years, drift/balance validation)
+2. Phase 9.4 - Run-flow simplification (`Play again` replacing separate generate-first workflow)
+3. Phase 9.5 - Additional Balkan scope expansion beyond the current seven-country set
