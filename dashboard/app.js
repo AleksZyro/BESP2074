@@ -78,9 +78,14 @@ const COUNTRY_FLAGS = {
     ROU: "\uD83C\uDDF7\uD83C\uDDF4",
     SRB: "\uD83C\uDDF7\uD83C\uDDF8",
 };
+const COUNTRY_DISPLAY_CODES = {
+    BGR: "BG",
+    MKD: "NMK",
+    ROU: "ROM",
+};
 const BASE_PLAYBACK_INTERVAL_MS = 1400;
 const DEFAULT_FILL = "rgba(127, 150, 173, 0.50)";
-const ADM1_PROVINCE_VIEW_COUNTRIES = new Set(["ALB", "BGR", "HUN"]);
+const ADM1_PROVINCE_VIEW_COUNTRIES = new Set();
 const ADM1_PROVINCE_PALETTES = {
     ALB: ["#856d57", "#947b61", "#a38a6b", "#b39a78", "#c3ab86", "#d3bc95"],
     BGR: ["#597855", "#688861", "#77996d", "#89ab7b", "#9abd8a", "#afcf9a"],
@@ -258,7 +263,7 @@ const VISUAL_REGION_DEFINITIONS = {
     "HRV::slavonia": { label: "Slavonia", dataRegionKey: "HRV::slavonia", fill: "#7d6247" },
     "HRV::dalmatia": { label: "Dalmatia", dataRegionKey: "HRV::dalmatia", fill: "#b18e68" },
     "HRV::istria-kvarner": { label: "Istria/Kvarner", dataRegionKey: "HRV::istria and kvarner", fill: "#c9a97d" },
-    "HUN::budapest": { label: "Budapest*", dataRegionKey: "HUN::budapest", fill: "#a76e60" },
+    "HUN::budapest": { label: "Budapest", dataRegionKey: "HUN::budapest", fill: "#a76e60" },
     "HUN::west": { label: "West Hungary", dataRegionKey: "HUN::western hungary", fill: "#b58f71" },
     "HUN::central": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#9b856c" },
     "HUN::east": { label: "East Hungary", dataRegionKey: "HUN::eastern hungary", fill: "#c29c7b" },
@@ -310,10 +315,22 @@ const REGION_FEATURE_TO_BESP = {
 const BESP_REGION_KEYS = new Set(Object.values(REGION_FEATURE_TO_BESP));
 const FEATURE_TO_VISUAL_REGION = {
     ...expandFeatureGroups({
+        "ALB::tirana": REGION_GROUPS_RESOLVED["ALB::tirana"],
+        "ALB::north": REGION_GROUPS_RESOLVED["ALB::northern albania"],
+        "ALB::central-coast": REGION_GROUPS_RESOLVED["ALB::central coast albania"],
+        "ALB::south": REGION_GROUPS_RESOLVED["ALB::southern albania"],
+        "BGR::sofia": REGION_GROUPS_RESOLVED["BGR::sofia"],
+        "BGR::north": REGION_GROUPS_RESOLVED["BGR::northern bulgaria"],
+        "BGR::south": REGION_GROUPS_RESOLVED["BGR::southern bulgaria"],
+        "BGR::black-sea": REGION_GROUPS_RESOLVED["BGR::black sea bulgaria"],
         "HRV::zagreb-central": REGION_GROUPS_RESOLVED["HRV::zagreb and central croatia"],
         "HRV::slavonia": REGION_GROUPS_RESOLVED["HRV::slavonia"],
         "HRV::dalmatia": REGION_GROUPS_RESOLVED["HRV::dalmatia"],
         "HRV::istria-kvarner": REGION_GROUPS_RESOLVED["HRV::istria and kvarner"],
+        "HUN::budapest": REGION_GROUPS_RESOLVED["HUN::budapest"],
+        "HUN::west": REGION_GROUPS_RESOLVED["HUN::western hungary"],
+        "HUN::central": REGION_GROUPS_RESOLVED["HUN::central hungary"],
+        "HUN::east": REGION_GROUPS_RESOLVED["HUN::eastern hungary"],
         "MKD::skopje": REGION_GROUPS_RESOLVED["MKD::skopje"],
         "MKD::west": REGION_GROUPS_RESOLVED["MKD::western north macedonia"],
         "MKD::east": REGION_GROUPS_RESOLVED["MKD::eastern north macedonia"],
@@ -1160,7 +1177,7 @@ function renderCountryLayer(geoData) {
             const box = estimateLabelBounds({
                 x,
                 y,
-                labelText: country.countryCode,
+                labelText: displayCountryCode(country.countryCode),
                 detailText,
                 labelFontPx: 15,
                 detailFontPx: 11,
@@ -1172,7 +1189,7 @@ function renderCountryLayer(geoData) {
                 box,
                 html: `
             <text class="map-country-label" x="${(country.centroid[0] + offsetX).toFixed(1)}" y="${(country.centroid[1] + offsetY).toFixed(1)}">
-                ${escapeHtml(country.countryCode)}
+                ${escapeHtml(displayCountryCode(country.countryCode))}
             </text>
             ${metricDetail ? `
             <text class="map-country-label-detail map-label-detail-${metricDetail.tone}" x="${(country.centroid[0] + offsetX).toFixed(1)}" y="${(country.centroid[1] + offsetY + 18).toFixed(1)}">
@@ -1505,14 +1522,14 @@ function setActiveHoverNode(node) {
 function renderCountryHover(countryCode, countryData) {
     if (!countryData) {
         setMapHoverDetails(
-            `${countryCode} (no export row)`,
+            `${displayCountryCode(countryCode)} (no export row)`,
             "No country-year row matched for this country boundary."
         );
         return;
     }
     if (!isClassicMetricView()) {
         setMapHoverDetails(
-            `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`,
+            `${countryData.country_name} (${displayCountryCode(countryData.country_code)}) - ${countryData.yearKey}`,
             describeMetricFocus(
                 dashboardState.activeMetric,
                 metricValueFromCountry(countryData, dashboardState.activeMetric)
@@ -1521,7 +1538,7 @@ function renderCountryHover(countryCode, countryData) {
         return;
     }
     setMapHoverDetails(
-        `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`,
+        `${countryData.country_name} (${displayCountryCode(countryData.country_code)}) - ${countryData.yearKey}`,
         describeCountrySummary(countryData)
     );
 }
@@ -1529,7 +1546,7 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
         if (!isClassicMetricView()) {
             setMapHoverDetails(
-                `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`,
+                `${regionName} (${displayCountryCode(regionData.country_code)}) - ${regionData.yearKey}`,
                 describeMetricFocus(
                     dashboardState.activeMetric,
                     metricValueFromRegion(regionData, dashboardState.activeMetric)
@@ -1541,7 +1558,7 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
             ? ` Split from aggregate: ${regionData.source_region_name}.`
             : "";
         setMapHoverDetails(
-            `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`,
+            `${regionName} (${displayCountryCode(regionData.country_code)}) - ${regionData.yearKey}`,
             `Population ${formatInteger(regionData.end_population)}, GDP ${formatDecimal(regionData.end_gdp_billion_eur)} bn EUR, `
             + `growth ${formatPercent(regionData.gdp_growth_rate)}, unemployment ${formatPercent(regionData.unemployment_rate)}, `
             + `attractiveness ${formatDecimal(regionData.regional_attractiveness)}.${aggregateNote}`
@@ -1551,7 +1568,7 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (countryData) {
         if (!isClassicMetricView()) {
             setMapHoverDetails(
-                `${regionName} (${countryCode})`,
+                `${regionName} (${displayCountryCode(countryCode)})`,
                 describeMetricFocus(
                     dashboardState.activeMetric,
                     metricValueFromCountry(countryData, dashboardState.activeMetric)
@@ -1560,13 +1577,13 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
             return;
         }
         setMapHoverDetails(
-            `${regionName} (${countryCode})`,
+            `${regionName} (${displayCountryCode(countryCode)})`,
             "No direct BESP region mapping for this geoboundary. "
             + `Fallback country context: ${countryData.country_name}, ${countryData.yearKey}, ${describeCountrySummary(countryData, false)}`
         );
         return;
     }
-    setMapHoverDetails(`${regionName} (${countryCode})`, "No matching export row for region or country fallback.");
+    setMapHoverDetails(`${regionName} (${displayCountryCode(countryCode)})`, "No matching export row for region or country fallback.");
 }
 function resetMapHoverDetails() {
     if (!isClassicMetricView()) {
@@ -1594,7 +1611,7 @@ function renderCountryTable(countryRows) {
         countryRows,
         EMPTY_TABLE_ROWS.countryExport,
         (country) => buildTableRow([
-            escapeHtml(country.yearKey), `${escapeHtml(countryFlag(country.country_code))} ${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})`,
+            escapeHtml(country.yearKey), `${escapeHtml(countryFlag(country.country_code))} ${escapeHtml(country.country_name)} (${escapeHtml(displayCountryCode(country.country_code))})`,
             formatInteger(country.end_population), `${formatDecimal(country.end_gdp_billion_eur)} bn EUR`,
             formatPercent(country.gdp_growth_rate), `${formatInteger(Math.round(country.gdp_per_capita_eur))} EUR`,
             formatPercent(country.average_unemployment_rate),
@@ -1621,7 +1638,7 @@ function renderStatePanels(countryRows) {
         elements.stateTableBody,
         countryRows,
         EMPTY_TABLE_ROWS.state,
-        (country) => buildTableRow([escapeHtml(country.yearKey), `${escapeHtml(country.country_name)} (${escapeHtml(country.country_code)})`, ...STATE_METRICS.map(([metricKey]) => formatStateRatio(country[metricKey]))])
+        (country) => buildTableRow([escapeHtml(country.yearKey), `${escapeHtml(country.country_name)} (${escapeHtml(displayCountryCode(country.country_code))})`, ...STATE_METRICS.map(([metricKey]) => formatStateRatio(country[metricKey]))])
     );
 }
 function renderRegionTable(regionRows) {
@@ -1630,7 +1647,7 @@ function renderRegionTable(regionRows) {
         regionRows,
         EMPTY_TABLE_ROWS.regionExport,
         (region) => buildTableRow([
-            escapeHtml(region.yearKey), escapeHtml(region.country_code), escapeHtml(region.region_name),
+            escapeHtml(region.yearKey), escapeHtml(displayCountryCode(region.country_code)), escapeHtml(region.region_name),
             formatInteger(region.end_population), `${formatDecimal(region.end_gdp_billion_eur)} bn EUR`,
             formatPercent(region.gdp_growth_rate), formatPercent(region.unemployment_rate),
             formatDecimal(region.regional_attractiveness),
@@ -1708,7 +1725,7 @@ function renderMapSummaryCards() {
                 const previousCountryRow = mapDataCache.previousCountriesByCode.get(countryCode) ?? null;
                 return isClassic
                     ? buildClassicSummaryCard(
-                        `${countryFlag(countryCode)} ${countryRow.country_name} (${countryCode})`,
+                        `${countryFlag(countryCode)} ${countryRow.country_name} (${displayCountryCode(countryCode)})`,
                         [
                             `Population ${formatInteger(countryRow.end_population)}`,
                             `GDP ${formatDecimal(countryRow.end_gdp_billion_eur)} bn EUR`,
@@ -1717,7 +1734,7 @@ function renderMapSummaryCards() {
                         countryRow.yearKey
                     )
                     : buildMetricSummaryCard(
-                        `${countryFlag(countryCode)} ${countryRow.country_name} (${countryCode})`,
+                        `${countryFlag(countryCode)} ${countryRow.country_name} (${displayCountryCode(countryCode)})`,
                         dashboardState.activeMetric,
                         metricValueFromCountry(countryRow, dashboardState.activeMetric),
                         previousCountryRow ? metricValueFromCountry(previousCountryRow, dashboardState.activeMetric) : Number.NaN,
@@ -1739,7 +1756,7 @@ function renderMapSummaryCards() {
             const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
             return isClassic
                 ? buildClassicSummaryCard(
-                    `${group.label} (${group.countryCode})`,
+                    `${group.label} (${displayCountryCode(group.countryCode)})`,
                     currentRegion ? [
                         `Population ${formatInteger(currentRegion.end_population)}`,
                         `GDP ${formatDecimal(currentRegion.end_gdp_billion_eur)} bn EUR`,
@@ -1748,7 +1765,7 @@ function renderMapSummaryCards() {
                     currentRegion?.yearKey ?? getActiveYearKey()
                 )
                 : buildMetricSummaryCard(
-                    `${group.label} (${group.countryCode})`,
+                    `${group.label} (${displayCountryCode(group.countryCode)})`,
                     dashboardState.activeMetric,
                     metricValueFromRegion(currentRegion, dashboardState.activeMetric),
                     previousRegion ? metricValueFromRegion(previousRegion, dashboardState.activeMetric) : Number.NaN,
@@ -2027,7 +2044,7 @@ function isClassicMetricView() {
     return dashboardState.activeMetric === "classic";
 }
 function buildCountrySummaryCard(country, row) {
-    const label = `<span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(country.countryCode)})`;
+    const label = `<span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(displayCountryCode(country.countryCode))})`;
     const metricLabel = METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric";
     const metricValue = row ? formatMetricDisplay(metricValueFromCountry(row, dashboardState.activeMetric), dashboardState.activeMetric) : "No data";
     const note = row ? `${escapeHtml(row.yearKey)} | ${escapeHtml(metricLabel)}` : "No matching country export row.";
@@ -2075,6 +2092,10 @@ function groupBy(items, keyBuilder) {
 }
 function buildRegionKey(countryCode, regionName) {
     return `${normalizeCountryCode(countryCode)}::${normalizeRegionName(regionName)}`;
+}
+function displayCountryCode(countryCode) {
+    const normalized = normalizeCountryCode(countryCode);
+    return COUNTRY_DISPLAY_CODES[normalized] ?? normalized;
 }
 function normalizeCountryCode(countryCode) {
     return String(countryCode ?? "").trim().toUpperCase();
