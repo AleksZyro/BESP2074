@@ -1184,13 +1184,11 @@ function renderCountryHover(countryCode, countryData) {
         return;
     }
     if (!isClassicMetricView()) {
-        const previousCountryData = mapDataCache.previousCountriesByCode.get(countryCode) ?? null;
         setMapHoverDetails(
             `${countryData.country_name} (${countryData.country_code}) - ${countryData.yearKey}`,
             describeMetricFocus(
                 dashboardState.activeMetric,
-                metricValueFromCountry(countryData, dashboardState.activeMetric),
-                previousCountryData ? metricValueFromCountry(previousCountryData, dashboardState.activeMetric) : Number.NaN
+                metricValueFromCountry(countryData, dashboardState.activeMetric)
             )
         );
         return;
@@ -1203,14 +1201,11 @@ function renderCountryHover(countryCode, countryData) {
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
         if (!isClassicMetricView()) {
-            const visualRegionKey = buildVisualRegionKey(countryCode, regionName);
-            const previousRegionData = mapDataCache.previousVisualRegionsByKey.get(visualRegionKey) ?? null;
             setMapHoverDetails(
                 `${regionName} (${regionData.country_code}) - ${regionData.yearKey}`,
                 describeMetricFocus(
                     dashboardState.activeMetric,
-                    metricValueFromRegion(regionData, dashboardState.activeMetric),
-                    previousRegionData ? metricValueFromRegion(previousRegionData, dashboardState.activeMetric) : Number.NaN
+                    metricValueFromRegion(regionData, dashboardState.activeMetric)
                 )
             );
             return;
@@ -1228,13 +1223,11 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
     }
     if (countryData) {
         if (!isClassicMetricView()) {
-            const previousCountryData = mapDataCache.previousCountriesByCode.get(countryCode) ?? null;
             setMapHoverDetails(
                 `${regionName} (${countryCode})`,
                 describeMetricFocus(
                     dashboardState.activeMetric,
-                    metricValueFromCountry(countryData, dashboardState.activeMetric),
-                    previousCountryData ? metricValueFromCountry(previousCountryData, dashboardState.activeMetric) : Number.NaN
+                    metricValueFromCountry(countryData, dashboardState.activeMetric)
                 )
             );
             return;
@@ -1252,7 +1245,7 @@ function resetMapHoverDetails() {
     if (!isClassicMetricView()) {
         setMapHoverDetails(
             `${METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric"} overlay active`,
-            "Move over a map area to compare the selected metric with the previous year."
+            "Move over a map area to inspect the selected metric for the active year."
         );
         return;
     }
@@ -1322,11 +1315,8 @@ function renderPublicSidebar() {
     const regionRows = [...mapDataCache.visualRegionsByKey.values()]
         .map((group) => group.displayData)
         .filter(Boolean);
-    const previousCountryRows = [...mapDataCache.previousCountriesByCode.values()];
-    const previousRegionRows = [...mapDataCache.previousVisualRegionsByKey.values()];
     const useRegionScope = activeMapMode === "region";
     const sourceRows = useRegionScope ? regionRows : countryRows;
-    const previousRows = useRegionScope ? previousRegionRows : previousCountryRows;
     const scopeLabel = useRegionScope ? "Regions" : "Countries";
     const isClassic = isClassicMetricView();
     elements.kpiGrid.classList.toggle("kpi-grid-metric", !isClassic);
@@ -1354,8 +1344,6 @@ function renderPublicSidebar() {
     if (!isClassic) {
         const metricKey = dashboardState.activeMetric;
         const currentAggregate = aggregateMetricForScope(sourceRows, metricKey);
-        const previousAggregate = aggregateMetricForScope(previousRows, metricKey);
-        const trend = metricTrend(metricKey, currentAggregate, previousAggregate);
         elements.kpiLabelPopulation.textContent = "\u{1F465} Population";
         elements.kpiLabelGdp.textContent = "\u{1F4B6} GDP per cap.";
         elements.kpiLabelUnemployment.textContent = "\u{1F4BC} Unemployment";
@@ -1364,18 +1352,8 @@ function renderPublicSidebar() {
         elements.kpiGdp.textContent = metricKey === "gdp_per_capita" ? formatMetricDisplay(currentAggregate, metricKey) : "-";
         elements.kpiUnemployment.textContent = metricKey === "unemployment" ? formatMetricDisplay(currentAggregate, metricKey) : "-";
         elements.kpiGrowth.textContent = metricKey === "attractiveness"
-            ? `${formatMetricDisplay(currentAggregate, metricKey)} ${trend.arrow}`
+            ? formatMetricDisplay(currentAggregate, metricKey)
             : "-";
-        if (metricKey !== "attractiveness") {
-            const activeValue = `${formatMetricDisplay(currentAggregate, metricKey)} ${trend.arrow}`.trim();
-            if (metricKey === "population") {
-                elements.kpiPopulation.textContent = activeValue;
-            } else if (metricKey === "gdp_per_capita") {
-                elements.kpiGdp.textContent = activeValue;
-            } else if (metricKey === "unemployment") {
-                elements.kpiUnemployment.textContent = activeValue;
-            }
-        }
         return;
     }
     elements.kpiLabelPopulation.textContent = "\u{1F465} Population";
@@ -1576,10 +1554,9 @@ function describeCountrySummary(countryData, includeUnemployment = true) {
         ? `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}.`
         : `${base}.`;
 }
-function describeMetricFocus(metricKey, currentValue, previousValue) {
+function describeMetricFocus(metricKey, currentValue) {
     const metricLabel = METRIC_VIEWS[metricKey]?.label ?? "Metric";
-    const trend = metricTrend(metricKey, currentValue, previousValue);
-    return `${metricLabel} ${formatMetricDisplay(currentValue, metricKey)}. ${trend.summary}`;
+    return `${metricLabel} ${formatMetricDisplay(currentValue, metricKey)}.`;
 }
 function buildMetaCard(label, value) {
     return `
@@ -1603,13 +1580,11 @@ function buildMetricSummaryCard(title, metricKey, currentValue, previousValue, y
     return `
         <article class="meta-card metric-summary-card">
             <span class="meta-label">${title}</span>
-            <div class="metric-summary-row">
-                <strong>${escapeHtml(formatMetricDisplay(currentValue, metricKey))}</strong>
-                <span class="metric-trend metric-trend-${trend.tone}">
-                    <span class="metric-trend-arrow">${trend.arrow}</span>
-                    <span>${escapeHtml(trend.label)}</span>
-                </span>
-            </div>
+            <p class="metric-summary-trendline metric-trend metric-trend-${trend.tone}">
+                <span class="metric-trend-arrow">${trend.arrow}</span>
+                <span>${escapeHtml(trend.label)}</span>
+            </p>
+            <strong class="metric-summary-value">${escapeHtml(formatMetricDisplay(currentValue, metricKey))}</strong>
             <p class="metric-summary-subtitle">${escapeHtml(yearKey || "No year")} | ${escapeHtml(METRIC_VIEWS[metricKey]?.label ?? "Metric")}</p>
         </article>
     `;
