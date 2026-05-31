@@ -971,12 +971,44 @@ function splitKosovoSubregionFeatures(geometry) {
     const latSouth = bbox.minLat + latSpan * 0.30;
     const latMid = bbox.minLat + latSpan * 0.58;
     const latNorth = bbox.minLat + latSpan * 0.78;
+    const lonOverlap = lonSpan * 0.025;
+    const latOverlap = latSpan * 0.025;
     const masks = [
-        { name: "Kosovska Mitrovica", minLon: bbox.minLon, maxLon: lonCenter, minLat: latMid, maxLat: bbox.maxLat },
-        { name: "Pec", minLon: bbox.minLon, maxLon: lonWest, minLat: latSouth, maxLat: latNorth },
-        { name: "Prizren", minLon: bbox.minLon, maxLon: lonCenter, minLat: bbox.minLat, maxLat: latSouth },
-        { name: "Kosovsko Pomoravlje", minLon: lonEast, maxLon: bbox.maxLon, minLat: bbox.minLat, maxLat: bbox.maxLat },
-        { name: "Kosovo", minLon: lonWest, maxLon: lonEast, minLat: latSouth, maxLat: latMid },
+        {
+            name: "Kosovska Mitrovica",
+            minLon: bbox.minLon,
+            maxLon: lonCenter + lonOverlap,
+            minLat: latMid - latOverlap,
+            maxLat: bbox.maxLat,
+        },
+        {
+            name: "Pec",
+            minLon: bbox.minLon,
+            maxLon: lonWest + lonOverlap,
+            minLat: latSouth - latOverlap,
+            maxLat: latNorth + latOverlap,
+        },
+        {
+            name: "Prizren",
+            minLon: bbox.minLon,
+            maxLon: lonCenter + lonOverlap,
+            minLat: bbox.minLat,
+            maxLat: latSouth + latOverlap,
+        },
+        {
+            name: "Kosovsko Pomoravlje",
+            minLon: lonEast - lonOverlap,
+            maxLon: bbox.maxLon,
+            minLat: bbox.minLat,
+            maxLat: bbox.maxLat,
+        },
+        {
+            name: "Kosovo",
+            minLon: lonWest - lonOverlap,
+            maxLon: lonEast + lonOverlap,
+            minLat: latSouth - latOverlap,
+            maxLat: latMid + latOverlap,
+        },
     ];
     const pieces = masks
         .map((mask) => ({
@@ -1323,11 +1355,21 @@ function renderCountryLayer(geoData) {
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
             const baseFeatures = features.filter((feature) => feature.rawCountryCode === countryCode);
-            const overlayFeatures = features.filter((feature) => feature.rawCountryCode !== countryCode);
             const basePathD = (baseFeatures.length ? baseFeatures : features)
                 .map((feature) => feature.pathD)
                 .join(" ");
-            const overlayPathD = overlayFeatures.map((feature) => feature.pathD).join(" ");
+            const overlayPathD = countryCode === "SRB"
+                ? groupedVisualRegions
+                    .filter((group) => (
+                        group.visualRegionKey === "SRB::kosovska-mitrovica"
+                        || group.visualRegionKey === "SRB::kosovsko-pomoravlje"
+                        || group.visualRegionKey === "SRB::kosovo-core"
+                        || group.visualRegionKey === "SRB::prizren"
+                        || group.visualRegionKey === "SRB::pec"
+                    ))
+                    .map((group) => group.pathD)
+                    .join(" ")
+                : "";
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
             const centroid = labelFeature?.centroid ?? averageCentroid(features);
             const displayName = labelFeature?.countryCode === "SRB"
