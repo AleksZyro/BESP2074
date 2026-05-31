@@ -13,29 +13,27 @@ const MAP_COUNTRY_CODES = ["ALB", "BGR", "BIH", "HRV", "HUN", "MKD", "MNE", "ROU
 const TARGET_COUNTRIES = new Set(MAP_COUNTRY_CODES);
 const COUNTRY_LABEL_OFFSETS = {
     ALB: [-12, 10],
-    BGR: [18, 4],
+    BGR: [10, 4],
     HRV: [-20, -6],
-    HUN: [-6, -18],
-    MKD: [22, 0],
-    ROU: [18, -12],
-    SRB: [0, -26],
+    HUN: [-6, -8],
+    MKD: [14, 0],
+    ROU: [10, -12],
+    SRB: [-8, -26],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
-    "ALB::tirana": [6, -4],
+    "ALB::tirana": [18, -14],
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
-    "HUN::central-hungary": [8, 4],
-    "HUN::central-transdanubia": [-8, 0],
-    "HUN::north-great-plain": [8, -4],
+    "HUN::central-hungary": [4, 2],
+    "HUN::transdanubia": [-8, 4],
+    "HUN::great-plains": [12, 6],
     "HUN::north-hungary": [0, -8],
-    "HUN::south-great-plain": [8, 12],
-    "HUN::south-transdanubia": [-6, 10],
-    "HUN::west-transdanubia": [-10, 4],
     "HRV::zagreb-central": [12, -4],
     "HRV::slavonia": [12, 10],
     "HRV::dalmatia": [10, 18],
     "HRV::istria-kvarner": [-10, -4],
-    "MKD::skopje": [8, -8],
+    "MKD::skopje": [8, -10],
+    "MKD::se": [12, 10],
     "MNE::boka": [-26, 2],
     "MNE::primorje": [8, 16],
     "MNE::zeta": [26, 0],
@@ -46,6 +44,11 @@ const VISUAL_REGION_LABEL_OFFSETS = {
     "ROU::moldavia": [10, -6],
     "ROU::wallachia-oltenia": [0, 10],
     "ROU::dobruja-lower-danube": [10, 12],
+    "SRB::kosovska-mitrovica": [-22, -8],
+    "SRB::kosovsko-pomoravlje": [20, 6],
+    "SRB::kosovo-core": [0, 0],
+    "SRB::prizren": [-14, 14],
+    "SRB::pec": [-18, 4],
 };
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
@@ -58,17 +61,13 @@ const REGION_LABEL_SHORT = {
     "BGR::north": "N Bulgaria",
     "BGR::south": "S Bulgaria",
     "HUN::central-hungary": "C. Hungary",
-    "HUN::central-transdanubia": "C. Transdan.",
-    "HUN::north-great-plain": "N Great Plain",
+    "HUN::great-plains": "Great Plains",
     "HUN::north-hungary": "N Hungary",
-    "HUN::south-great-plain": "S Great Plain",
-    "HUN::south-transdanubia": "S. Transdan.",
-    "HUN::west-transdanubia": "W. Transdan.",
+    "HUN::transdanubia": "Transdanubia",
     "HRV::zagreb-central": "CE HRV",
     "HRV::istria-kvarner": "Istrija",
-    "MKD::east": "East MKD",
-    "MKD::south": "South MKD",
-    "MKD::west": "West MKD",
+    "MKD::se": "SE Macedonia",
+    "MKD::west": "West Macedonia",
     "MNE::stara-crna-gora": "Stara C. Gora",
     "MNE::stara-hercegovina": "St. Hercegovina",
     "MNE::stara-raska": "Stara Raska",
@@ -77,15 +76,12 @@ const REGION_LABEL_SHORT = {
     "ROU::wallachia-oltenia": "Wallachia",
     "ROU::dobruja-lower-danube": "Dobruja",
     "SRB::ji-srb": "JI SRB",
-    "SRB::kosovo-metohija": "Kosovo i Met.",
+    "SRB::kosovo-core": "Kosovo",
     "SRB::sz-srb": "SZ SRB",
 };
 const REGION_LABEL_MULTILINE = {
-    "HUN::west-transdanubia": ["Western", "Transdanubia"],
-    "HUN::central-transdanubia": ["Central", "Transdanubia"],
-    "HUN::south-transdanubia": ["Southern", "Transdanubia"],
-    "HUN::north-great-plain": ["Northern", "Great Plain"],
-    "HUN::south-great-plain": ["Southern", "Great Plain"],
+    "HUN::transdanubia": ["Transdanubia"],
+    "HUN::great-plains": ["Great", "Plains"],
     "HUN::central-hungary": ["Central", "Hungary"],
     "HUN::north-hungary": ["Northern", "Hungary"],
     "MNE::stara-hercegovina": ["Stara", "Hercegovina"],
@@ -103,15 +99,17 @@ const REGION_LABEL_NAME_ONLY = new Set([
     "HRV::slavonia",
     "MKD::skopje",
     "MKD::west",
-    "MKD::east",
-    "MKD::south",
+    "MKD::se",
+    "SRB::kosovska-mitrovica",
+    "SRB::kosovsko-pomoravlje",
+    "SRB::prizren",
+    "SRB::pec",
 ]);
 const REGION_LABEL_PRIORITY_BOOST = {
-    "ALB::tirana": 9000,
+    "ALB::tirana": 14000,
     "MKD::skopje": 7000,
     "MKD::west": 4200,
-    "MKD::east": 4200,
-    "MKD::south": 4200,
+    "MKD::se": 4500,
     "HRV::slavonia": 3600,
     "HRV::zagreb-central": 2400,
     "HRV::dalmatia": 2400,
@@ -121,13 +119,15 @@ const REGION_LABEL_PRIORITY_BOOST = {
     "MNE::brda": 4400,
     "MNE::stara-hercegovina": 4400,
     "MNE::stara-raska": 4400,
-    "HUN::west-transdanubia": 3200,
-    "HUN::central-transdanubia": 3200,
-    "HUN::south-transdanubia": 3200,
+    "HUN::transdanubia": 5200,
     "HUN::central-hungary": 3200,
     "HUN::north-hungary": 3200,
-    "HUN::north-great-plain": 3200,
-    "HUN::south-great-plain": 3200,
+    "HUN::great-plains": 4800,
+    "SRB::kosovska-mitrovica": 3600,
+    "SRB::kosovsko-pomoravlje": 3600,
+    "SRB::prizren": 3400,
+    "SRB::pec": 3400,
+    "SRB::kosovo-core": 3000,
 };
 const COUNTRY_FLAGS = {
     ALB: "\uD83C\uDDE6\uD83C\uDDF1",
@@ -199,6 +199,10 @@ const REGION_NAME_ALIASES = Object.fromEntries([
     ["autonomous province of vojvodina", "vojvodina"], ["vojvodina", "vojvodina"],
     ["central serbia", "central serbia"], ["south and east serbia", "south and east serbia"],
     ["kosovo and metohija", "kosovo and metohija"], ["kosovo", "kosovo and metohija"],
+    ["kosovsko pomoravlje", "kosovsko pomoravlje"],
+    ["kosovska mitrovica", "kosovska mitrovica"],
+    ["prizren", "prizren"],
+    ["pec", "pec"],
     ["kosovo & metohija", "kosovo and metohija"], ["coast", "coast"], ["inland", "inland"],
     ["tirane", "tirana"], ["skopje", "skopje"], ["sofia city", "sofia"], ["sofia", "sofia"],
     ["budapest", "budapest"], ["bucharest ilfov", "bucharest ilfov"],
@@ -280,24 +284,19 @@ const REGION_GROUP_OVERRIDES = {
     ],
     "HRV::istrija": ["istria", "primorje gorski kotar"],
     "HUN::central hungary": ["budapest", "pest"],
-    "HUN::western transdanubia": [
+    "HUN::transdanubia": [
         "gyor moson sopron", "vas", "zala",
-    ],
-    "HUN::central transdanubia": [
         "fejer", "komarom esztergom", "veszprem",
-    ],
-    "HUN::southern transdanubia": [
         "baranya", "somogy", "tolna",
     ],
     "HUN::northern hungary": [
         "borsod abauj zemplen", "heves", "nograd",
     ],
-    "HUN::northern great plain": [
+    "HUN::great plains": [
         "hajdu bihar", "szabolcs szatmar bereg", "jasz nagykun szolnok",
-    ],
-    "HUN::southern great plain": [
         "bacs kiskun", "bekes", "csongrad csanad",
     ],
+    "MKD::se macedonia": ["east", "northeast", "southeast", "pelagonia", "vardar"],
     "ROU::bucharest ilfov": ["bucuresti", "ilfov"],
     "ROU::transylvania and banat": [
         "alba", "arad", "bihor", "bistrita nasaud", "brasov", "caras severin",
@@ -333,22 +332,22 @@ const VISUAL_REGION_DEFINITIONS = {
     "HRV::slavonia": { label: "Slavonija", dataRegionKey: "HRV::slavonija", fill: "#a78962" },
     "HRV::dalmatia": { label: "Dalmacija", dataRegionKey: "HRV::dalmacija", fill: "#bf9a6f" },
     "HRV::istria-kvarner": { label: "Istrija", dataRegionKey: "HRV::istrija", fill: "#d7b88d" },
-    "HUN::central-hungary": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#db3333" },
-    "HUN::west-transdanubia": { label: "Western Transdanubia", dataRegionKey: "HUN::western transdanubia", fill: "#9751aa" },
-    "HUN::central-transdanubia": { label: "Central Transdanubia", dataRegionKey: "HUN::central transdanubia", fill: "#4250cc" },
-    "HUN::south-transdanubia": { label: "Southern Transdanubia", dataRegionKey: "HUN::southern transdanubia", fill: "#f18a2f" },
-    "HUN::north-hungary": { label: "Northern Hungary", dataRegionKey: "HUN::northern hungary", fill: "#83bfce" },
-    "HUN::north-great-plain": { label: "Northern Great Plain", dataRegionKey: "HUN::northern great plain", fill: "#31b24d" },
-    "HUN::south-great-plain": { label: "Southern Great Plain", dataRegionKey: "HUN::southern great plain", fill: "#e4d623" },
+    "HUN::central-hungary": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#d34b4b" },
+    "HUN::transdanubia": { label: "Transdanubia", dataRegionKey: "HUN::transdanubia", fill: "#6f63c7" },
+    "HUN::north-hungary": { label: "Northern Hungary", dataRegionKey: "HUN::northern hungary", fill: "#81c5d8" },
+    "HUN::great-plains": { label: "Great Plains", dataRegionKey: "HUN::great plains", fill: "#41b65a" },
     "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#8d2c74" },
-    "MKD::west": { label: "West MKD", dataRegionKey: "MKD::western north macedonia", fill: "#5f4db4" },
-    "MKD::east": { label: "East MKD", dataRegionKey: "MKD::eastern north macedonia", fill: "#4b8bbd" },
-    "MKD::south": { label: "South MKD", dataRegionKey: "MKD::southern north macedonia", fill: "#7a9f39" },
+    "MKD::west": { label: "West Macedonia", dataRegionKey: "MKD::western north macedonia", fill: "#5f4db4" },
+    "MKD::se": { label: "SE Macedonia", dataRegionKey: "MKD::se macedonia", fill: "#4b8bbd" },
     "SRB::vojvodina": { label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
     "SRB::belgrade": { label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
     "SRB::sz-srb": { label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
     "SRB::ji-srb": { label: "JI SRB", dataRegionKey: "SRB::south and east serbia", fill: "#cf857c" },
-    "SRB::kosovo-metohija": { label: "Kosovo i Metohija", dataRegionKey: "SRB::kosovo and metohija", fill: "#efb287" },
+    "SRB::kosovska-mitrovica": { label: "Kosovska Mitrovica", dataRegionKey: "SRB::kosovska mitrovica", fill: "#efb287" },
+    "SRB::kosovsko-pomoravlje": { label: "Kosovsko Pomoravlje", dataRegionKey: "SRB::kosovsko pomoravlje", fill: "#e3a678" },
+    "SRB::kosovo-core": { label: "Kosovo", dataRegionKey: "SRB::kosovo", fill: "#ebb489" },
+    "SRB::prizren": { label: "Prizren", dataRegionKey: "SRB::prizren", fill: "#d9966f" },
+    "SRB::pec": { label: "Pec", dataRegionKey: "SRB::pec", fill: "#c98761" },
     "MNE::boka": { label: "Boka", dataRegionKey: "MNE::coast", fill: "#78b8c8" },
     "MNE::primorje": { label: "Primorje", dataRegionKey: "MNE::coast", fill: "#5aa6b7" },
     "MNE::zeta": { label: "Zeta", dataRegionKey: "MNE::inland", fill: "#8fca78" },
@@ -382,7 +381,11 @@ const REGION_FEATURE_TO_BESP = {
     "BIH::republika srpska": "BIH::republika srpska",
     "BIH::brcko": "BIH::republika srpska",
     "SRB::belgrade": "SRB::belgrade",
-    "SRB::kosovo": "SRB::kosovo and metohija",
+    "SRB::kosovo": "SRB::kosovo",
+    "SRB::kosovsko pomoravlje": "SRB::kosovsko pomoravlje",
+    "SRB::kosovska mitrovica": "SRB::kosovska mitrovica",
+    "SRB::prizren": "SRB::prizren",
+    "SRB::pec": "SRB::pec",
     ...expandFeatureGroups(REGION_GROUPS_RESOLVED),
 };
 const BESP_REGION_KEYS = new Set(Object.values(REGION_FEATURE_TO_BESP));
@@ -401,16 +404,12 @@ const FEATURE_TO_VISUAL_REGION = {
         "HRV::dalmatia": REGION_GROUPS_RESOLVED["HRV::dalmacija"],
         "HRV::istria-kvarner": REGION_GROUPS_RESOLVED["HRV::istrija"],
         "HUN::central-hungary": REGION_GROUPS_RESOLVED["HUN::central hungary"],
-        "HUN::west-transdanubia": REGION_GROUPS_RESOLVED["HUN::western transdanubia"],
-        "HUN::central-transdanubia": REGION_GROUPS_RESOLVED["HUN::central transdanubia"],
-        "HUN::south-transdanubia": REGION_GROUPS_RESOLVED["HUN::southern transdanubia"],
+        "HUN::transdanubia": REGION_GROUPS_RESOLVED["HUN::transdanubia"],
         "HUN::north-hungary": REGION_GROUPS_RESOLVED["HUN::northern hungary"],
-        "HUN::north-great-plain": REGION_GROUPS_RESOLVED["HUN::northern great plain"],
-        "HUN::south-great-plain": REGION_GROUPS_RESOLVED["HUN::southern great plain"],
+        "HUN::great-plains": REGION_GROUPS_RESOLVED["HUN::great plains"],
         "MKD::skopje": REGION_GROUPS_RESOLVED["MKD::skopje"],
         "MKD::west": REGION_GROUPS_RESOLVED["MKD::western north macedonia"],
-        "MKD::east": REGION_GROUPS_RESOLVED["MKD::eastern north macedonia"],
-        "MKD::south": REGION_GROUPS_RESOLVED["MKD::southern north macedonia"],
+        "MKD::se": REGION_GROUPS_RESOLVED["MKD::se macedonia"],
         "ROU::bucharest-ilfov": REGION_GROUPS_RESOLVED["ROU::bucharest ilfov"],
         "ROU::transylvania-banat": REGION_GROUPS_RESOLVED["ROU::transylvania and banat"],
         "ROU::moldavia": REGION_GROUPS_RESOLVED["ROU::moldavia"],
@@ -421,8 +420,11 @@ const FEATURE_TO_VISUAL_REGION = {
     "BIH::republika srpska": "BIH::rs",
     "BIH::brcko": "BIH::rs",
     "SRB::belgrade": "SRB::belgrade",
-    "SRB::kosovo": "SRB::kosovo-metohija",
-    "SRB::kosovo and metohija": "SRB::kosovo-metohija",
+    "SRB::kosovska mitrovica": "SRB::kosovska-mitrovica",
+    "SRB::kosovsko pomoravlje": "SRB::kosovsko-pomoravlje",
+    "SRB::kosovo": "SRB::kosovo-core",
+    "SRB::prizren": "SRB::prizren",
+    "SRB::pec": "SRB::pec",
     ...expandFeatureGroups({
         "SRB::vojvodina": REGION_GROUPS_RESOLVED["SRB::vojvodina"],
         "SRB::sz-srb": REGION_GROUPS_RESOLVED["SRB::central serbia"],
@@ -897,10 +899,10 @@ async function loadGeoBoundaryData() {
     const countryFeaturesRaw = countryCollections.flatMap((collection) => collection.features ?? []);
     const regionFeaturesRaw = regionCollections.flatMap((collection) => collection.features ?? []);
     const countryFeatures = countryFeaturesRaw
-        .map((feature) => normalizeGeoFeature(feature, "country"))
+        .flatMap((feature) => normalizeGeoFeature(feature, "country"))
         .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
     const regionFeatures = regionFeaturesRaw
-        .map((feature) => normalizeGeoFeature(feature, "region"))
+        .flatMap((feature) => normalizeGeoFeature(feature, "region"))
         .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
     const allGeometryFeatures = [...countryFeatures, ...regionFeatures];
     if (!allGeometryFeatures.length) {
@@ -930,18 +932,154 @@ function normalizeGeoFeature(feature, layerType) {
     if (rawCountryCode === "XKX") {
         countryCode = "SRB";
         if (layerType === "region") {
-            name = "Kosovo and Metohija";
+            return splitKosovoSubregionFeatures(feature.geometry).map((subregion) => ({
+                countryCode,
+                rawCountryCode,
+                name: subregion.name,
+                geometry: subregion.geometry,
+            }));
         }
     }
     if (!countryCode || !name) {
-        return null;
+        return [];
     }
-    return {
+    return [{
         countryCode,
         rawCountryCode,
         name,
         geometry: feature.geometry,
-    };
+    }];
+}
+function splitKosovoSubregionFeatures(geometry) {
+    const bbox = geometryBounds(geometry);
+    if (!bbox) {
+        return [{
+            name: "Kosovo",
+            geometry,
+        }];
+    }
+    const lonSpan = bbox.maxLon - bbox.minLon;
+    const latSpan = bbox.maxLat - bbox.minLat;
+    const lonA = bbox.minLon + lonSpan * 0.52;
+    const lonB = bbox.minLon + lonSpan * 0.64;
+    const latA = bbox.minLat + latSpan * 0.38;
+    const latB = bbox.minLat + latSpan * 0.68;
+    const masks = [
+        { name: "Kosovska Mitrovica", minLon: bbox.minLon, maxLon: lonA, minLat: latB, maxLat: bbox.maxLat },
+        { name: "Pec", minLon: bbox.minLon, maxLon: lonA, minLat: latA, maxLat: latB },
+        { name: "Prizren", minLon: bbox.minLon, maxLon: lonB, minLat: bbox.minLat, maxLat: latA },
+        { name: "Kosovsko Pomoravlje", minLon: lonB, maxLon: bbox.maxLon, minLat: bbox.minLat, maxLat: bbox.maxLat },
+        { name: "Kosovo", minLon: lonA, maxLon: lonB, minLat: latA, maxLat: bbox.maxLat },
+    ];
+    const pieces = masks
+        .map((mask) => ({
+            name: mask.name,
+            geometry: clipGeometryToBbox(geometry, mask),
+        }))
+        .filter((piece) => geometryHasPoints(piece.geometry));
+    return pieces.length ? pieces : [{ name: "Kosovo", geometry }];
+}
+function geometryBounds(geometry) {
+    const points = extractCoordinates(geometry);
+    if (!points.length) {
+        return null;
+    }
+    let minLon = Number.POSITIVE_INFINITY;
+    let maxLon = Number.NEGATIVE_INFINITY;
+    let minLat = Number.POSITIVE_INFINITY;
+    let maxLat = Number.NEGATIVE_INFINITY;
+    for (const [lon, lat] of points) {
+        if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+            continue;
+        }
+        minLon = Math.min(minLon, lon);
+        maxLon = Math.max(maxLon, lon);
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+    }
+    return Number.isFinite(minLon)
+        ? { minLon, maxLon, minLat, maxLat }
+        : null;
+}
+function clipGeometryToBbox(geometry, bbox) {
+    if (!geometry?.type || !geometry?.coordinates) {
+        return geometry;
+    }
+    if (geometry.type === "Polygon") {
+        const rings = geometry.coordinates
+            .map((ring) => clipRingToBbox(ring, bbox))
+            .filter((ring) => ring.length >= 4);
+        return rings.length ? { type: "Polygon", coordinates: rings } : { type: "Polygon", coordinates: [] };
+    }
+    if (geometry.type === "MultiPolygon") {
+        const polygons = geometry.coordinates
+            .map((polygon) => polygon
+                .map((ring) => clipRingToBbox(ring, bbox))
+                .filter((ring) => ring.length >= 4))
+            .filter((polygon) => polygon.length);
+        return { type: "MultiPolygon", coordinates: polygons };
+    }
+    return geometry;
+}
+function clipRingToBbox(ring, bbox) {
+    let output = ring;
+    for (const edge of ["left", "right", "bottom", "top"]) {
+        output = clipPointsAgainstEdge(output, edge, bbox);
+        if (!output.length) {
+            return [];
+        }
+    }
+    const first = output[0];
+    const last = output[output.length - 1];
+    if (!first || !last || first[0] !== last[0] || first[1] !== last[1]) {
+        output.push([...first]);
+    }
+    return output;
+}
+function clipPointsAgainstEdge(points, edge, bbox) {
+    if (!Array.isArray(points) || !points.length) {
+        return [];
+    }
+    const output = [];
+    for (let index = 0; index < points.length; index += 1) {
+        const current = points[index];
+        const previous = points[(index + points.length - 1) % points.length];
+        const currentInside = pointInsideEdge(current, edge, bbox);
+        const previousInside = pointInsideEdge(previous, edge, bbox);
+        if (currentInside) {
+            if (!previousInside) {
+                output.push(intersectionWithEdge(previous, current, edge, bbox));
+            }
+            output.push(current);
+        } else if (previousInside) {
+            output.push(intersectionWithEdge(previous, current, edge, bbox));
+        }
+    }
+    return output.filter(Boolean);
+}
+function pointInsideEdge(point, edge, bbox) {
+    const [x, y] = point;
+    if (edge === "left") return x >= bbox.minLon;
+    if (edge === "right") return x <= bbox.maxLon;
+    if (edge === "bottom") return y >= bbox.minLat;
+    return y <= bbox.maxLat;
+}
+function intersectionWithEdge(start, end, edge, bbox) {
+    const [x1, y1] = start;
+    const [x2, y2] = end;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    if (edge === "left" || edge === "right") {
+        const xEdge = edge === "left" ? bbox.minLon : bbox.maxLon;
+        const t = dx === 0 ? 0 : (xEdge - x1) / dx;
+        return [xEdge, y1 + t * dy];
+    }
+    const yEdge = edge === "bottom" ? bbox.minLat : bbox.maxLat;
+    const t = dy === 0 ? 0 : (yEdge - y1) / dy;
+    return [x1 + t * dx, yEdge];
+}
+function geometryHasPoints(geometry) {
+    return extractCoordinates(geometry).length >= 4;
 }
 function createProjection(features) {
     let minLon = Number.POSITIVE_INFINITY;
@@ -1178,10 +1316,17 @@ function renderCountryLayer(geoData) {
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
             const countryPath = features.map((feature) => feature.pathD).join(" ");
-            const kosovoRegion = countryCode === "SRB"
-                ? groupedVisualRegions.find((group) => group.visualRegionKey === "SRB::kosovo-metohija")
-                : null;
-            const mergedPathD = kosovoRegion ? `${countryPath} ${kosovoRegion.pathD}` : countryPath;
+            const kosovoPath = countryCode === "SRB"
+                ? groupedVisualRegions
+                    .filter((group) => (
+                        group.visualRegionKey.startsWith("SRB::kosov")
+                        || group.visualRegionKey === "SRB::prizren"
+                        || group.visualRegionKey === "SRB::pec"
+                    ))
+                    .map((group) => group.pathD)
+                    .join(" ")
+                : "";
+            const mergedPathD = kosovoPath ? `${countryPath} ${kosovoPath}` : countryPath;
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
             const centroid = labelFeature?.centroid ?? averageCentroid(features);
             const displayName = labelFeature?.countryCode === "SRB"
@@ -1193,7 +1338,7 @@ function renderCountryLayer(geoData) {
                 mergedPathD,
                 centroid,
                 features,
-                kosovoRegion,
+                kosovoPath,
             };
         })
         .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
@@ -1207,7 +1352,7 @@ function renderCountryLayer(geoData) {
                     countryMetricRange,
                     dashboardState.activeMetric
                 );
-            const kosovoSeamFix = country.kosovoRegion;
+            const kosovoSeamFix = country.kosovoPath;
             return `
                 <path
                     class="map-country-shape"
@@ -1224,7 +1369,7 @@ function renderCountryLayer(geoData) {
                 <path
                     class="map-country-shape"
                     data-country-code="${escapeHtml(country.countryCode)}"
-                    d="${escapeHtml(kosovoSeamFix.pathD)}"
+                    d="${escapeHtml(kosovoSeamFix)}"
                     fill="none"
                     stroke="${escapeHtml(fill)}"
                     stroke-width="2.4"

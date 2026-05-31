@@ -78,7 +78,7 @@ Dashboard 5.x (map v1):
 - Loads `output/latest.json` automatically when served from the repository root
 - Shows export metadata plus simple country and region summary tables
 - Renders real geodata country boundaries (BIH, MNE, SRB) and ADM1 region boundaries
-- Renders Kosovo geodata in the SRB scope to match BESP region data (`Kosovo and Metohija`)
+- Renders Kosovo geodata in the SRB scope with export-driven Kosovo subregions (`Kosovsko Pomoravlje`, `Kosovo`, `Kosovska Mitrovica`, `Prizren`, `Pec`)
 - Simulation/export scope and public map country coverage now both include ALB, MKD, BGR, and HUN
 - Simulation/export scope and public map country coverage now also include HRV and ROU
 - Country view renders SRB as one continuous block (Kosovo included in SRB scope, no separate country marker)
@@ -86,6 +86,9 @@ Dashboard 5.x (map v1):
 - Region view now also includes coarse macroregion groupings for HRV and ROU with export-driven hover and metric overlay support
 - Province-style countries now use country-specific color families in region view so ALB/BGR/HUN no longer collapse into near-identical tones
 - Region labels now use deconfliction and priority-based compact mode in dense clusters (name kept first; delta reduced where space is too tight, full detail on hover)
+- Region label polish pass now includes multiline handling for long names and boosted priority for must-show labels (for example Tirana/Skopje)
+- HUN region grouping is intentionally simplified to 4 macroregions (`Transdanubia`, `Great Plains`, `Central Hungary`, `Northern Hungary`)
+- MKD region grouping is intentionally simplified to 3 macroregions (`Skopje`, `West Macedonia`, `SE Macedonia`)
 - Region labels are grouped by BESP region keys to avoid district-label clutter
 - Bosnia map mapping currently assigns Brcko to RS rendering scope
 - Keeps hover details export-driven with country fallback where region mapping is not available

@@ -268,6 +268,16 @@ Contains:
 - Unifies region-view color logic so each country now reads as its own color family rather than a set of random standout provinces
 - Preserves export-driven hover, metric overlays, and fallback behavior across the expanded map scope
 
+### Phase 9.3.3 - Region Grouping/Label Alignment + Kosovo Subregions Pass
+Status: complete
+
+Contains:
+- Refines map label placement/priority so must-show labels (e.g. Tirana) remain visible more reliably in dense region mode
+- Re-groups Hungary into 4 macroregions (`Transdanubia`, `Great Plains`, `Central Hungary`, `Northern Hungary`)
+- Re-groups North Macedonia into 3 macroregions (`Skopje`, `West Macedonia`, `SE Macedonia`)
+- Splits Kosovo-and-Metohija rendering scope into five export-driven Kosovo subregions while keeping SRB country-scope behavior
+- Adjusts country-label offsets for cleaner centering in crowded east/central map areas
+
 Contains:
 - State cards (year-synced averages)
 - State table by active year and country
