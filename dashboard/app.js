@@ -80,9 +80,54 @@ const REGION_LABEL_SHORT = {
     "SRB::kosovo-metohija": "Kosovo i Met.",
     "SRB::sz-srb": "SZ SRB",
 };
+const REGION_LABEL_MULTILINE = {
+    "HUN::west-transdanubia": ["Western", "Transdanubia"],
+    "HUN::central-transdanubia": ["Central", "Transdanubia"],
+    "HUN::south-transdanubia": ["Southern", "Transdanubia"],
+    "HUN::north-great-plain": ["Northern", "Great Plain"],
+    "HUN::south-great-plain": ["Southern", "Great Plain"],
+    "HUN::central-hungary": ["Central", "Hungary"],
+    "HUN::north-hungary": ["Northern", "Hungary"],
+    "MNE::stara-hercegovina": ["Stara", "Hercegovina"],
+    "MNE::stara-crna-gora": ["Stara", "Crna Gora"],
+    "MNE::stara-raska": ["Stara", "Raska"],
+};
+const REGION_LABEL_NAME_ONLY = new Set([
+    "ALB::tirana",
+    "MNE::boka",
+    "MNE::primorje",
+    "MNE::zeta",
+    "MNE::brda",
+    "MNE::stara-hercegovina",
+    "MNE::stara-raska",
+    "HRV::slavonia",
+    "MKD::skopje",
+    "MKD::west",
+    "MKD::east",
+    "MKD::south",
+]);
 const REGION_LABEL_PRIORITY_BOOST = {
-    "ALB::tirana": 4200,
-    "MKD::skopje": 4200,
+    "ALB::tirana": 9000,
+    "MKD::skopje": 7000,
+    "MKD::west": 4200,
+    "MKD::east": 4200,
+    "MKD::south": 4200,
+    "HRV::slavonia": 3600,
+    "HRV::zagreb-central": 2400,
+    "HRV::dalmatia": 2400,
+    "HRV::istria-kvarner": 2400,
+    "MNE::zeta": 4400,
+    "MNE::primorje": 4400,
+    "MNE::brda": 4400,
+    "MNE::stara-hercegovina": 4400,
+    "MNE::stara-raska": 4400,
+    "HUN::west-transdanubia": 3200,
+    "HUN::central-transdanubia": 3200,
+    "HUN::south-transdanubia": 3200,
+    "HUN::central-hungary": 3200,
+    "HUN::north-hungary": 3200,
+    "HUN::north-great-plain": 3200,
+    "HUN::south-great-plain": 3200,
 };
 const COUNTRY_FLAGS = {
     ALB: "\uD83C\uDDE6\uD83C\uDDF1",
@@ -1297,19 +1342,26 @@ function renderRegionLayer(geoData) {
             "region"
         );
         const view = chooseRegionLabelView(group);
-        const labelText = view.abbreviate ? abbreviateRegionLabel(group) : group.label;
+        const labelLines = getRegionLabelLines(group, view);
+        const labelText = labelLines.join(" ");
         const metricDetail = view.showDetail ? metricDetailRaw : null;
         const x = group.centroid[0] + offsetX;
         const y = group.centroid[1] + offsetY;
         const box = estimateLabelBounds({
             x,
             y,
-            labelText,
+            labelLines,
             detailText: metricDetail?.text ?? "",
             labelFontPx: view.labelFontPx,
             detailFontPx: view.detailFontPx,
             showDetail: Boolean(metricDetail),
         });
+        const baseLineY = y - ((labelLines.length - 1) * view.labelFontPx * 0.54);
+        const labelTspans = labelLines
+            .map((line, index) => (
+                `<tspan x="${x.toFixed(1)}" dy="${index === 0 ? "0" : `${(view.labelFontPx * 1.08).toFixed(1)}`}">${escapeHtml(line)}</tspan>`
+            ))
+            .join("");
         const labelClass = view.compact ? "map-region-label map-region-label-compact" : "map-region-label";
         const detailClass = view.compact
             ? "map-region-label-detail map-region-label-detail-compact"
@@ -1320,8 +1372,8 @@ function renderRegionLayer(geoData) {
             box,
             html: `
             <g data-visual-region-key="${escapeHtml(group.visualRegionKey)}">
-                <text class="${labelClass}" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${escapeHtml(labelText)}</text>
-                ${metricDetail ? `<text class="${detailClass} map-label-detail-${metricDetail.tone}" x="${x.toFixed(1)}" y="${(y + 14).toFixed(1)}">${escapeHtml(metricDetail.text)}</text>` : ""}
+                <text class="${labelClass}" x="${x.toFixed(1)}" y="${baseLineY.toFixed(1)}">${labelTspans}</text>
+                ${metricDetail ? `<text class="${detailClass} map-label-detail-${metricDetail.tone}" x="${x.toFixed(1)}" y="${(baseLineY + labelLines.length * view.labelFontPx + 2).toFixed(1)}">${escapeHtml(metricDetail.text)}</text>` : ""}
             </g>
         `,
         };
@@ -1336,16 +1388,26 @@ function chooseRegionLabelView(group) {
     const share = Number(group.areaShare ?? 0);
     const fallbackProvince = !VISUAL_REGION_DEFINITIONS[group.visualRegionKey];
     const tiny = area < 900;
+    const priorityBoost = REGION_LABEL_PRIORITY_BOOST[group.visualRegionKey] ?? 0;
+    const keepFullLabel = priorityBoost >= 3200;
     const compact = fallbackProvince
         ? area < 1700 || share < 0.16
         : area < 1500 || share < 0.22;
+    const nameOnly = REGION_LABEL_NAME_ONLY.has(group.visualRegionKey);
     return {
-        abbreviate: compact || area < 2200 || fallbackProvince,
-        showDetail: isMetric && !tiny,
+        abbreviate: !keepFullLabel && (compact || area < 2200 || fallbackProvince),
+        showDetail: isMetric && !tiny && !nameOnly,
         compact,
         labelFontPx: fallbackProvince ? 10.2 : (compact ? 10.5 : 12),
         detailFontPx: fallbackProvince ? 8.2 : (compact ? 8.4 : 9.5),
     };
+}
+function getRegionLabelLines(group, view) {
+    const key = group.visualRegionKey;
+    if (!view.abbreviate && REGION_LABEL_MULTILINE[key]) {
+        return REGION_LABEL_MULTILINE[key];
+    }
+    return [view.abbreviate ? abbreviateRegionLabel(group) : group.label];
 }
 function abbreviateRegionLabel(group) {
     if (REGION_LABEL_SHORT[group.visualRegionKey]) {
@@ -1382,17 +1444,27 @@ function computeRegionLabelPriority(group, view) {
 function estimateLabelBounds({
     x,
     y,
-    labelText,
+    labelLines,
     detailText,
     labelFontPx,
     detailFontPx,
     showDetail,
 }) {
-    const labelWidth = Math.max(18, labelText.length * labelFontPx * 0.56);
+    const normalizedLines = Array.isArray(labelLines) && labelLines.length
+        ? labelLines
+        : [""];
+    const longestLineLength = normalizedLines.reduce(
+        (longest, line) => Math.max(longest, line.length),
+        0
+    );
+    const labelWidth = Math.max(18, longestLineLength * labelFontPx * 0.56);
+    const labelHeight = Math.max(1, normalizedLines.length) * labelFontPx * 1.08;
     const detailWidth = showDetail ? Math.max(10, detailText.length * detailFontPx * 0.54) : 0;
     const width = Math.max(labelWidth, detailWidth) + 8;
-    const height = showDetail ? (labelFontPx + detailFontPx + 7) : (labelFontPx + 3);
-    const top = y - labelFontPx;
+    const height = showDetail
+        ? (labelHeight + detailFontPx + 6)
+        : (labelHeight + 3);
+    const top = y - labelHeight * 0.62;
     return {
         left: x - width / 2,
         right: x + width / 2,
