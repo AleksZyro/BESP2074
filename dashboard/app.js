@@ -21,12 +21,21 @@ const COUNTRY_LABEL_OFFSETS = {
     SRB: [0, -26],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
+    "ALB::tirana": [6, -4],
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
+    "HUN::central-hungary": [8, 4],
+    "HUN::central-transdanubia": [-8, 0],
+    "HUN::north-great-plain": [8, -4],
+    "HUN::north-hungary": [0, -8],
+    "HUN::south-great-plain": [8, 12],
+    "HUN::south-transdanubia": [-6, 10],
+    "HUN::west-transdanubia": [-10, 4],
     "HRV::zagreb-central": [12, -4],
     "HRV::slavonia": [12, 10],
     "HRV::dalmatia": [10, 18],
     "HRV::istria-kvarner": [-10, -4],
+    "MKD::skopje": [8, -8],
     "MNE::boka": [-26, 2],
     "MNE::primorje": [8, 16],
     "MNE::zeta": [26, 0],
@@ -48,11 +57,15 @@ const REGION_LABEL_SHORT = {
     "BGR::black-sea": "Black Sea",
     "BGR::north": "N Bulgaria",
     "BGR::south": "S Bulgaria",
-    "HUN::central": "Central HUN",
-    "HUN::east": "East HUN",
-    "HUN::west": "West HUN",
-    "HRV::zagreb-central": "Central HRV",
-    "HRV::istria-kvarner": "Istria/Kvarner",
+    "HUN::central-hungary": "C. Hungary",
+    "HUN::central-transdanubia": "C. Transdan.",
+    "HUN::north-great-plain": "N Great Plain",
+    "HUN::north-hungary": "N Hungary",
+    "HUN::south-great-plain": "S Great Plain",
+    "HUN::south-transdanubia": "S. Transdan.",
+    "HUN::west-transdanubia": "W. Transdan.",
+    "HRV::zagreb-central": "CE HRV",
+    "HRV::istria-kvarner": "Istrija",
     "MKD::east": "East MKD",
     "MKD::south": "South MKD",
     "MKD::west": "West MKD",
@@ -66,6 +79,10 @@ const REGION_LABEL_SHORT = {
     "SRB::ji-srb": "JI SRB",
     "SRB::kosovo-metohija": "Kosovo i Met.",
     "SRB::sz-srb": "SZ SRB",
+};
+const REGION_LABEL_PRIORITY_BOOST = {
+    "ALB::tirana": 4200,
+    "MKD::skopje": 4200,
 };
 const COUNTRY_FLAGS = {
     ALB: "\uD83C\uDDE6\uD83C\uDDF1",
@@ -204,30 +221,37 @@ const REGION_GROUP_OVERRIDES = {
     "ALB::northern albania": ["shkoder", "kukes", "lezhe", "diber"],
     "ALB::central coast albania": ["durres", "elbasan", "fier", "berat"],
     "ALB::southern albania": ["vlore", "gjirokaster", "korce"],
-    "HRV::zagreb and central croatia": [
+    "HRV::ce hrv": [
         "city of zagreb", "zagreb county", "krapina zagorje", "varazdin",
         "me imurje", "bjelovar bilogora", "koprivnica krizevci",
         "sisak moslavina", "karlovac",
     ],
-    "HRV::slavonia": [
+    "HRV::slavonija": [
         "brod posavina", "osijek baranja", "pozega slavonia",
         "virovitica podravina", "vukovar syrmia",
     ],
-    "HRV::dalmatia": [
-        "zadar county", "sibenik knin", "split dalmatia", "dubrovnik neretva",
+    "HRV::dalmacija": [
+        "zadar county", "sibenik knin", "split dalmatia", "dubrovnik neretva", "lika senj",
     ],
-    "HRV::istria and kvarner": ["istria", "primorje gorski kotar", "lika senj"],
-    "HUN::budapest": ["budapest", "pest"],
-    "HUN::western hungary": [
-        "baranya", "fejer", "gyor moson sopron", "komarom esztergom",
-        "somogy", "tolna", "vas", "veszprem", "zala",
+    "HRV::istrija": ["istria", "primorje gorski kotar"],
+    "HUN::central hungary": ["budapest", "pest"],
+    "HUN::western transdanubia": [
+        "gyor moson sopron", "vas", "zala",
     ],
-    "HUN::central hungary": [
-        "heves", "jasz nagykun szolnok", "nograd",
+    "HUN::central transdanubia": [
+        "fejer", "komarom esztergom", "veszprem",
     ],
-    "HUN::eastern hungary": [
-        "bacs kiskun", "bekes", "borsod abauj zemplen",
-        "csongrad csanad", "hajdu bihar", "szabolcs szatmar bereg",
+    "HUN::southern transdanubia": [
+        "baranya", "somogy", "tolna",
+    ],
+    "HUN::northern hungary": [
+        "borsod abauj zemplen", "heves", "nograd",
+    ],
+    "HUN::northern great plain": [
+        "hajdu bihar", "szabolcs szatmar bereg", "jasz nagykun szolnok",
+    ],
+    "HUN::southern great plain": [
+        "bacs kiskun", "bekes", "csongrad csanad",
     ],
     "ROU::bucharest ilfov": ["bucuresti", "ilfov"],
     "ROU::transylvania and banat": [
@@ -237,12 +261,13 @@ const REGION_GROUP_OVERRIDES = {
     ],
     "ROU::moldavia": [
         "bacau", "botosani", "iasi", "neamt", "suceava", "vaslui", "vrancea",
+        "galati",
     ],
     "ROU::wallachia and oltenia": [
         "arges", "buzau", "calarasi", "dambovita", "dolj", "giurgiu",
         "gorj", "ialomita", "mehedinti", "olt", "prahova", "teleorman", "valcea",
     ],
-    "ROU::dobruja and lower danube": ["braila", "galati", "constanta", "tulcea"],
+    "ROU::dobruja and lower danube": ["braila", "constanta", "tulcea"],
 };
 const REGION_GROUPS_RESOLVED = {
     ...REGION_GROUPS,
@@ -259,18 +284,21 @@ const VISUAL_REGION_DEFINITIONS = {
     "BGR::black-sea": { label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#5e88a9" },
     "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
     "BIH::rs": { label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c" },
-    "HRV::zagreb-central": { label: "Central Croatia", dataRegionKey: "HRV::zagreb and central croatia", fill: "#9a7c5a" },
-    "HRV::slavonia": { label: "Slavonia", dataRegionKey: "HRV::slavonia", fill: "#7d6247" },
-    "HRV::dalmatia": { label: "Dalmatia", dataRegionKey: "HRV::dalmatia", fill: "#b18e68" },
-    "HRV::istria-kvarner": { label: "Istria/Kvarner", dataRegionKey: "HRV::istria and kvarner", fill: "#c9a97d" },
-    "HUN::budapest": { label: "Budapest", dataRegionKey: "HUN::budapest", fill: "#a76e60" },
-    "HUN::west": { label: "West Hungary", dataRegionKey: "HUN::western hungary", fill: "#b58f71" },
-    "HUN::central": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#9b856c" },
-    "HUN::east": { label: "East Hungary", dataRegionKey: "HUN::eastern hungary", fill: "#c29c7b" },
-    "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#916b7c" },
-    "MKD::west": { label: "West MKD", dataRegionKey: "MKD::western north macedonia", fill: "#a47c8e" },
-    "MKD::east": { label: "East MKD", dataRegionKey: "MKD::eastern north macedonia", fill: "#7d5868" },
-    "MKD::south": { label: "South MKD", dataRegionKey: "MKD::southern north macedonia", fill: "#b38f9d" },
+    "HRV::zagreb-central": { label: "CE HRV", dataRegionKey: "HRV::ce hrv", fill: "#8a6b4d" },
+    "HRV::slavonia": { label: "Slavonija", dataRegionKey: "HRV::slavonija", fill: "#a78962" },
+    "HRV::dalmatia": { label: "Dalmacija", dataRegionKey: "HRV::dalmacija", fill: "#bf9a6f" },
+    "HRV::istria-kvarner": { label: "Istrija", dataRegionKey: "HRV::istrija", fill: "#d7b88d" },
+    "HUN::central-hungary": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#db3333" },
+    "HUN::west-transdanubia": { label: "Western Transdanubia", dataRegionKey: "HUN::western transdanubia", fill: "#9751aa" },
+    "HUN::central-transdanubia": { label: "Central Transdanubia", dataRegionKey: "HUN::central transdanubia", fill: "#4250cc" },
+    "HUN::south-transdanubia": { label: "Southern Transdanubia", dataRegionKey: "HUN::southern transdanubia", fill: "#f18a2f" },
+    "HUN::north-hungary": { label: "Northern Hungary", dataRegionKey: "HUN::northern hungary", fill: "#83bfce" },
+    "HUN::north-great-plain": { label: "Northern Great Plain", dataRegionKey: "HUN::northern great plain", fill: "#31b24d" },
+    "HUN::south-great-plain": { label: "Southern Great Plain", dataRegionKey: "HUN::southern great plain", fill: "#e4d623" },
+    "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#8d2c74" },
+    "MKD::west": { label: "West MKD", dataRegionKey: "MKD::western north macedonia", fill: "#5f4db4" },
+    "MKD::east": { label: "East MKD", dataRegionKey: "MKD::eastern north macedonia", fill: "#4b8bbd" },
+    "MKD::south": { label: "South MKD", dataRegionKey: "MKD::southern north macedonia", fill: "#7a9f39" },
     "SRB::vojvodina": { label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
     "SRB::belgrade": { label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
     "SRB::sz-srb": { label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
@@ -323,14 +351,17 @@ const FEATURE_TO_VISUAL_REGION = {
         "BGR::north": REGION_GROUPS_RESOLVED["BGR::northern bulgaria"],
         "BGR::south": REGION_GROUPS_RESOLVED["BGR::southern bulgaria"],
         "BGR::black-sea": REGION_GROUPS_RESOLVED["BGR::black sea bulgaria"],
-        "HRV::zagreb-central": REGION_GROUPS_RESOLVED["HRV::zagreb and central croatia"],
-        "HRV::slavonia": REGION_GROUPS_RESOLVED["HRV::slavonia"],
-        "HRV::dalmatia": REGION_GROUPS_RESOLVED["HRV::dalmatia"],
-        "HRV::istria-kvarner": REGION_GROUPS_RESOLVED["HRV::istria and kvarner"],
-        "HUN::budapest": REGION_GROUPS_RESOLVED["HUN::budapest"],
-        "HUN::west": REGION_GROUPS_RESOLVED["HUN::western hungary"],
-        "HUN::central": REGION_GROUPS_RESOLVED["HUN::central hungary"],
-        "HUN::east": REGION_GROUPS_RESOLVED["HUN::eastern hungary"],
+        "HRV::zagreb-central": REGION_GROUPS_RESOLVED["HRV::ce hrv"],
+        "HRV::slavonia": REGION_GROUPS_RESOLVED["HRV::slavonija"],
+        "HRV::dalmatia": REGION_GROUPS_RESOLVED["HRV::dalmacija"],
+        "HRV::istria-kvarner": REGION_GROUPS_RESOLVED["HRV::istrija"],
+        "HUN::central-hungary": REGION_GROUPS_RESOLVED["HUN::central hungary"],
+        "HUN::west-transdanubia": REGION_GROUPS_RESOLVED["HUN::western transdanubia"],
+        "HUN::central-transdanubia": REGION_GROUPS_RESOLVED["HUN::central transdanubia"],
+        "HUN::south-transdanubia": REGION_GROUPS_RESOLVED["HUN::southern transdanubia"],
+        "HUN::north-hungary": REGION_GROUPS_RESOLVED["HUN::northern hungary"],
+        "HUN::north-great-plain": REGION_GROUPS_RESOLVED["HUN::northern great plain"],
+        "HUN::south-great-plain": REGION_GROUPS_RESOLVED["HUN::southern great plain"],
         "MKD::skopje": REGION_GROUPS_RESOLVED["MKD::skopje"],
         "MKD::west": REGION_GROUPS_RESOLVED["MKD::western north macedonia"],
         "MKD::east": REGION_GROUPS_RESOLVED["MKD::eastern north macedonia"],
@@ -1345,7 +1376,8 @@ function abbreviateRegionLabel(group) {
 function computeRegionLabelPriority(group, view) {
     const area = Number(group.projectedArea ?? 0);
     const share = Number(group.areaShare ?? 0);
-    return area + (view.showDetail ? 800 : 0) + share * 500;
+    const boost = REGION_LABEL_PRIORITY_BOOST[group.visualRegionKey] ?? 0;
+    return area + (view.showDetail ? 800 : 0) + share * 500 + boost;
 }
 function estimateLabelBounds({
     x,
