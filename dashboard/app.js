@@ -965,49 +965,45 @@ function splitKosovoSubregionFeatures(geometry) {
     }
     const lonSpan = bbox.maxLon - bbox.minLon;
     const latSpan = bbox.maxLat - bbox.minLat;
-    const lonWest = bbox.minLon + lonSpan * 0.38;
-    const lonCenter = bbox.minLon + lonSpan * 0.58;
-    const lonEast = bbox.minLon + lonSpan * 0.76;
-    const latSouth = bbox.minLat + latSpan * 0.30;
-    const latMid = bbox.minLat + latSpan * 0.58;
-    const latNorth = bbox.minLat + latSpan * 0.78;
-    const lonOverlap = lonSpan * 0.025;
-    const latOverlap = latSpan * 0.025;
+    const lonWest = bbox.minLon + lonSpan * 0.35;
+    const lonCenter = bbox.minLon + lonSpan * 0.56;
+    const latSouth = bbox.minLat + latSpan * 0.31;
+    const latMid = bbox.minLat + latSpan * 0.60;
     const masks = [
         {
             name: "Kosovska Mitrovica",
             minLon: bbox.minLon,
-            maxLon: lonCenter + lonOverlap,
-            minLat: latMid - latOverlap,
+            maxLon: lonCenter,
+            minLat: latMid,
             maxLat: bbox.maxLat,
         },
         {
             name: "Pec",
             minLon: bbox.minLon,
-            maxLon: lonWest + lonOverlap,
-            minLat: latSouth - latOverlap,
-            maxLat: latNorth + latOverlap,
+            maxLon: lonWest,
+            minLat: latSouth,
+            maxLat: latMid,
         },
         {
             name: "Prizren",
             minLon: bbox.minLon,
-            maxLon: lonCenter + lonOverlap,
+            maxLon: lonCenter,
             minLat: bbox.minLat,
-            maxLat: latSouth + latOverlap,
+            maxLat: latSouth,
         },
         {
             name: "Kosovsko Pomoravlje",
-            minLon: lonEast - lonOverlap,
+            minLon: lonCenter,
             maxLon: bbox.maxLon,
             minLat: bbox.minLat,
             maxLat: bbox.maxLat,
         },
         {
             name: "Kosovo",
-            minLon: lonWest - lonOverlap,
-            maxLon: lonEast + lonOverlap,
-            minLat: latSouth - latOverlap,
-            maxLat: latMid + latOverlap,
+            minLon: lonWest,
+            maxLon: lonCenter,
+            minLat: latSouth,
+            maxLat: latMid,
         },
     ];
     const pieces = masks
@@ -1684,15 +1680,19 @@ function buildRegionGuideOverlayHtml(geoData) {
     }
     return [
         ...buildBosniaGuidePieces(geoData),
-    ].map((piece) => `
+        ...buildBosniaGuideLines(geoData),
+    ].map((piece) => {
+        const pathD = piece.pathD ?? geometryToPath(piece.geometry, geoData.projection, false);
+        return `
         <path
             class="map-guide-line"
-            d="${escapeHtml(geometryToPath(piece.geometry, geoData.projection, false))}"
+            d="${escapeHtml(pathD)}"
             fill="none"
             stroke-linejoin="round"
             stroke-linecap="round"
         ></path>
-    `).join("");
+    `;
+    }).join("");
 }
 function buildBosniaGuidePieces(geoData) {
     const fbihFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::federation of bosnia and herzegovina");
@@ -1733,6 +1733,48 @@ function buildGuidePiecesFromMasks(geometry, masks) {
             maxLat: bbox.minLat + latSpan * mask.maxY,
         }))
         .filter((piece) => geometryHasPoints(piece));
+}
+function buildBosniaGuideLines(geoData) {
+    const fbihFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::federation of bosnia and herzegovina");
+    const rsFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::republika srpska");
+    if (!fbihFeature || !rsFeature) {
+        return [];
+    }
+    return [
+        buildGuideLineFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
+            [0.16, 0.70], [0.28, 0.58], [0.35, 0.48], [0.44, 0.36],
+        ]),
+        buildGuideLineFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
+            [0.46, 0.76], [0.50, 0.58], [0.54, 0.42], [0.62, 0.24],
+        ]),
+        buildGuideLineFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
+            [0.64, 0.70], [0.74, 0.58], [0.84, 0.50], [0.92, 0.38],
+        ]),
+        buildGuideLineFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
+            [0.10, 0.24], [0.30, 0.24], [0.48, 0.26], [0.66, 0.28], [0.84, 0.30],
+        ]),
+        buildGuideLineFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
+            [0.42, 0.08], [0.44, 0.28], [0.48, 0.52], [0.52, 0.80],
+        ]),
+        buildGuideLineFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
+            [0.70, 0.60], [0.82, 0.64], [0.92, 0.76],
+        ]),
+    ].filter(Boolean);
+}
+function buildGuideLineFromNormalizedPoints(geometry, projection, points) {
+    const bbox = geometryBounds(geometry);
+    if (!bbox || !Array.isArray(points) || points.length < 2) {
+        return null;
+    }
+    const lonSpan = bbox.maxLon - bbox.minLon;
+    const latSpan = bbox.maxLat - bbox.minLat;
+    const pathPoints = points.map(([x, y]) => {
+        const lon = bbox.minLon + lonSpan * x;
+        const lat = bbox.minLat + latSpan * y;
+        const [px, py] = projection(lon, lat);
+        return `${px.toFixed(2)},${py.toFixed(2)}`;
+    });
+    return { pathD: `M ${pathPoints.join(" L ")}` };
 }
 function boxesOverlap(left, right, padding = 0) {
     return !(
