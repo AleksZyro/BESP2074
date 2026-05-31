@@ -21,7 +21,7 @@ const COUNTRY_LABEL_OFFSETS = {
     SRB: [-8, -26],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
-    "ALB::tirana": [18, -14],
+    "ALB::tirana": [24, -8],
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
     "HUN::central-hungary": [4, 2],
@@ -32,7 +32,7 @@ const VISUAL_REGION_LABEL_OFFSETS = {
     "HRV::slavonia": [12, 10],
     "HRV::dalmatia": [10, 18],
     "HRV::istria-kvarner": [-10, -4],
-    "MKD::skopje": [8, -10],
+    "MKD::skopje": [10, 6],
     "MKD::se": [12, 10],
     "MNE::boka": [-26, 2],
     "MNE::primorje": [8, 16],
@@ -87,6 +87,8 @@ const REGION_LABEL_MULTILINE = {
     "MNE::stara-hercegovina": ["Stara", "Hercegovina"],
     "MNE::stara-crna-gora": ["Stara", "Crna Gora"],
     "MNE::stara-raska": ["Stara", "Raska"],
+    "SRB::kosovska-mitrovica": ["Kosovska", "Mitrovica"],
+    "SRB::kosovsko-pomoravlje": ["Kosovsko", "Pomoravlje"],
 };
 const REGION_LABEL_NAME_ONLY = new Set([
     "ALB::tirana",
@@ -104,6 +106,10 @@ const REGION_LABEL_NAME_ONLY = new Set([
     "SRB::kosovsko-pomoravlje",
     "SRB::prizren",
     "SRB::pec",
+]);
+const REGION_LABEL_FORCE_SHOW = new Set([
+    "ALB::tirana",
+    "MKD::skopje",
 ]);
 const REGION_LABEL_PRIORITY_BOOST = {
     "ALB::tirana": 14000,
@@ -918,6 +924,7 @@ async function loadGeoBoundaryData() {
     return {
         countryFeatures: projectedCountryFeatures,
         regionFeatures: projectedRegionFeatures,
+        projection,
     };
 }
 function normalizeGeoFeature(feature, layerType) {
@@ -960,16 +967,17 @@ function splitKosovoSubregionFeatures(geometry) {
     }
     const lonSpan = bbox.maxLon - bbox.minLon;
     const latSpan = bbox.maxLat - bbox.minLat;
-    const lonA = bbox.minLon + lonSpan * 0.52;
-    const lonB = bbox.minLon + lonSpan * 0.64;
-    const latA = bbox.minLat + latSpan * 0.38;
-    const latB = bbox.minLat + latSpan * 0.68;
+    const lonWest = bbox.minLon + lonSpan * 0.42;
+    const lonCenter = bbox.minLon + lonSpan * 0.60;
+    const lonEast = bbox.minLon + lonSpan * 0.79;
+    const latSouth = bbox.minLat + latSpan * 0.33;
+    const latMid = bbox.minLat + latSpan * 0.61;
     const masks = [
-        { name: "Kosovska Mitrovica", minLon: bbox.minLon, maxLon: lonA, minLat: latB, maxLat: bbox.maxLat },
-        { name: "Pec", minLon: bbox.minLon, maxLon: lonA, minLat: latA, maxLat: latB },
-        { name: "Prizren", minLon: bbox.minLon, maxLon: lonB, minLat: bbox.minLat, maxLat: latA },
-        { name: "Kosovsko Pomoravlje", minLon: lonB, maxLon: bbox.maxLon, minLat: bbox.minLat, maxLat: bbox.maxLat },
-        { name: "Kosovo", minLon: lonA, maxLon: lonB, minLat: latA, maxLat: bbox.maxLat },
+        { name: "Kosovska Mitrovica", minLon: bbox.minLon, maxLon: lonCenter, minLat: latMid, maxLat: bbox.maxLat },
+        { name: "Pec", minLon: bbox.minLon, maxLon: lonWest, minLat: latSouth, maxLat: latMid },
+        { name: "Prizren", minLon: bbox.minLon, maxLon: lonCenter, minLat: bbox.minLat, maxLat: latSouth },
+        { name: "Kosovsko Pomoravlje", minLon: lonEast, maxLon: bbox.maxLon, minLat: bbox.minLat, maxLat: bbox.maxLat },
+        { name: "Kosovo", minLon: lonWest, maxLon: lonEast, minLat: latSouth, maxLat: latMid },
     ];
     const pieces = masks
         .map((mask) => ({
@@ -1352,33 +1360,14 @@ function renderCountryLayer(geoData) {
                     countryMetricRange,
                     dashboardState.activeMetric
                 );
-            const kosovoSeamFix = country.kosovoPath;
             return `
                 <path
                     class="map-country-shape"
                     data-country-code="${escapeHtml(country.countryCode)}"
                     d="${escapeHtml(country.mergedPathD)}"
                     fill="${escapeHtml(fill)}"
-                    stroke="${escapeHtml(fill)}"
-                    stroke-width="1.35"
-                    stroke-linejoin="round"
-                    stroke-linecap="round"
                     fill-rule="nonzero"
                 ></path>
-                ${kosovoSeamFix ? `
-                <path
-                    class="map-country-shape"
-                    data-country-code="${escapeHtml(country.countryCode)}"
-                    d="${escapeHtml(kosovoSeamFix)}"
-                    fill="none"
-                    stroke="${escapeHtml(fill)}"
-                    stroke-width="2.4"
-                    stroke-linejoin="round"
-                    stroke-linecap="round"
-                    fill-rule="nonzero"
-                    pointer-events="none"
-                ></path>
-                ` : ""}
             `;
         })
         .join("");
@@ -1514,6 +1503,7 @@ function renderRegionLayer(geoData) {
         return {
             key: group.visualRegionKey,
             priority: computeRegionLabelPriority(group, view),
+            alwaysShow: REGION_LABEL_FORCE_SHOW.has(group.visualRegionKey),
             box,
             html: `
             <g data-visual-region-key="${escapeHtml(group.visualRegionKey)}">
@@ -1523,9 +1513,10 @@ function renderRegionLayer(geoData) {
         `,
         };
     });
-    elements.regionLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 2)
+    const guideOverlayHtml = buildRegionGuideOverlayHtml(geoData);
+    elements.regionLabelLayer.innerHTML = `${guideOverlayHtml}${selectNonOverlappingLabels(labelCandidates, 2)
         .map((entry) => entry.html)
-        .join("");
+        .join("")}`;
 }
 function chooseRegionLabelView(group) {
     const isMetric = !isClassicMetricView();
@@ -1618,14 +1609,78 @@ function estimateLabelBounds({
     };
 }
 function selectNonOverlappingLabels(candidates, padding = 2) {
-    const sorted = [...candidates].sort((a, b) => b.priority - a.priority);
+    const forced = candidates
+        .filter((candidate) => candidate.alwaysShow)
+        .sort((a, b) => b.priority - a.priority);
+    const normal = candidates
+        .filter((candidate) => !candidate.alwaysShow)
+        .sort((a, b) => b.priority - a.priority);
     const accepted = [];
-    for (const candidate of sorted) {
+    for (const candidate of forced) {
+        if (!accepted.some((entry) => boxesOverlap(entry.box, candidate.box, padding))) {
+            accepted.push(candidate);
+        }
+    }
+    for (const candidate of normal) {
         if (!accepted.some((entry) => boxesOverlap(entry.box, candidate.box, padding))) {
             accepted.push(candidate);
         }
     }
     return accepted;
+}
+function buildRegionGuideOverlayHtml(geoData) {
+    if (activeMapMode !== "region" || !geoData?.projection) {
+        return "";
+    }
+    return [
+        ...buildBosniaGuidePieces(geoData),
+    ].map((piece) => `
+        <path
+            class="map-guide-line"
+            d="${escapeHtml(geometryToPath(piece.geometry, geoData.projection, false))}"
+            fill="none"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+        ></path>
+    `).join("");
+}
+function buildBosniaGuidePieces(geoData) {
+    const fbihFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::federation of bosnia and herzegovina");
+    const rsFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::republika srpska");
+    if (!fbihFeature || !rsFeature) {
+        return [];
+    }
+    return [
+        ...buildGuidePiecesFromMasks(fbihFeature.geometry, [
+            { minX: 0.00, maxX: 0.34, minY: 0.56, maxY: 1.00 },
+            { minX: 0.58, maxX: 1.00, minY: 0.56, maxY: 1.00 },
+            { minX: 0.42, maxX: 0.76, minY: 0.44, maxY: 0.72 },
+            { minX: 0.34, maxX: 0.62, minY: 0.34, maxY: 0.60 },
+            { minX: 0.70, maxX: 0.94, minY: 0.28, maxY: 0.52 },
+            { minX: 0.22, maxX: 0.62, minY: 0.00, maxY: 0.30 },
+            { minX: 0.00, maxX: 0.28, minY: 0.00, maxY: 0.26 },
+        ]),
+        ...buildGuidePiecesFromMasks(rsFeature.geometry, [
+            { minX: 0.00, maxX: 0.46, minY: 0.00, maxY: 1.00 },
+            { minX: 0.40, maxX: 1.00, minY: 0.00, maxY: 1.00 },
+        ]),
+    ];
+}
+function buildGuidePiecesFromMasks(geometry, masks) {
+    const bbox = geometryBounds(geometry);
+    if (!bbox) {
+        return [];
+    }
+    const lonSpan = bbox.maxLon - bbox.minLon;
+    const latSpan = bbox.maxLat - bbox.minLat;
+    return masks
+        .map((mask) => clipGeometryToBbox(geometry, {
+            minLon: bbox.minLon + lonSpan * mask.minX,
+            maxLon: bbox.minLon + lonSpan * mask.maxX,
+            minLat: bbox.minLat + latSpan * mask.minY,
+            maxLat: bbox.minLat + latSpan * mask.maxY,
+        }))
+        .filter((piece) => geometryHasPoints(piece));
 }
 function boxesOverlap(left, right, padding = 0) {
     return !(
