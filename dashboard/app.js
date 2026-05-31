@@ -21,7 +21,7 @@ const COUNTRY_LABEL_OFFSETS = {
     SRB: [-8, -26],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
-    "ALB::tirana": [24, -8],
+    "ALB::tirana": [-18, -10],
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
     "HUN::central-hungary": [4, 2],
@@ -102,8 +102,11 @@ const REGION_LABEL_NAME_ONLY = new Set([
     "MKD::skopje",
     "MKD::west",
     "MKD::se",
+]);
+const REGION_LABEL_HIDDEN = new Set([
     "SRB::kosovska-mitrovica",
     "SRB::kosovsko-pomoravlje",
+    "SRB::kosovo-core",
     "SRB::prizren",
     "SRB::pec",
 ]);
@@ -112,7 +115,7 @@ const REGION_LABEL_FORCE_SHOW = new Set([
     "MKD::skopje",
 ]);
 const REGION_LABEL_PRIORITY_BOOST = {
-    "ALB::tirana": 14000,
+    "ALB::tirana": 18000,
     "MKD::skopje": 7000,
     "MKD::west": 4200,
     "MKD::se": 4500,
@@ -129,11 +132,6 @@ const REGION_LABEL_PRIORITY_BOOST = {
     "HUN::central-hungary": 3200,
     "HUN::north-hungary": 3200,
     "HUN::great-plains": 4800,
-    "SRB::kosovska-mitrovica": 3600,
-    "SRB::kosovsko-pomoravlje": 3600,
-    "SRB::prizren": 3400,
-    "SRB::pec": 3400,
-    "SRB::kosovo-core": 3000,
 };
 const COUNTRY_FLAGS = {
     ALB: "\uD83C\uDDE6\uD83C\uDDF1",
@@ -967,14 +965,15 @@ function splitKosovoSubregionFeatures(geometry) {
     }
     const lonSpan = bbox.maxLon - bbox.minLon;
     const latSpan = bbox.maxLat - bbox.minLat;
-    const lonWest = bbox.minLon + lonSpan * 0.42;
-    const lonCenter = bbox.minLon + lonSpan * 0.60;
-    const lonEast = bbox.minLon + lonSpan * 0.79;
-    const latSouth = bbox.minLat + latSpan * 0.33;
-    const latMid = bbox.minLat + latSpan * 0.61;
+    const lonWest = bbox.minLon + lonSpan * 0.38;
+    const lonCenter = bbox.minLon + lonSpan * 0.58;
+    const lonEast = bbox.minLon + lonSpan * 0.76;
+    const latSouth = bbox.minLat + latSpan * 0.30;
+    const latMid = bbox.minLat + latSpan * 0.58;
+    const latNorth = bbox.minLat + latSpan * 0.78;
     const masks = [
         { name: "Kosovska Mitrovica", minLon: bbox.minLon, maxLon: lonCenter, minLat: latMid, maxLat: bbox.maxLat },
-        { name: "Pec", minLon: bbox.minLon, maxLon: lonWest, minLat: latSouth, maxLat: latMid },
+        { name: "Pec", minLon: bbox.minLon, maxLon: lonWest, minLat: latSouth, maxLat: latNorth },
         { name: "Prizren", minLon: bbox.minLon, maxLon: lonCenter, minLat: bbox.minLat, maxLat: latSouth },
         { name: "Kosovsko Pomoravlje", minLon: lonEast, maxLon: bbox.maxLon, minLat: bbox.minLat, maxLat: bbox.maxLat },
         { name: "Kosovo", minLon: lonWest, maxLon: lonEast, minLat: latSouth, maxLat: latMid },
@@ -1323,18 +1322,12 @@ function renderCountryLayer(geoData) {
     const groupedVisualRegions = buildVisualRegionGroups(geoData.regionFeatures ?? []);
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
-            const countryPath = features.map((feature) => feature.pathD).join(" ");
-            const kosovoPath = countryCode === "SRB"
-                ? groupedVisualRegions
-                    .filter((group) => (
-                        group.visualRegionKey.startsWith("SRB::kosov")
-                        || group.visualRegionKey === "SRB::prizren"
-                        || group.visualRegionKey === "SRB::pec"
-                    ))
-                    .map((group) => group.pathD)
-                    .join(" ")
-                : "";
-            const mergedPathD = kosovoPath ? `${countryPath} ${kosovoPath}` : countryPath;
+            const baseFeatures = features.filter((feature) => feature.rawCountryCode === countryCode);
+            const overlayFeatures = features.filter((feature) => feature.rawCountryCode !== countryCode);
+            const basePathD = (baseFeatures.length ? baseFeatures : features)
+                .map((feature) => feature.pathD)
+                .join(" ");
+            const overlayPathD = overlayFeatures.map((feature) => feature.pathD).join(" ");
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
             const centroid = labelFeature?.centroid ?? averageCentroid(features);
             const displayName = labelFeature?.countryCode === "SRB"
@@ -1343,10 +1336,10 @@ function renderCountryLayer(geoData) {
             return {
                 countryCode,
                 displayName,
-                mergedPathD,
+                basePathD,
+                overlayPathD,
                 centroid,
                 features,
-                kosovoPath,
             };
         })
         .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
@@ -1361,13 +1354,25 @@ function renderCountryLayer(geoData) {
                     dashboardState.activeMetric
                 );
             return `
-                <path
-                    class="map-country-shape"
-                    data-country-code="${escapeHtml(country.countryCode)}"
-                    d="${escapeHtml(country.mergedPathD)}"
-                    fill="${escapeHtml(fill)}"
-                    fill-rule="nonzero"
-                ></path>
+                <g data-country-code="${escapeHtml(country.countryCode)}">
+                    <path
+                        class="map-country-shape"
+                        data-country-code="${escapeHtml(country.countryCode)}"
+                        d="${escapeHtml(country.basePathD)}"
+                        fill="${escapeHtml(fill)}"
+                        fill-rule="nonzero"
+                    ></path>
+                    ${country.overlayPathD ? `
+                    <path
+                        class="map-country-shape map-country-overlay"
+                        data-country-code="${escapeHtml(country.countryCode)}"
+                        d="${escapeHtml(country.overlayPathD)}"
+                        fill="${escapeHtml(fill)}"
+                        fill-rule="nonzero"
+                        stroke="none"
+                    ></path>
+                    ` : ""}
+                </g>
             `;
         })
         .join("");
@@ -1467,6 +1472,9 @@ function renderRegionLayer(geoData) {
         `)
         .join("");
     const labelCandidates = groupedRegions.map((group) => {
+        if (REGION_LABEL_HIDDEN.has(group.visualRegionKey)) {
+            return null;
+        }
         const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
         const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
         const metricDetailRaw = buildMapMetricDetail(
@@ -1512,7 +1520,7 @@ function renderRegionLayer(geoData) {
             </g>
         `,
         };
-    });
+    }).filter(Boolean);
     const guideOverlayHtml = buildRegionGuideOverlayHtml(geoData);
     elements.regionLabelLayer.innerHTML = `${guideOverlayHtml}${selectNonOverlappingLabels(labelCandidates, 2)
         .map((entry) => entry.html)
@@ -1652,17 +1660,19 @@ function buildBosniaGuidePieces(geoData) {
     }
     return [
         ...buildGuidePiecesFromMasks(fbihFeature.geometry, [
-            { minX: 0.00, maxX: 0.34, minY: 0.56, maxY: 1.00 },
-            { minX: 0.58, maxX: 1.00, minY: 0.56, maxY: 1.00 },
-            { minX: 0.42, maxX: 0.76, minY: 0.44, maxY: 0.72 },
-            { minX: 0.34, maxX: 0.62, minY: 0.34, maxY: 0.60 },
-            { minX: 0.70, maxX: 0.94, minY: 0.28, maxY: 0.52 },
-            { minX: 0.22, maxX: 0.62, minY: 0.00, maxY: 0.30 },
-            { minX: 0.00, maxX: 0.28, minY: 0.00, maxY: 0.26 },
+            { minX: 0.00, maxX: 0.30, minY: 0.52, maxY: 0.96 },
+            { minX: 0.28, maxX: 0.66, minY: 0.52, maxY: 0.96 },
+            { minX: 0.62, maxX: 1.00, minY: 0.54, maxY: 0.96 },
+            { minX: 0.34, maxX: 0.62, minY: 0.28, maxY: 0.58 },
+            { minX: 0.58, maxX: 0.86, minY: 0.20, maxY: 0.50 },
+            { minX: 0.18, maxX: 0.46, minY: 0.14, maxY: 0.36 },
+            { minX: 0.38, maxX: 0.70, minY: 0.02, maxY: 0.24 },
+            { minX: 0.00, maxX: 0.20, minY: 0.06, maxY: 0.24 },
         ]),
         ...buildGuidePiecesFromMasks(rsFeature.geometry, [
-            { minX: 0.00, maxX: 0.46, minY: 0.00, maxY: 1.00 },
-            { minX: 0.40, maxX: 1.00, minY: 0.00, maxY: 1.00 },
+            { minX: 0.00, maxX: 0.48, minY: 0.00, maxY: 1.00 },
+            { minX: 0.42, maxX: 0.88, minY: 0.10, maxY: 0.92 },
+            { minX: 0.82, maxX: 1.00, minY: 0.70, maxY: 0.94 },
         ]),
     ];
 }
