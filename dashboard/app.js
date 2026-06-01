@@ -13,15 +13,16 @@ const MAP_COUNTRY_CODES = ["ALB", "BGR", "BIH", "HRV", "HUN", "MKD", "MNE", "ROU
 const TARGET_COUNTRIES = new Set(MAP_COUNTRY_CODES);
 const COUNTRY_LABEL_OFFSETS = {
     ALB: [-12, 10],
-    BGR: [10, 4],
-    HRV: [-20, -6],
-    HUN: [-6, -8],
-    MKD: [14, 0],
-    ROU: [10, -12],
-    SRB: [-8, -26],
+    BGR: [4, 2],
+    BIH: [18, 4],
+    HRV: [18, -8],
+    HUN: [-4, 14],
+    MKD: [0, -2],
+    ROU: [-18, -8],
+    SRB: [-10, -18],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
-    "ALB::tirana": [-18, -10],
+    "ALB::tirana": [12, -26],
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
     "HUN::central-hungary": [4, 2],
@@ -965,10 +966,12 @@ function splitKosovoSubregionFeatures(geometry) {
     }
     const lonSpan = bbox.maxLon - bbox.minLon;
     const latSpan = bbox.maxLat - bbox.minLat;
-    const lonWest = bbox.minLon + lonSpan * 0.35;
-    const lonCenter = bbox.minLon + lonSpan * 0.56;
-    const latSouth = bbox.minLat + latSpan * 0.31;
-    const latMid = bbox.minLat + latSpan * 0.60;
+    const lonWest = bbox.minLon + lonSpan * 0.33;
+    const lonCenter = bbox.minLon + lonSpan * 0.60;
+    const latSouth = bbox.minLat + latSpan * 0.34;
+    const latMid = bbox.minLat + latSpan * 0.67;
+    const padLon = lonSpan * 0.012;
+    const padLat = latSpan * 0.012;
     const masks = [
         {
             name: "Kosovska Mitrovica",
@@ -1009,10 +1012,37 @@ function splitKosovoSubregionFeatures(geometry) {
     const pieces = masks
         .map((mask) => ({
             name: mask.name,
-            geometry: clipGeometryToBbox(geometry, mask),
+            geometry: stripGeometryHoles(clipGeometryToBbox(geometry, expandBboxMask(mask, bbox, padLon, padLat))),
         }))
         .filter((piece) => geometryHasPoints(piece.geometry));
     return pieces.length ? pieces : [{ name: "Kosovo", geometry }];
+}
+function expandBboxMask(mask, bbox, padLon, padLat) {
+    return {
+        minLon: Math.max(bbox.minLon, mask.minLon - padLon),
+        maxLon: Math.min(bbox.maxLon, mask.maxLon + padLon),
+        minLat: Math.max(bbox.minLat, mask.minLat - padLat),
+        maxLat: Math.min(bbox.maxLat, mask.maxLat + padLat),
+    };
+}
+function stripGeometryHoles(geometry) {
+    if (!geometry?.type || !geometry?.coordinates) {
+        return geometry;
+    }
+    if (geometry.type === "Polygon") {
+        return geometry.coordinates.length
+            ? { type: "Polygon", coordinates: [geometry.coordinates[0]] }
+            : geometry;
+    }
+    if (geometry.type === "MultiPolygon") {
+        return {
+            type: "MultiPolygon",
+            coordinates: geometry.coordinates
+                .filter((polygon) => Array.isArray(polygon) && polygon[0]?.length >= 4)
+                .map((polygon) => [polygon[0]]),
+        };
+    }
+    return geometry;
 }
 function geometryBounds(geometry) {
     const points = extractCoordinates(geometry);
@@ -1347,23 +1377,16 @@ function renderCountryLayer(geoData) {
         (row) => metricValueFromCountry(row, dashboardState.activeMetric)
     );
     const groupedByCountry = groupBy(geoData.countryFeatures, (feature) => feature.countryCode);
-    const groupedVisualRegions = buildVisualRegionGroups(geoData.regionFeatures ?? []);
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
             const baseFeatures = features.filter((feature) => feature.rawCountryCode === countryCode);
+            const kosovoOverlayFeatures = features.filter((feature) => feature.rawCountryCode === "XKX");
             const basePathD = (baseFeatures.length ? baseFeatures : features)
                 .map((feature) => feature.pathD)
                 .join(" ");
             const overlayPathD = countryCode === "SRB"
-                ? groupedVisualRegions
-                    .filter((group) => (
-                        group.visualRegionKey === "SRB::kosovska-mitrovica"
-                        || group.visualRegionKey === "SRB::kosovsko-pomoravlje"
-                        || group.visualRegionKey === "SRB::kosovo-core"
-                        || group.visualRegionKey === "SRB::prizren"
-                        || group.visualRegionKey === "SRB::pec"
-                    ))
-                    .map((group) => group.pathD)
+                ? kosovoOverlayFeatures
+                    .map((feature) => feature.pathD)
                     .join(" ")
                 : "";
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
@@ -1560,7 +1583,11 @@ function renderRegionLayer(geoData) {
         };
     }).filter(Boolean);
     const guideOverlayHtml = buildRegionGuideOverlayHtml(geoData);
-    elements.regionLabelLayer.innerHTML = `${guideOverlayHtml}${selectNonOverlappingLabels(labelCandidates, 2)
+    const chosenLabels = selectNonOverlappingLabels(labelCandidates, 2);
+    const pinnedLabels = ["ALB::tirana"]
+        .map((key) => labelCandidates.find((candidate) => candidate.key === key))
+        .filter((candidate) => candidate && !chosenLabels.some((entry) => entry.key === candidate.key));
+    elements.regionLabelLayer.innerHTML = `${guideOverlayHtml}${[...chosenLabels, ...pinnedLabels]
         .map((entry) => entry.html)
         .join("")}`;
 }
@@ -1679,7 +1706,6 @@ function buildRegionGuideOverlayHtml(geoData) {
         return "";
     }
     return [
-        ...buildBosniaGuidePieces(geoData),
         ...buildBosniaGuideLines(geoData),
     ].map((piece) => {
         const pathD = piece.pathD ?? geometryToPath(piece.geometry, geoData.projection, false);
@@ -1694,46 +1720,6 @@ function buildRegionGuideOverlayHtml(geoData) {
     `;
     }).join("");
 }
-function buildBosniaGuidePieces(geoData) {
-    const fbihFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::federation of bosnia and herzegovina");
-    const rsFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::republika srpska");
-    if (!fbihFeature || !rsFeature) {
-        return [];
-    }
-    return [
-        ...buildGuidePiecesFromMasks(fbihFeature.geometry, [
-            { minX: 0.00, maxX: 0.30, minY: 0.52, maxY: 0.96 },
-            { minX: 0.28, maxX: 0.66, minY: 0.52, maxY: 0.96 },
-            { minX: 0.62, maxX: 1.00, minY: 0.54, maxY: 0.96 },
-            { minX: 0.34, maxX: 0.62, minY: 0.28, maxY: 0.58 },
-            { minX: 0.58, maxX: 0.86, minY: 0.20, maxY: 0.50 },
-            { minX: 0.18, maxX: 0.46, minY: 0.14, maxY: 0.36 },
-            { minX: 0.38, maxX: 0.70, minY: 0.02, maxY: 0.24 },
-            { minX: 0.00, maxX: 0.20, minY: 0.06, maxY: 0.24 },
-        ]),
-        ...buildGuidePiecesFromMasks(rsFeature.geometry, [
-            { minX: 0.00, maxX: 0.48, minY: 0.00, maxY: 1.00 },
-            { minX: 0.42, maxX: 0.88, minY: 0.10, maxY: 0.92 },
-            { minX: 0.82, maxX: 1.00, minY: 0.70, maxY: 0.94 },
-        ]),
-    ];
-}
-function buildGuidePiecesFromMasks(geometry, masks) {
-    const bbox = geometryBounds(geometry);
-    if (!bbox) {
-        return [];
-    }
-    const lonSpan = bbox.maxLon - bbox.minLon;
-    const latSpan = bbox.maxLat - bbox.minLat;
-    return masks
-        .map((mask) => clipGeometryToBbox(geometry, {
-            minLon: bbox.minLon + lonSpan * mask.minX,
-            maxLon: bbox.minLon + lonSpan * mask.maxX,
-            minLat: bbox.minLat + latSpan * mask.minY,
-            maxLat: bbox.minLat + latSpan * mask.maxY,
-        }))
-        .filter((piece) => geometryHasPoints(piece));
-}
 function buildBosniaGuideLines(geoData) {
     const fbihFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::federation of bosnia and herzegovina");
     const rsFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::republika srpska");
@@ -1741,27 +1727,33 @@ function buildBosniaGuideLines(geoData) {
         return [];
     }
     return [
-        buildGuideLineFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
-            [0.16, 0.70], [0.28, 0.58], [0.35, 0.48], [0.44, 0.36],
+        buildGuidePathFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
+            [0.10, 0.22], [0.36, 0.16], [0.56, 0.18], [0.82, 0.28],
         ]),
-        buildGuideLineFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
-            [0.46, 0.76], [0.50, 0.58], [0.54, 0.42], [0.62, 0.24],
+        buildGuidePathFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
+            [0.36, 0.16], [0.42, 0.38], [0.48, 0.60], [0.56, 0.82],
         ]),
-        buildGuideLineFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
-            [0.64, 0.70], [0.74, 0.58], [0.84, 0.50], [0.92, 0.38],
+        buildGuidePathFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
+            [0.70, 0.18], [0.76, 0.34], [0.82, 0.54], [0.90, 0.74],
         ]),
-        buildGuideLineFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
-            [0.10, 0.24], [0.30, 0.24], [0.48, 0.26], [0.66, 0.28], [0.84, 0.30],
+        buildGuidePathFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
+            [0.76, 0.36], [0.84, 0.40], [0.92, 0.46], [0.88, 0.58], [0.78, 0.56],
+        ], true),
+        buildGuidePathFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
+            [0.10, 0.64], [0.22, 0.54], [0.36, 0.46], [0.52, 0.40],
         ]),
-        buildGuideLineFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
-            [0.42, 0.08], [0.44, 0.28], [0.48, 0.52], [0.52, 0.80],
+        buildGuidePathFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
+            [0.22, 0.80], [0.34, 0.66], [0.44, 0.54], [0.56, 0.42], [0.66, 0.30],
         ]),
-        buildGuideLineFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
-            [0.70, 0.60], [0.82, 0.64], [0.92, 0.76],
+        buildGuidePathFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
+            [0.48, 0.82], [0.52, 0.68], [0.58, 0.52], [0.68, 0.38], [0.86, 0.30],
+        ]),
+        buildGuidePathFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
+            [0.18, 0.24], [0.30, 0.24], [0.42, 0.28], [0.54, 0.30], [0.68, 0.32], [0.82, 0.36],
         ]),
     ].filter(Boolean);
 }
-function buildGuideLineFromNormalizedPoints(geometry, projection, points) {
+function buildGuidePathFromNormalizedPoints(geometry, projection, points, closePath = false) {
     const bbox = geometryBounds(geometry);
     if (!bbox || !Array.isArray(points) || points.length < 2) {
         return null;
@@ -1774,7 +1766,7 @@ function buildGuideLineFromNormalizedPoints(geometry, projection, points) {
         const [px, py] = projection(lon, lat);
         return `${px.toFixed(2)},${py.toFixed(2)}`;
     });
-    return { pathD: `M ${pathPoints.join(" L ")}` };
+    return { pathD: `M ${pathPoints.join(" L ")}${closePath ? " Z" : ""}` };
 }
 function boxesOverlap(left, right, padding = 0) {
     return !(
