@@ -13,28 +13,20 @@ const MAP_COUNTRY_CODES = ["ALB", "BGR", "BIH", "HRV", "HUN", "MKD", "MNE", "ROU
 const TARGET_COUNTRIES = new Set(MAP_COUNTRY_CODES);
 const COUNTRY_LABEL_OFFSETS = {
     ALB: [-12, 10],
-    BGR: [4, 2],
-    BIH: [40, 12],
-    HRV: [108, -26],
-    HUN: [-4, 14],
-    MKD: [0, -2],
-    ROU: [-18, -8],
-    SRB: [-10, -18],
+    BGR: [18, 4],
+    HRV: [-20, -6],
+    HUN: [-6, -18],
+    MKD: [22, 0],
+    ROU: [18, -12],
+    SRB: [0, -26],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
-    "ALB::tirana": [12, -26],
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
-    "HUN::central-hungary": [4, 2],
-    "HUN::transdanubia": [-8, 4],
-    "HUN::great-plains": [12, 6],
-    "HUN::north-hungary": [0, -8],
     "HRV::zagreb-central": [12, -4],
     "HRV::slavonia": [12, 10],
     "HRV::dalmatia": [10, 18],
     "HRV::istria-kvarner": [-10, -4],
-    "MKD::skopje": [10, 6],
-    "MKD::se": [12, 10],
     "MNE::boka": [-26, 2],
     "MNE::primorje": [8, 16],
     "MNE::zeta": [26, 0],
@@ -45,11 +37,6 @@ const VISUAL_REGION_LABEL_OFFSETS = {
     "ROU::moldavia": [10, -6],
     "ROU::wallachia-oltenia": [0, 10],
     "ROU::dobruja-lower-danube": [10, 12],
-    "SRB::kosovska-mitrovica": [-22, -8],
-    "SRB::kosovsko-pomoravlje": [20, 6],
-    "SRB::kosovo-core": [0, 0],
-    "SRB::prizren": [-14, 14],
-    "SRB::pec": [-18, 4],
 };
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
@@ -61,14 +48,14 @@ const REGION_LABEL_SHORT = {
     "BGR::black-sea": "Black Sea",
     "BGR::north": "N Bulgaria",
     "BGR::south": "S Bulgaria",
-    "HUN::central-hungary": "C. Hungary",
-    "HUN::great-plains": "Great Plains",
-    "HUN::north-hungary": "N Hungary",
-    "HUN::transdanubia": "Transdanubia",
-    "HRV::zagreb-central": "CE HRV",
-    "HRV::istria-kvarner": "Istrija",
-    "MKD::se": "SE Macedonia",
-    "MKD::west": "West Macedonia",
+    "HUN::central": "Central HUN",
+    "HUN::east": "East HUN",
+    "HUN::west": "West HUN",
+    "HRV::zagreb-central": "Central HRV",
+    "HRV::istria-kvarner": "Istria/Kvarner",
+    "MKD::east": "East MKD",
+    "MKD::south": "South MKD",
+    "MKD::west": "West MKD",
     "MNE::stara-crna-gora": "Stara C. Gora",
     "MNE::stara-hercegovina": "St. Hercegovina",
     "MNE::stara-raska": "Stara Raska",
@@ -77,62 +64,8 @@ const REGION_LABEL_SHORT = {
     "ROU::wallachia-oltenia": "Wallachia",
     "ROU::dobruja-lower-danube": "Dobruja",
     "SRB::ji-srb": "JI SRB",
-    "SRB::kosovo-core": "Kosovo",
+    "SRB::kosovo-metohija": "Kosovo i Met.",
     "SRB::sz-srb": "SZ SRB",
-};
-const REGION_LABEL_MULTILINE = {
-    "HUN::transdanubia": ["Transdanubia"],
-    "HUN::great-plains": ["Great", "Plains"],
-    "HUN::central-hungary": ["Central", "Hungary"],
-    "HUN::north-hungary": ["Northern", "Hungary"],
-    "MNE::stara-hercegovina": ["Stara", "Hercegovina"],
-    "MNE::stara-crna-gora": ["Stara", "Crna Gora"],
-    "MNE::stara-raska": ["Stara", "Raska"],
-    "SRB::kosovo-core": ["Kosovo i", "Metohija"],
-    "SRB::kosovska-mitrovica": ["Kosovska", "Mitrovica"],
-    "SRB::kosovsko-pomoravlje": ["Kosovsko", "Pomoravlje"],
-};
-const REGION_LABEL_NAME_ONLY = new Set([
-    "ALB::tirana",
-    "MNE::boka",
-    "MNE::primorje",
-    "MNE::zeta",
-    "MNE::brda",
-    "MNE::stara-hercegovina",
-    "MNE::stara-raska",
-    "HRV::slavonia",
-    "MKD::skopje",
-    "MKD::west",
-    "MKD::se",
-]);
-const REGION_LABEL_HIDDEN = new Set([
-    "SRB::kosovska-mitrovica",
-    "SRB::kosovsko-pomoravlje",
-    "SRB::prizren",
-    "SRB::pec",
-]);
-const REGION_LABEL_FORCE_SHOW = new Set([
-    "ALB::tirana",
-    "MKD::skopje",
-]);
-const REGION_LABEL_PRIORITY_BOOST = {
-    "ALB::tirana": 18000,
-    "MKD::skopje": 7000,
-    "MKD::west": 4200,
-    "MKD::se": 4500,
-    "HRV::slavonia": 3600,
-    "HRV::zagreb-central": 2400,
-    "HRV::dalmatia": 2400,
-    "HRV::istria-kvarner": 2400,
-    "MNE::zeta": 4400,
-    "MNE::primorje": 4400,
-    "MNE::brda": 4400,
-    "MNE::stara-hercegovina": 4400,
-    "MNE::stara-raska": 4400,
-    "HUN::transdanubia": 5200,
-    "HUN::central-hungary": 3200,
-    "HUN::north-hungary": 3200,
-    "HUN::great-plains": 4800,
 };
 const COUNTRY_FLAGS = {
     ALB: "\uD83C\uDDE6\uD83C\uDDF1",
@@ -204,10 +137,6 @@ const REGION_NAME_ALIASES = Object.fromEntries([
     ["autonomous province of vojvodina", "vojvodina"], ["vojvodina", "vojvodina"],
     ["central serbia", "central serbia"], ["south and east serbia", "south and east serbia"],
     ["kosovo and metohija", "kosovo and metohija"], ["kosovo", "kosovo and metohija"],
-    ["kosovsko pomoravlje", "kosovsko pomoravlje"],
-    ["kosovska mitrovica", "kosovska mitrovica"],
-    ["prizren", "prizren"],
-    ["pec", "pec"],
     ["kosovo & metohija", "kosovo and metohija"], ["coast", "coast"], ["inland", "inland"],
     ["tirane", "tirana"], ["skopje", "skopje"], ["sofia city", "sofia"], ["sofia", "sofia"],
     ["budapest", "budapest"], ["bucharest ilfov", "bucharest ilfov"],
@@ -275,33 +204,31 @@ const REGION_GROUP_OVERRIDES = {
     "ALB::northern albania": ["shkoder", "kukes", "lezhe", "diber"],
     "ALB::central coast albania": ["durres", "elbasan", "fier", "berat"],
     "ALB::southern albania": ["vlore", "gjirokaster", "korce"],
-    "HRV::ce hrv": [
+    "HRV::zagreb and central croatia": [
         "city of zagreb", "zagreb county", "krapina zagorje", "varazdin",
         "me imurje", "bjelovar bilogora", "koprivnica krizevci",
         "sisak moslavina", "karlovac",
     ],
-    "HRV::slavonija": [
+    "HRV::slavonia": [
         "brod posavina", "osijek baranja", "pozega slavonia",
         "virovitica podravina", "vukovar syrmia",
     ],
-    "HRV::dalmacija": [
-        "zadar county", "sibenik knin", "split dalmatia", "dubrovnik neretva", "lika senj",
+    "HRV::dalmatia": [
+        "zadar county", "sibenik knin", "split dalmatia", "dubrovnik neretva",
     ],
-    "HRV::istrija": ["istria", "primorje gorski kotar"],
-    "HUN::central hungary": ["budapest", "pest"],
-    "HUN::transdanubia": [
-        "gyor moson sopron", "vas", "zala",
-        "fejer", "komarom esztergom", "veszprem",
-        "baranya", "somogy", "tolna",
+    "HRV::istria and kvarner": ["istria", "primorje gorski kotar", "lika senj"],
+    "HUN::budapest": ["budapest", "pest"],
+    "HUN::western hungary": [
+        "baranya", "fejer", "gyor moson sopron", "komarom esztergom",
+        "somogy", "tolna", "vas", "veszprem", "zala",
     ],
-    "HUN::northern hungary": [
-        "borsod abauj zemplen", "heves", "nograd",
+    "HUN::central hungary": [
+        "heves", "jasz nagykun szolnok", "nograd",
     ],
-    "HUN::great plains": [
-        "hajdu bihar", "szabolcs szatmar bereg", "jasz nagykun szolnok",
-        "bacs kiskun", "bekes", "csongrad csanad",
+    "HUN::eastern hungary": [
+        "bacs kiskun", "bekes", "borsod abauj zemplen",
+        "csongrad csanad", "hajdu bihar", "szabolcs szatmar bereg",
     ],
-    "MKD::se macedonia": ["east", "northeast", "southeast", "pelagonia", "vardar"],
     "ROU::bucharest ilfov": ["bucuresti", "ilfov"],
     "ROU::transylvania and banat": [
         "alba", "arad", "bihor", "bistrita nasaud", "brasov", "caras severin",
@@ -310,13 +237,12 @@ const REGION_GROUP_OVERRIDES = {
     ],
     "ROU::moldavia": [
         "bacau", "botosani", "iasi", "neamt", "suceava", "vaslui", "vrancea",
-        "galati",
     ],
     "ROU::wallachia and oltenia": [
         "arges", "buzau", "calarasi", "dambovita", "dolj", "giurgiu",
         "gorj", "ialomita", "mehedinti", "olt", "prahova", "teleorman", "valcea",
     ],
-    "ROU::dobruja and lower danube": ["braila", "constanta", "tulcea"],
+    "ROU::dobruja and lower danube": ["braila", "galati", "constanta", "tulcea"],
 };
 const REGION_GROUPS_RESOLVED = {
     ...REGION_GROUPS,
@@ -333,37 +259,23 @@ const VISUAL_REGION_DEFINITIONS = {
     "BGR::black-sea": { label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#5e88a9" },
     "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
     "BIH::rs": { label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c" },
-    "HRV::zagreb-central": { label: "CE HRV", dataRegionKey: "HRV::ce hrv", fill: "#8a6b4d" },
-    "HRV::slavonia": { label: "Slavonija", dataRegionKey: "HRV::slavonija", fill: "#a78962" },
-    "HRV::dalmatia": { label: "Dalmacija", dataRegionKey: "HRV::dalmacija", fill: "#bf9a6f" },
-    "HRV::istria-kvarner": { label: "Istrija", dataRegionKey: "HRV::istrija", fill: "#d7b88d" },
-    "HUN::central-hungary": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#d34b4b" },
-    "HUN::transdanubia": { label: "Transdanubia", dataRegionKey: "HUN::transdanubia", fill: "#6f63c7" },
-    "HUN::north-hungary": { label: "Northern Hungary", dataRegionKey: "HUN::northern hungary", fill: "#81c5d8" },
-    "HUN::great-plains": { label: "Great Plains", dataRegionKey: "HUN::great plains", fill: "#41b65a" },
-    "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#8d2c74" },
-    "MKD::west": { label: "West Macedonia", dataRegionKey: "MKD::western north macedonia", fill: "#5f4db4" },
-    "MKD::se": { label: "SE Macedonia", dataRegionKey: "MKD::se macedonia", fill: "#4b8bbd" },
+    "HRV::zagreb-central": { label: "Central Croatia", dataRegionKey: "HRV::zagreb and central croatia", fill: "#9a7c5a" },
+    "HRV::slavonia": { label: "Slavonia", dataRegionKey: "HRV::slavonia", fill: "#7d6247" },
+    "HRV::dalmatia": { label: "Dalmatia", dataRegionKey: "HRV::dalmatia", fill: "#b18e68" },
+    "HRV::istria-kvarner": { label: "Istria/Kvarner", dataRegionKey: "HRV::istria and kvarner", fill: "#c9a97d" },
+    "HUN::budapest": { label: "Budapest", dataRegionKey: "HUN::budapest", fill: "#a76e60" },
+    "HUN::west": { label: "West Hungary", dataRegionKey: "HUN::western hungary", fill: "#b58f71" },
+    "HUN::central": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#9b856c" },
+    "HUN::east": { label: "East Hungary", dataRegionKey: "HUN::eastern hungary", fill: "#c29c7b" },
+    "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#916b7c" },
+    "MKD::west": { label: "West MKD", dataRegionKey: "MKD::western north macedonia", fill: "#a47c8e" },
+    "MKD::east": { label: "East MKD", dataRegionKey: "MKD::eastern north macedonia", fill: "#7d5868" },
+    "MKD::south": { label: "South MKD", dataRegionKey: "MKD::southern north macedonia", fill: "#b38f9d" },
     "SRB::vojvodina": { label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
     "SRB::belgrade": { label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
     "SRB::sz-srb": { label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
     "SRB::ji-srb": { label: "JI SRB", dataRegionKey: "SRB::south and east serbia", fill: "#cf857c" },
-    "SRB::kosovska-mitrovica": { label: "Kosovska Mitrovica", dataRegionKey: "SRB::kosovska mitrovica", fill: "#efb287" },
-    "SRB::kosovsko-pomoravlje": { label: "Kosovsko Pomoravlje", dataRegionKey: "SRB::kosovsko pomoravlje", fill: "#e3a678" },
-    "SRB::kosovo-core": {
-        label: "Kosovo i Metohija",
-        dataRegionKey: "SRB::kosovo-aggregate",
-        sourceRegionKeys: [
-            "SRB::kosovo",
-            "SRB::kosovska mitrovica",
-            "SRB::kosovsko pomoravlje",
-            "SRB::prizren",
-            "SRB::pec",
-        ],
-        fill: "#ebb489",
-    },
-    "SRB::prizren": { label: "Prizren", dataRegionKey: "SRB::prizren", fill: "#d9966f" },
-    "SRB::pec": { label: "Pec", dataRegionKey: "SRB::pec", fill: "#c98761" },
+    "SRB::kosovo-metohija": { label: "Kosovo i Metohija", dataRegionKey: "SRB::kosovo and metohija", fill: "#efb287" },
     "MNE::boka": { label: "Boka", dataRegionKey: "MNE::coast", fill: "#78b8c8" },
     "MNE::primorje": { label: "Primorje", dataRegionKey: "MNE::coast", fill: "#5aa6b7" },
     "MNE::zeta": { label: "Zeta", dataRegionKey: "MNE::inland", fill: "#8fca78" },
@@ -397,11 +309,7 @@ const REGION_FEATURE_TO_BESP = {
     "BIH::republika srpska": "BIH::republika srpska",
     "BIH::brcko": "BIH::republika srpska",
     "SRB::belgrade": "SRB::belgrade",
-    "SRB::kosovo": "SRB::kosovo",
-    "SRB::kosovsko pomoravlje": "SRB::kosovsko pomoravlje",
-    "SRB::kosovska mitrovica": "SRB::kosovska mitrovica",
-    "SRB::prizren": "SRB::prizren",
-    "SRB::pec": "SRB::pec",
+    "SRB::kosovo": "SRB::kosovo and metohija",
     ...expandFeatureGroups(REGION_GROUPS_RESOLVED),
 };
 const BESP_REGION_KEYS = new Set(Object.values(REGION_FEATURE_TO_BESP));
@@ -415,17 +323,18 @@ const FEATURE_TO_VISUAL_REGION = {
         "BGR::north": REGION_GROUPS_RESOLVED["BGR::northern bulgaria"],
         "BGR::south": REGION_GROUPS_RESOLVED["BGR::southern bulgaria"],
         "BGR::black-sea": REGION_GROUPS_RESOLVED["BGR::black sea bulgaria"],
-        "HRV::zagreb-central": REGION_GROUPS_RESOLVED["HRV::ce hrv"],
-        "HRV::slavonia": REGION_GROUPS_RESOLVED["HRV::slavonija"],
-        "HRV::dalmatia": REGION_GROUPS_RESOLVED["HRV::dalmacija"],
-        "HRV::istria-kvarner": REGION_GROUPS_RESOLVED["HRV::istrija"],
-        "HUN::central-hungary": REGION_GROUPS_RESOLVED["HUN::central hungary"],
-        "HUN::transdanubia": REGION_GROUPS_RESOLVED["HUN::transdanubia"],
-        "HUN::north-hungary": REGION_GROUPS_RESOLVED["HUN::northern hungary"],
-        "HUN::great-plains": REGION_GROUPS_RESOLVED["HUN::great plains"],
+        "HRV::zagreb-central": REGION_GROUPS_RESOLVED["HRV::zagreb and central croatia"],
+        "HRV::slavonia": REGION_GROUPS_RESOLVED["HRV::slavonia"],
+        "HRV::dalmatia": REGION_GROUPS_RESOLVED["HRV::dalmatia"],
+        "HRV::istria-kvarner": REGION_GROUPS_RESOLVED["HRV::istria and kvarner"],
+        "HUN::budapest": REGION_GROUPS_RESOLVED["HUN::budapest"],
+        "HUN::west": REGION_GROUPS_RESOLVED["HUN::western hungary"],
+        "HUN::central": REGION_GROUPS_RESOLVED["HUN::central hungary"],
+        "HUN::east": REGION_GROUPS_RESOLVED["HUN::eastern hungary"],
         "MKD::skopje": REGION_GROUPS_RESOLVED["MKD::skopje"],
         "MKD::west": REGION_GROUPS_RESOLVED["MKD::western north macedonia"],
-        "MKD::se": REGION_GROUPS_RESOLVED["MKD::se macedonia"],
+        "MKD::east": REGION_GROUPS_RESOLVED["MKD::eastern north macedonia"],
+        "MKD::south": REGION_GROUPS_RESOLVED["MKD::southern north macedonia"],
         "ROU::bucharest-ilfov": REGION_GROUPS_RESOLVED["ROU::bucharest ilfov"],
         "ROU::transylvania-banat": REGION_GROUPS_RESOLVED["ROU::transylvania and banat"],
         "ROU::moldavia": REGION_GROUPS_RESOLVED["ROU::moldavia"],
@@ -436,11 +345,8 @@ const FEATURE_TO_VISUAL_REGION = {
     "BIH::republika srpska": "BIH::rs",
     "BIH::brcko": "BIH::rs",
     "SRB::belgrade": "SRB::belgrade",
-    "SRB::kosovska mitrovica": "SRB::kosovo-core",
-    "SRB::kosovsko pomoravlje": "SRB::kosovo-core",
-    "SRB::kosovo": "SRB::kosovo-core",
-    "SRB::prizren": "SRB::kosovo-core",
-    "SRB::pec": "SRB::kosovo-core",
+    "SRB::kosovo": "SRB::kosovo-metohija",
+    "SRB::kosovo and metohija": "SRB::kosovo-metohija",
     ...expandFeatureGroups({
         "SRB::vojvodina": REGION_GROUPS_RESOLVED["SRB::vojvodina"],
         "SRB::sz-srb": REGION_GROUPS_RESOLVED["SRB::central serbia"],
@@ -915,10 +821,10 @@ async function loadGeoBoundaryData() {
     const countryFeaturesRaw = countryCollections.flatMap((collection) => collection.features ?? []);
     const regionFeaturesRaw = regionCollections.flatMap((collection) => collection.features ?? []);
     const countryFeatures = countryFeaturesRaw
-        .flatMap((feature) => normalizeGeoFeature(feature, "country"))
+        .map((feature) => normalizeGeoFeature(feature, "country"))
         .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
     const regionFeatures = regionFeaturesRaw
-        .flatMap((feature) => normalizeGeoFeature(feature, "region"))
+        .map((feature) => normalizeGeoFeature(feature, "region"))
         .filter((feature) => feature && TARGET_COUNTRIES.has(feature.countryCode));
     const allGeometryFeatures = [...countryFeatures, ...regionFeatures];
     if (!allGeometryFeatures.length) {
@@ -934,7 +840,6 @@ async function loadGeoBoundaryData() {
     return {
         countryFeatures: projectedCountryFeatures,
         regionFeatures: projectedRegionFeatures,
-        projection,
     };
 }
 function normalizeGeoFeature(feature, layerType) {
@@ -949,213 +854,18 @@ function normalizeGeoFeature(feature, layerType) {
     if (rawCountryCode === "XKX") {
         countryCode = "SRB";
         if (layerType === "region") {
-            return splitKosovoSubregionFeatures(feature.geometry).map((subregion) => ({
-                countryCode,
-                rawCountryCode,
-                name: subregion.name,
-                geometry: subregion.geometry,
-            }));
+            name = "Kosovo and Metohija";
         }
     }
     if (!countryCode || !name) {
-        return [];
+        return null;
     }
-    return [{
+    return {
         countryCode,
         rawCountryCode,
         name,
         geometry: feature.geometry,
-    }];
-}
-function splitKosovoSubregionFeatures(geometry) {
-    const bbox = geometryBounds(geometry);
-    if (!bbox) {
-        return [{
-            name: "Kosovo",
-            geometry,
-        }];
-    }
-    const lonSpan = bbox.maxLon - bbox.minLon;
-    const latSpan = bbox.maxLat - bbox.minLat;
-    const lonWest = bbox.minLon + lonSpan * 0.33;
-    const lonCenter = bbox.minLon + lonSpan * 0.60;
-    const latSouth = bbox.minLat + latSpan * 0.34;
-    const latMid = bbox.minLat + latSpan * 0.67;
-    const padLon = lonSpan * 0.012;
-    const padLat = latSpan * 0.012;
-    const masks = [
-        {
-            name: "Kosovska Mitrovica",
-            minLon: bbox.minLon,
-            maxLon: lonCenter,
-            minLat: latMid,
-            maxLat: bbox.maxLat,
-        },
-        {
-            name: "Pec",
-            minLon: bbox.minLon,
-            maxLon: lonWest,
-            minLat: latSouth,
-            maxLat: latMid,
-        },
-        {
-            name: "Prizren",
-            minLon: bbox.minLon,
-            maxLon: lonCenter,
-            minLat: bbox.minLat,
-            maxLat: latSouth,
-        },
-        {
-            name: "Kosovsko Pomoravlje",
-            minLon: lonCenter,
-            maxLon: bbox.maxLon,
-            minLat: bbox.minLat,
-            maxLat: bbox.maxLat,
-        },
-        {
-            name: "Kosovo",
-            minLon: lonWest,
-            maxLon: lonCenter,
-            minLat: latSouth,
-            maxLat: latMid,
-        },
-    ];
-    const pieces = masks
-        .map((mask) => ({
-            name: mask.name,
-            geometry: stripGeometryHoles(clipGeometryToBbox(geometry, expandBboxMask(mask, bbox, padLon, padLat))),
-        }))
-        .filter((piece) => geometryHasPoints(piece.geometry));
-    return pieces.length ? pieces : [{ name: "Kosovo", geometry }];
-}
-function expandBboxMask(mask, bbox, padLon, padLat) {
-    return {
-        minLon: Math.max(bbox.minLon, mask.minLon - padLon),
-        maxLon: Math.min(bbox.maxLon, mask.maxLon + padLon),
-        minLat: Math.max(bbox.minLat, mask.minLat - padLat),
-        maxLat: Math.min(bbox.maxLat, mask.maxLat + padLat),
     };
-}
-function stripGeometryHoles(geometry) {
-    if (!geometry?.type || !geometry?.coordinates) {
-        return geometry;
-    }
-    if (geometry.type === "Polygon") {
-        return geometry.coordinates.length
-            ? { type: "Polygon", coordinates: [geometry.coordinates[0]] }
-            : geometry;
-    }
-    if (geometry.type === "MultiPolygon") {
-        return {
-            type: "MultiPolygon",
-            coordinates: geometry.coordinates
-                .filter((polygon) => Array.isArray(polygon) && polygon[0]?.length >= 4)
-                .map((polygon) => [polygon[0]]),
-        };
-    }
-    return geometry;
-}
-function geometryBounds(geometry) {
-    const points = extractCoordinates(geometry);
-    if (!points.length) {
-        return null;
-    }
-    let minLon = Number.POSITIVE_INFINITY;
-    let maxLon = Number.NEGATIVE_INFINITY;
-    let minLat = Number.POSITIVE_INFINITY;
-    let maxLat = Number.NEGATIVE_INFINITY;
-    for (const [lon, lat] of points) {
-        if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
-            continue;
-        }
-        minLon = Math.min(minLon, lon);
-        maxLon = Math.max(maxLon, lon);
-        minLat = Math.min(minLat, lat);
-        maxLat = Math.max(maxLat, lat);
-    }
-    return Number.isFinite(minLon)
-        ? { minLon, maxLon, minLat, maxLat }
-        : null;
-}
-function clipGeometryToBbox(geometry, bbox) {
-    if (!geometry?.type || !geometry?.coordinates) {
-        return geometry;
-    }
-    if (geometry.type === "Polygon") {
-        const rings = geometry.coordinates
-            .map((ring) => clipRingToBbox(ring, bbox))
-            .filter((ring) => ring.length >= 4);
-        return rings.length ? { type: "Polygon", coordinates: rings } : { type: "Polygon", coordinates: [] };
-    }
-    if (geometry.type === "MultiPolygon") {
-        const polygons = geometry.coordinates
-            .map((polygon) => polygon
-                .map((ring) => clipRingToBbox(ring, bbox))
-                .filter((ring) => ring.length >= 4))
-            .filter((polygon) => polygon.length);
-        return { type: "MultiPolygon", coordinates: polygons };
-    }
-    return geometry;
-}
-function clipRingToBbox(ring, bbox) {
-    let output = ring;
-    for (const edge of ["left", "right", "bottom", "top"]) {
-        output = clipPointsAgainstEdge(output, edge, bbox);
-        if (!output.length) {
-            return [];
-        }
-    }
-    const first = output[0];
-    const last = output[output.length - 1];
-    if (!first || !last || first[0] !== last[0] || first[1] !== last[1]) {
-        output.push([...first]);
-    }
-    return output;
-}
-function clipPointsAgainstEdge(points, edge, bbox) {
-    if (!Array.isArray(points) || !points.length) {
-        return [];
-    }
-    const output = [];
-    for (let index = 0; index < points.length; index += 1) {
-        const current = points[index];
-        const previous = points[(index + points.length - 1) % points.length];
-        const currentInside = pointInsideEdge(current, edge, bbox);
-        const previousInside = pointInsideEdge(previous, edge, bbox);
-        if (currentInside) {
-            if (!previousInside) {
-                output.push(intersectionWithEdge(previous, current, edge, bbox));
-            }
-            output.push(current);
-        } else if (previousInside) {
-            output.push(intersectionWithEdge(previous, current, edge, bbox));
-        }
-    }
-    return output.filter(Boolean);
-}
-function pointInsideEdge(point, edge, bbox) {
-    const [x, y] = point;
-    if (edge === "left") return x >= bbox.minLon;
-    if (edge === "right") return x <= bbox.maxLon;
-    if (edge === "bottom") return y >= bbox.minLat;
-    return y <= bbox.maxLat;
-}
-function intersectionWithEdge(start, end, edge, bbox) {
-    const [x1, y1] = start;
-    const [x2, y2] = end;
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    if (edge === "left" || edge === "right") {
-        const xEdge = edge === "left" ? bbox.minLon : bbox.maxLon;
-        const t = dx === 0 ? 0 : (xEdge - x1) / dx;
-        return [xEdge, y1 + t * dy];
-    }
-    const yEdge = edge === "bottom" ? bbox.minLat : bbox.maxLat;
-    const t = dy === 0 ? 0 : (yEdge - y1) / dy;
-    return [x1 + t * dx, yEdge];
-}
-function geometryHasPoints(geometry) {
-    return extractCoordinates(geometry).length >= 4;
 }
 function createProjection(features) {
     let minLon = Number.POSITIVE_INFINITY;
@@ -1388,16 +1098,14 @@ function renderCountryLayer(geoData) {
         (row) => metricValueFromCountry(row, dashboardState.activeMetric)
     );
     const groupedByCountry = groupBy(geoData.countryFeatures, (feature) => feature.countryCode);
+    const groupedVisualRegions = buildVisualRegionGroups(geoData.regionFeatures ?? []);
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
-            const baseFeatures = features.filter((feature) => feature.rawCountryCode === countryCode);
-            const kosovoOverlayFeatures = features.filter((feature) => feature.rawCountryCode === "XKX");
-            const basePathD = (baseFeatures.length ? baseFeatures : features)
-                .map((feature) => feature.pathD)
-                .join(" ");
-            const overlayPathD = countryCode === "SRB"
-                ? kosovoOverlayFeatures.map((feature) => feature.pathD).join(" ")
-                : "";
+            const countryPath = features.map((feature) => feature.pathD).join(" ");
+            const kosovoRegion = countryCode === "SRB"
+                ? groupedVisualRegions.find((group) => group.visualRegionKey === "SRB::kosovo-metohija")
+                : null;
+            const mergedPathD = kosovoRegion ? `${countryPath} ${kosovoRegion.pathD}` : countryPath;
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
             const centroid = labelFeature?.centroid ?? averageCentroid(features);
             const displayName = labelFeature?.countryCode === "SRB"
@@ -1406,10 +1114,10 @@ function renderCountryLayer(geoData) {
             return {
                 countryCode,
                 displayName,
-                basePathD,
-                overlayPathD,
+                mergedPathD,
                 centroid,
                 features,
+                kosovoRegion,
             };
         })
         .sort((left, right) => left.countryCode.localeCompare(right.countryCode));
@@ -1423,26 +1131,33 @@ function renderCountryLayer(geoData) {
                     countryMetricRange,
                     dashboardState.activeMetric
                 );
+            const kosovoSeamFix = country.kosovoRegion;
             return `
-                <g data-country-code="${escapeHtml(country.countryCode)}">
-                    <path
-                        class="map-country-shape"
-                        data-country-code="${escapeHtml(country.countryCode)}"
-                        d="${escapeHtml(country.basePathD)}"
-                        fill="${escapeHtml(fill)}"
-                        fill-rule="nonzero"
-                    ></path>
-                    ${country.overlayPathD ? `
-                    <path
-                        class="map-country-shape map-country-overlay"
-                        data-country-code="${escapeHtml(country.countryCode)}"
-                        d="${escapeHtml(country.overlayPathD)}"
-                        fill="${escapeHtml(fill)}"
-                        fill-rule="nonzero"
-                        stroke="none"
-                    ></path>
-                    ` : ""}
-                </g>
+                <path
+                    class="map-country-shape"
+                    data-country-code="${escapeHtml(country.countryCode)}"
+                    d="${escapeHtml(country.mergedPathD)}"
+                    fill="${escapeHtml(fill)}"
+                    stroke="${escapeHtml(fill)}"
+                    stroke-width="1.35"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                    fill-rule="nonzero"
+                ></path>
+                ${kosovoSeamFix ? `
+                <path
+                    class="map-country-shape"
+                    data-country-code="${escapeHtml(country.countryCode)}"
+                    d="${escapeHtml(kosovoSeamFix.pathD)}"
+                    fill="none"
+                    stroke="${escapeHtml(fill)}"
+                    stroke-width="2.4"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                    fill-rule="nonzero"
+                    pointer-events="none"
+                ></path>
+                ` : ""}
             `;
         })
         .join("");
@@ -1542,9 +1257,6 @@ function renderRegionLayer(geoData) {
         `)
         .join("");
     const labelCandidates = groupedRegions.map((group) => {
-        if (REGION_LABEL_HIDDEN.has(group.visualRegionKey)) {
-            return null;
-        }
         const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
         const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
         const metricDetailRaw = buildMapMetricDetail(
@@ -1554,26 +1266,19 @@ function renderRegionLayer(geoData) {
             "region"
         );
         const view = chooseRegionLabelView(group);
-        const labelLines = getRegionLabelLines(group, view);
-        const labelText = labelLines.join(" ");
+        const labelText = view.abbreviate ? abbreviateRegionLabel(group) : group.label;
         const metricDetail = view.showDetail ? metricDetailRaw : null;
         const x = group.centroid[0] + offsetX;
         const y = group.centroid[1] + offsetY;
         const box = estimateLabelBounds({
             x,
             y,
-            labelLines,
+            labelText,
             detailText: metricDetail?.text ?? "",
             labelFontPx: view.labelFontPx,
             detailFontPx: view.detailFontPx,
             showDetail: Boolean(metricDetail),
         });
-        const baseLineY = y - ((labelLines.length - 1) * view.labelFontPx * 0.54);
-        const labelTspans = labelLines
-            .map((line, index) => (
-                `<tspan x="${x.toFixed(1)}" dy="${index === 0 ? "0" : `${(view.labelFontPx * 1.08).toFixed(1)}`}">${escapeHtml(line)}</tspan>`
-            ))
-            .join("");
         const labelClass = view.compact ? "map-region-label map-region-label-compact" : "map-region-label";
         const detailClass = view.compact
             ? "map-region-label-detail map-region-label-detail-compact"
@@ -1581,24 +1286,18 @@ function renderRegionLayer(geoData) {
         return {
             key: group.visualRegionKey,
             priority: computeRegionLabelPriority(group, view),
-            alwaysShow: REGION_LABEL_FORCE_SHOW.has(group.visualRegionKey),
             box,
             html: `
             <g data-visual-region-key="${escapeHtml(group.visualRegionKey)}">
-                <text class="${labelClass}" x="${x.toFixed(1)}" y="${baseLineY.toFixed(1)}">${labelTspans}</text>
-                ${metricDetail ? `<text class="${detailClass} map-label-detail-${metricDetail.tone}" x="${x.toFixed(1)}" y="${(baseLineY + labelLines.length * view.labelFontPx + 2).toFixed(1)}">${escapeHtml(metricDetail.text)}</text>` : ""}
+                <text class="${labelClass}" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${escapeHtml(labelText)}</text>
+                ${metricDetail ? `<text class="${detailClass} map-label-detail-${metricDetail.tone}" x="${x.toFixed(1)}" y="${(y + 14).toFixed(1)}">${escapeHtml(metricDetail.text)}</text>` : ""}
             </g>
         `,
         };
-    }).filter(Boolean);
-    const guideOverlayHtml = buildRegionGuideOverlayHtml(geoData);
-    const chosenLabels = selectNonOverlappingLabels(labelCandidates, 2);
-    const pinnedLabels = ["ALB::tirana"]
-        .map((key) => labelCandidates.find((candidate) => candidate.key === key))
-        .filter((candidate) => candidate && !chosenLabels.some((entry) => entry.key === candidate.key));
-    elements.regionLabelLayer.innerHTML = `${guideOverlayHtml}${[...chosenLabels, ...pinnedLabels]
+    });
+    elements.regionLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 2)
         .map((entry) => entry.html)
-        .join("")}`;
+        .join("");
 }
 function chooseRegionLabelView(group) {
     const isMetric = !isClassicMetricView();
@@ -1606,26 +1305,16 @@ function chooseRegionLabelView(group) {
     const share = Number(group.areaShare ?? 0);
     const fallbackProvince = !VISUAL_REGION_DEFINITIONS[group.visualRegionKey];
     const tiny = area < 900;
-    const priorityBoost = REGION_LABEL_PRIORITY_BOOST[group.visualRegionKey] ?? 0;
-    const keepFullLabel = priorityBoost >= 3200;
     const compact = fallbackProvince
         ? area < 1700 || share < 0.16
         : area < 1500 || share < 0.22;
-    const nameOnly = REGION_LABEL_NAME_ONLY.has(group.visualRegionKey);
     return {
-        abbreviate: !keepFullLabel && (compact || area < 2200 || fallbackProvince),
-        showDetail: isMetric && !tiny && !nameOnly,
+        abbreviate: compact || area < 2200 || fallbackProvince,
+        showDetail: isMetric && !tiny,
         compact,
         labelFontPx: fallbackProvince ? 10.2 : (compact ? 10.5 : 12),
         detailFontPx: fallbackProvince ? 8.2 : (compact ? 8.4 : 9.5),
     };
-}
-function getRegionLabelLines(group, view) {
-    const key = group.visualRegionKey;
-    if (!view.abbreviate && REGION_LABEL_MULTILINE[key]) {
-        return REGION_LABEL_MULTILINE[key];
-    }
-    return [view.abbreviate ? abbreviateRegionLabel(group) : group.label];
 }
 function abbreviateRegionLabel(group) {
     if (REGION_LABEL_SHORT[group.visualRegionKey]) {
@@ -1656,33 +1345,22 @@ function abbreviateRegionLabel(group) {
 function computeRegionLabelPriority(group, view) {
     const area = Number(group.projectedArea ?? 0);
     const share = Number(group.areaShare ?? 0);
-    const boost = REGION_LABEL_PRIORITY_BOOST[group.visualRegionKey] ?? 0;
-    return area + (view.showDetail ? 800 : 0) + share * 500 + boost;
+    return area + (view.showDetail ? 800 : 0) + share * 500;
 }
 function estimateLabelBounds({
     x,
     y,
-    labelLines,
+    labelText,
     detailText,
     labelFontPx,
     detailFontPx,
     showDetail,
 }) {
-    const normalizedLines = Array.isArray(labelLines) && labelLines.length
-        ? labelLines
-        : [""];
-    const longestLineLength = normalizedLines.reduce(
-        (longest, line) => Math.max(longest, line.length),
-        0
-    );
-    const labelWidth = Math.max(18, longestLineLength * labelFontPx * 0.56);
-    const labelHeight = Math.max(1, normalizedLines.length) * labelFontPx * 1.08;
+    const labelWidth = Math.max(18, labelText.length * labelFontPx * 0.56);
     const detailWidth = showDetail ? Math.max(10, detailText.length * detailFontPx * 0.54) : 0;
     const width = Math.max(labelWidth, detailWidth) + 8;
-    const height = showDetail
-        ? (labelHeight + detailFontPx + 6)
-        : (labelHeight + 3);
-    const top = y - labelHeight * 0.62;
+    const height = showDetail ? (labelFontPx + detailFontPx + 7) : (labelFontPx + 3);
+    const top = y - labelFontPx;
     return {
         left: x - width / 2,
         right: x + width / 2,
@@ -1691,138 +1369,14 @@ function estimateLabelBounds({
     };
 }
 function selectNonOverlappingLabels(candidates, padding = 2) {
-    const forced = candidates
-        .filter((candidate) => candidate.alwaysShow)
-        .sort((a, b) => b.priority - a.priority);
-    const normal = candidates
-        .filter((candidate) => !candidate.alwaysShow)
-        .sort((a, b) => b.priority - a.priority);
+    const sorted = [...candidates].sort((a, b) => b.priority - a.priority);
     const accepted = [];
-    for (const candidate of forced) {
-        if (!accepted.some((entry) => boxesOverlap(entry.box, candidate.box, padding))) {
-            accepted.push(candidate);
-        }
-    }
-    for (const candidate of normal) {
+    for (const candidate of sorted) {
         if (!accepted.some((entry) => boxesOverlap(entry.box, candidate.box, padding))) {
             accepted.push(candidate);
         }
     }
     return accepted;
-}
-function buildRegionGuideOverlayHtml(geoData) {
-    if (activeMapMode !== "region" || !geoData?.projection) {
-        return "";
-    }
-    return [
-        ...buildBosniaGuidePieces(geoData),
-        ...buildBosniaGuideLines(geoData),
-        ...buildKosovoGuideLines(geoData),
-    ].map((piece) => {
-        const pathD = piece.pathD ?? geometryToPath(piece.geometry, geoData.projection, false);
-        return `
-        <path
-            class="map-guide-line"
-            d="${escapeHtml(pathD)}"
-            fill="none"
-            stroke-linejoin="round"
-            stroke-linecap="round"
-        ></path>
-    `;
-    }).join("");
-}
-function buildBosniaGuidePieces(geoData) {
-    const fbihFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::federation of bosnia and herzegovina");
-    const rsFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::republika srpska");
-    if (!fbihFeature || !rsFeature) {
-        return [];
-    }
-    return [
-        ...buildGuidePiecesFromMasks(fbihFeature.geometry, [
-            { minX: 0.00, maxX: 0.24, minY: 0.52, maxY: 0.84 },
-            { minX: 0.24, maxX: 0.46, minY: 0.46, maxY: 0.78 },
-            { minX: 0.46, maxX: 0.66, minY: 0.46, maxY: 0.76 },
-            { minX: 0.66, maxX: 0.92, minY: 0.44, maxY: 0.76 },
-            { minX: 0.20, maxX: 0.44, minY: 0.16, maxY: 0.46 },
-            { minX: 0.44, maxX: 0.64, minY: 0.14, maxY: 0.42 },
-            { minX: 0.62, maxX: 0.86, minY: 0.10, maxY: 0.34 },
-            { minX: 0.12, maxX: 0.42, minY: 0.80, maxY: 1.00 },
-        ]),
-        ...buildGuidePiecesFromMasks(rsFeature.geometry, [
-            { minX: 0.00, maxX: 0.56, minY: 0.00, maxY: 1.00 },
-            { minX: 0.54, maxX: 1.00, minY: 0.12, maxY: 1.00 },
-            { minX: 0.72, maxX: 0.94, minY: 0.34, maxY: 0.56 },
-        ]),
-    ];
-}
-function buildGuidePiecesFromMasks(geometry, masks) {
-    const bbox = geometryBounds(geometry);
-    if (!bbox) {
-        return [];
-    }
-    const lonSpan = bbox.maxLon - bbox.minLon;
-    const latSpan = bbox.maxLat - bbox.minLat;
-    return masks
-        .map((mask) => clipGeometryToBbox(geometry, {
-            minLon: bbox.minLon + lonSpan * mask.minX,
-            maxLon: bbox.minLon + lonSpan * mask.maxX,
-            minLat: bbox.minLat + latSpan * mask.minY,
-            maxLat: bbox.minLat + latSpan * mask.maxY,
-        }))
-        .filter((piece) => geometryHasPoints(piece));
-}
-function buildBosniaGuideLines(geoData) {
-    const fbihFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::federation of bosnia and herzegovina");
-    const rsFeature = geoData.regionFeatures.find((feature) => feature.key === "BIH::republika srpska");
-    if (!fbihFeature || !rsFeature) {
-        return [];
-    }
-    return [
-        buildGuidePathFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
-            [0.10, 0.22], [0.36, 0.16], [0.56, 0.18], [0.82, 0.28],
-        ]),
-        buildGuidePathFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
-            [0.36, 0.16], [0.42, 0.38], [0.48, 0.60], [0.56, 0.82],
-        ]),
-        buildGuidePathFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
-            [0.70, 0.18], [0.76, 0.34], [0.82, 0.54], [0.90, 0.74],
-        ]),
-        buildGuidePathFromNormalizedPoints(rsFeature.geometry, geoData.projection, [
-            [0.76, 0.36], [0.84, 0.40], [0.92, 0.46], [0.88, 0.58], [0.78, 0.56],
-        ], true),
-        buildGuidePathFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
-            [0.10, 0.64], [0.22, 0.54], [0.36, 0.46], [0.52, 0.40],
-        ]),
-        buildGuidePathFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
-            [0.22, 0.80], [0.34, 0.66], [0.44, 0.54], [0.56, 0.42], [0.66, 0.30],
-        ]),
-        buildGuidePathFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
-            [0.48, 0.82], [0.52, 0.68], [0.58, 0.52], [0.68, 0.38], [0.86, 0.30],
-        ]),
-        buildGuidePathFromNormalizedPoints(fbihFeature.geometry, geoData.projection, [
-            [0.18, 0.24], [0.30, 0.24], [0.42, 0.28], [0.54, 0.30], [0.68, 0.32], [0.82, 0.36],
-        ]),
-    ].filter(Boolean);
-}
-function buildKosovoGuideLines(geoData) {
-    return (geoData.regionFeatures ?? [])
-        .filter((feature) => feature.rawCountryCode === "XKX")
-        .map((feature) => ({ geometry: feature.geometry }));
-}
-function buildGuidePathFromNormalizedPoints(geometry, projection, points, closePath = false) {
-    const bbox = geometryBounds(geometry);
-    if (!bbox || !Array.isArray(points) || points.length < 2) {
-        return null;
-    }
-    const lonSpan = bbox.maxLon - bbox.minLon;
-    const latSpan = bbox.maxLat - bbox.minLat;
-    const pathPoints = points.map(([x, y]) => {
-        const lon = bbox.minLon + lonSpan * x;
-        const lat = bbox.minLat + latSpan * y;
-        const [px, py] = projection(lon, lat);
-        return `${px.toFixed(2)},${py.toFixed(2)}`;
-    });
-    return { pathD: `M ${pathPoints.join(" L ")}${closePath ? " Z" : ""}` };
 }
 function boxesOverlap(left, right, padding = 0) {
     return !(
@@ -1881,9 +1435,6 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
             visualRegionKey,
             label: template?.label ?? features[0]?.visualRegionLabel ?? visualRegionKey,
             dataRegionKey: template?.dataRegionKey ?? features[0]?.visualRegionDataKey ?? null,
-            sourceRegionKeys: template?.sourceRegionKeys ?? [...new Set(
-                features.map((feature) => feature.visualRegionDataKey ?? feature.bespRegionKey).filter(Boolean)
-            )],
             countryCode: features[0]?.countryCode ?? "",
             fill: template?.fill ?? features[0]?.visualRegionFill ?? "rgba(126, 143, 161, 0.5)",
             centroid: averageCentroid(features),
@@ -1908,14 +1459,6 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
 }
 function buildVisualRegionDisplayData(group, areaShare, regionSourceMap) {
     const source = group.dataRegionKey ? regionSourceMap.get(group.dataRegionKey) : null;
-    if (!source && group.sourceRegionKeys?.length) {
-        const sources = group.sourceRegionKeys
-            .map((key) => regionSourceMap.get(key))
-            .filter(Boolean);
-        if (sources.length) {
-            return aggregateVisualRegionSources(group, sources);
-        }
-    }
     if (!source) {
         return null;
     }
@@ -1939,46 +1482,6 @@ function buildVisualRegionDisplayData(group, areaShare, regionSourceMap) {
         end_gdp_billion_eur: scaledEndGdp,
         gdp_per_capita_eur: scaledPopulation > 0 ? (scaledEndGdp * 1_000_000_000) / scaledPopulation : 0,
         is_visual_split: normalizeRegionName(group.label) !== normalizeRegionName(source.region_name),
-    };
-}
-function aggregateVisualRegionSources(group, sources) {
-    const first = sources[0];
-    const totalStartPopulation = sumMetric(sources, "start_population");
-    const totalEndPopulation = sumMetric(sources, "end_population");
-    const totalArea = sumMetric(sources, "area_km2");
-    const totalStartGdp = sumMetric(sources, "start_gdp_billion_eur");
-    const totalEndGdp = sumMetric(sources, "end_gdp_billion_eur");
-    const populationWeight = (row) => Math.max(1, Number(row.end_population) || 0);
-    const weightedAverage = (key) => {
-        const totalWeight = sources.reduce((sum, row) => sum + populationWeight(row), 0);
-        if (!totalWeight) {
-            return 0;
-        }
-        return sources.reduce((sum, row) => sum + (Number(row[key]) || 0) * populationWeight(row), 0) / totalWeight;
-    };
-    return {
-        ...first,
-        region_name: group.label,
-        source_region_name: group.label,
-        start_population: totalStartPopulation,
-        births: Math.round(sumMetric(sources, "births")),
-        deaths: Math.round(sumMetric(sources, "deaths")),
-        natural_change: Math.round(sumMetric(sources, "natural_change")),
-        net_external_migration: Math.round(sumMetric(sources, "net_external_migration")),
-        internal_migration: Math.round(sumMetric(sources, "internal_migration")),
-        end_population: totalEndPopulation,
-        start_gdp_billion_eur: totalStartGdp,
-        end_gdp_billion_eur: totalEndGdp,
-        gdp_growth_rate: totalStartGdp > 0 ? ((totalEndGdp - totalStartGdp) / totalStartGdp) : 0,
-        gdp_per_capita_eur: totalEndPopulation > 0 ? (totalEndGdp * 1_000_000_000) / totalEndPopulation : 0,
-        unemployment_rate: weightedAverage("unemployment_rate"),
-        area_km2: totalArea,
-        population_density: totalArea > 0 ? totalEndPopulation / totalArea : 0,
-        housing_overload: weightedAverage("housing_overload"),
-        regional_attractiveness: weightedAverage("regional_attractiveness"),
-        data_confidence: weightedAverage("data_confidence"),
-        population_note: "Aggregated visual region from component subregions.",
-        is_visual_split: true,
     };
 }
 function bindMapHoverEvents() {
