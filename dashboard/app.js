@@ -14,8 +14,8 @@ const TARGET_COUNTRIES = new Set(MAP_COUNTRY_CODES);
 const COUNTRY_LABEL_OFFSETS = {
     ALB: [-12, 10],
     BGR: [4, 2],
-    BIH: [30, 6],
-    HRV: [62, -12],
+    BIH: [40, 12],
+    HRV: [108, -26],
     HUN: [-4, 14],
     MKD: [0, -2],
     ROU: [-18, -8],
@@ -1391,10 +1391,13 @@ function renderCountryLayer(geoData) {
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
             const baseFeatures = features.filter((feature) => feature.rawCountryCode === countryCode);
-            const basePathD = (countryCode === "SRB" ? features : (baseFeatures.length ? baseFeatures : features))
+            const kosovoOverlayFeatures = features.filter((feature) => feature.rawCountryCode === "XKX");
+            const basePathD = (baseFeatures.length ? baseFeatures : features)
                 .map((feature) => feature.pathD)
                 .join(" ");
-            const overlayPathD = "";
+            const overlayPathD = countryCode === "SRB"
+                ? kosovoOverlayFeatures.map((feature) => feature.pathD).join(" ")
+                : "";
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
             const centroid = labelFeature?.centroid ?? averageCentroid(features);
             const displayName = labelFeature?.countryCode === "SRB"
@@ -1804,7 +1807,7 @@ function buildBosniaGuideLines(geoData) {
 function buildKosovoGuideLines(geoData) {
     return (geoData.regionFeatures ?? [])
         .filter((feature) => feature.rawCountryCode === "XKX")
-        .map((feature) => ({ pathD: feature.pathD }));
+        .map((feature) => ({ geometry: feature.geometry }));
 }
 function buildGuidePathFromNormalizedPoints(geometry, projection, points, closePath = false) {
     const bbox = geometryBounds(geometry);
