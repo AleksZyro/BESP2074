@@ -158,6 +158,14 @@ code { font-family: Consolas, "Courier New", monospace; }
 }
 .map-country-shape { stroke: none; stroke-width: 0; vector-effect: non-scaling-stroke; }
 .map-region-shape { stroke: rgba(8, 14, 24, 0.7); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.map-region-guide {
+    fill: none;
+    stroke: rgba(8, 14, 24, 0.68);
+    stroke-width: 1.35;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
 .map-country-label, .map-region-label, .map-country-label-detail, .map-region-label-detail {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     font-weight: 600;

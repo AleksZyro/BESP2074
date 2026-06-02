@@ -41,6 +41,15 @@ const VISUAL_REGION_LABEL_OFFSETS = {
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
+const VISUAL_REGION_INTERNAL_GUIDES = {
+    "SRB::kosovo-metohija": [
+        [[0.46, 0.04], [0.49, 0.21], [0.42, 0.45]],
+        [[0.06, 0.45], [0.23, 0.43], [0.42, 0.45]],
+        [[0.20, 0.94], [0.26, 0.73], [0.42, 0.45]],
+        [[0.58, 0.17], [0.73, 0.16]],
+        [[0.73, 0.16], [0.71, 0.41], [0.66, 0.70]],
+    ],
+};
 const REGION_LABEL_SHORT = {
     "ALB::central-coast": "Central Coast",
     "ALB::north": "N Albania",
@@ -908,6 +917,7 @@ function projectFeature(feature, projection, kind) {
     }
     const centroid = geometryCentroid(feature.geometry, projection);
     const projectedArea = geometryProjectedArea(feature.geometry, projection, includeHoles);
+    const projectedBounds = geometryProjectedBounds(feature.geometry, projection);
     const key = buildRegionKey(feature.countryCode, feature.name);
     const bespRegionKey = kind === "region" ? resolveBespRegionKey(feature.countryCode, feature.name) : null;
     const visualRegion = kind === "region" ? resolveVisualRegion(feature.countryCode, feature.name, bespRegionKey) : null;
@@ -922,6 +932,7 @@ function projectFeature(feature, projection, kind) {
         pathD,
         centroid,
         projectedArea,
+        projectedBounds,
     };
 }
 function geometryToPath(geometry, projection, includeHoles = true) {
@@ -967,6 +978,23 @@ function geometryCentroid(geometry, projection) {
     const avgLon = lonSum / points.length;
     const avgLat = latSum / points.length;
     return projection(avgLon, avgLat);
+}
+function geometryProjectedBounds(geometry, projection) {
+    const points = extractCoordinates(geometry).map(([lon, lat]) => projection(lon, lat));
+    if (!points.length) {
+        return null;
+    }
+    return points.reduce((bounds, [x, y]) => ({
+        minX: Math.min(bounds.minX, x),
+        maxX: Math.max(bounds.maxX, x),
+        minY: Math.min(bounds.minY, y),
+        maxY: Math.max(bounds.maxY, y),
+    }), {
+        minX: Number.POSITIVE_INFINITY,
+        maxX: Number.NEGATIVE_INFINITY,
+        minY: Number.POSITIVE_INFINITY,
+        maxY: Number.NEGATIVE_INFINITY,
+    });
 }
 function extractCoordinates(geometry) {
     const type = geometry?.type;
@@ -1215,6 +1243,25 @@ function averageCentroid(features) {
     }
     return [x / features.length, y / features.length];
 }
+function mergeProjectedBounds(features) {
+    const validBounds = features
+        .map((feature) => feature.projectedBounds)
+        .filter(Boolean);
+    if (!validBounds.length) {
+        return null;
+    }
+    return validBounds.reduce((merged, bounds) => ({
+        minX: Math.min(merged.minX, bounds.minX),
+        maxX: Math.max(merged.maxX, bounds.maxX),
+        minY: Math.min(merged.minY, bounds.minY),
+        maxY: Math.max(merged.maxY, bounds.maxY),
+    }), {
+        minX: Number.POSITIVE_INFINITY,
+        maxX: Number.NEGATIVE_INFINITY,
+        minY: Number.POSITIVE_INFINITY,
+        maxY: Number.NEGATIVE_INFINITY,
+    });
+}
 function renderRegionLayer(geoData) {
     if (!geoData?.regionFeatures?.length) {
         elements.regionLayer.innerHTML = "";
@@ -1254,6 +1301,7 @@ function renderRegionLayer(geoData) {
                         group.fill
                     ))}"
             ></path>
+            ${buildInternalGuideMarkup(group)}
         `)
         .join("");
     const labelCandidates = groupedRegions.map((group) => {
@@ -1438,6 +1486,7 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
             countryCode: features[0]?.countryCode ?? "",
             fill: template?.fill ?? features[0]?.visualRegionFill ?? "rgba(126, 143, 161, 0.5)",
             centroid: averageCentroid(features),
+            projectedBounds: mergeProjectedBounds(features),
             projectedArea: features.reduce((sum, feature) => sum + (feature.projectedArea ?? 0), 0),
             pathD: mergedPathD,
         };
@@ -1456,6 +1505,40 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
             displayData: buildVisualRegionDisplayData(group, areaShare, regionSourceMap),
         };
     });
+}
+function buildInternalGuideMarkup(group) {
+    const guideSegments = VISUAL_REGION_INTERNAL_GUIDES[group.visualRegionKey];
+    const bounds = group.projectedBounds;
+    if (!guideSegments?.length || !bounds) {
+        return "";
+    }
+    const width = Math.max(bounds.maxX - bounds.minX, 1);
+    const height = Math.max(bounds.maxY - bounds.minY, 1);
+    const clipId = `guide-clip-${group.visualRegionKey.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
+    const linePaths = guideSegments.map((segment) => {
+        const points = segment.map(([nx, ny]) => {
+            const x = bounds.minX + width * nx;
+            const y = bounds.minY + height * ny;
+            return `${x.toFixed(2)},${y.toFixed(2)}`;
+        });
+        return `
+            <path
+                class="map-region-guide"
+                d="M ${points.join(" L ")}"
+                clip-path="url(#${escapeHtml(clipId)})"
+            ></path>
+        `;
+    }).join("");
+    return `
+        <defs>
+            <clipPath id="${escapeHtml(clipId)}">
+                <path d="${escapeHtml(group.pathD)}"></path>
+            </clipPath>
+        </defs>
+        <g class="map-region-guide-wrap" pointer-events="none">
+            ${linePaths}
+        </g>
+    `;
 }
 function buildVisualRegionDisplayData(group, areaShare, regionSourceMap) {
     const source = group.dataRegionKey ? regionSourceMap.get(group.dataRegionKey) : null;
