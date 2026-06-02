@@ -21,16 +21,23 @@ const COUNTRY_LABEL_OFFSETS = {
     SRB: [0, -26],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
+    "ALB::tirana": [0, -8],
+    "ALB::north": [10, -6],
+    "ALB::south": [0, 10],
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
     "HUN::central-hungary": [4, 2],
     "HUN::transdanubia": [-8, 4],
     "HUN::great-plains": [12, 6],
     "HUN::north-hungary": [0, -8],
-    "HRV::zagreb-central": [12, -4],
-    "HRV::slavonia": [12, 10],
+    "HRV::zagreb-central": [6, -10],
+    "HRV::slavonia": [20, 6],
     "HRV::dalmatia": [10, 18],
-    "HRV::istria-kvarner": [-10, -4],
+    "HRV::istria-kvarner": [-14, -2],
+    "MKD::skopje": [0, 4],
+    "MKD::west": [-12, 0],
+    "MKD::east": [12, 12],
+    "MKD::south": [4, 18],
     "MNE::boka": [-26, 2],
     "MNE::primorje": [8, 16],
     "MNE::zeta": [26, 0],
@@ -45,38 +52,41 @@ const VISUAL_REGION_LABEL_OFFSETS = {
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
+const REGION_LABEL_PRIORITY_BOOST = {
+    "ALB::tirana": 2200,
+    "HRV::slavonia": 900,
+    "HRV::zagreb-central": 500,
+    "MKD::skopje": 1200,
+};
 const VISUAL_REGION_INTERNAL_GUIDES = {
     "BIH::fbih": [
-        [[0.20, 0.20], [0.33, 0.28], [0.41, 0.43]],
-        [[0.35, 0.12], [0.43, 0.28], [0.53, 0.31]],
-        [[0.55, 0.09], [0.58, 0.24], [0.64, 0.40]],
-        [[0.66, 0.18], [0.71, 0.31], [0.83, 0.41]],
-        [[0.34, 0.57], [0.49, 0.53], [0.61, 0.57]],
-        [[0.46, 0.46], [0.43, 0.63], [0.48, 0.88]],
-        [[0.60, 0.44], [0.56, 0.63], [0.54, 0.86]],
-        [[0.16, 0.44], [0.28, 0.51], [0.35, 0.66]],
-        [[0.72, 0.48], [0.79, 0.63], [0.89, 0.67]],
+        [[0.16, 0.22], [0.30, 0.23], [0.42, 0.34]],
+        [[0.46, 0.17], [0.52, 0.31], [0.61, 0.44]],
+        [[0.66, 0.20], [0.73, 0.29], [0.83, 0.35]],
+        [[0.27, 0.51], [0.43, 0.54], [0.59, 0.50]],
+        [[0.43, 0.34], [0.40, 0.56], [0.48, 0.88]],
+        [[0.61, 0.44], [0.57, 0.65], [0.55, 0.90]],
+        [[0.73, 0.33], [0.78, 0.46], [0.88, 0.56]],
     ],
     "BIH::rs": [
-        [[0.30, 0.14], [0.44, 0.18], [0.56, 0.29]],
-        [[0.49, 0.17], [0.47, 0.34], [0.39, 0.53]],
-        [[0.39, 0.53], [0.56, 0.58], [0.78, 0.53]],
-        [[0.73, 0.09], [0.78, 0.17], [0.83, 0.31]],
-        [[0.67, 0.28], [0.74, 0.38], [0.86, 0.42]],
-        [[0.58, 0.64], [0.69, 0.71], [0.82, 0.86]],
+        [[0.32, 0.15], [0.48, 0.21], [0.58, 0.33]],
+        [[0.58, 0.19], [0.63, 0.30], [0.75, 0.31]],
+        [[0.46, 0.33], [0.47, 0.53], [0.39, 0.72]],
+        [[0.39, 0.71], [0.57, 0.72], [0.79, 0.60]],
+        [[0.73, 0.29], [0.80, 0.43], [0.88, 0.52]],
     ],
     "SRB::kosovo-metohija": [
-        [[0.31, 0.07], [0.42, 0.18], [0.45, 0.36]],
-        [[0.60, 0.08], [0.54, 0.20], [0.47, 0.33]],
-        [[0.08, 0.48], [0.28, 0.46], [0.47, 0.33]],
-        [[0.26, 0.94], [0.33, 0.72], [0.47, 0.33]],
-        [[0.71, 0.17], [0.69, 0.40], [0.63, 0.72]],
+        [[0.34, 0.06], [0.44, 0.18], [0.41, 0.39]],
+        [[0.57, 0.10], [0.56, 0.25], [0.55, 0.56]],
+        [[0.79, 0.23], [0.66, 0.31], [0.57, 0.47]],
+        [[0.12, 0.51], [0.31, 0.48], [0.55, 0.47]],
+        [[0.28, 0.92], [0.36, 0.69], [0.50, 0.48]],
     ],
 };
 const REGION_LABEL_SHORT = {
     "ALB::central-coast": "Central Coast",
-    "ALB::north": "N Albania",
-    "ALB::south": "S Albania",
+    "ALB::north": "N ALB",
+    "ALB::south": "S ALB",
     "BGR::black-sea": "Black Sea",
     "BGR::north": "N Bulgaria",
     "BGR::south": "S Bulgaria",
@@ -84,13 +94,15 @@ const REGION_LABEL_SHORT = {
     "HUN::great-plains": "Great Plains",
     "HUN::north-hungary": "N Hungary",
     "HUN::transdanubia": "Transdanubia",
-    "HRV::zagreb-central": "Central HRV",
-    "HRV::istria-kvarner": "Istria/Kvarner",
-    "MKD::east": "East MKD",
-    "MKD::south": "South MKD",
-    "MKD::west": "West MKD",
+    "HRV::zagreb-central": "CE HRV",
+    "HRV::istria-kvarner": "Istrija",
+    "HRV::slavonia": "Slavonija",
+    "HRV::dalmatia": "Dalmacija",
+    "MKD::east": "SE MAC",
+    "MKD::south": "",
+    "MKD::west": "W MAC",
     "MNE::stara-crna-gora": "Stara C. Gora",
-    "MNE::stara-hercegovina": "St. Hercegovina",
+    "MNE::stara-hercegovina": "St HEC",
     "MNE::stara-raska": "Stara Raska",
     "ROU::bucharest-ilfov": "Bucharest",
     "ROU::transylvania-banat": "Transylvania",
@@ -247,9 +259,9 @@ const REGION_GROUP_OVERRIDES = {
         "virovitica podravina", "vukovar syrmia",
     ],
     "HRV::dalmatia": [
-        "zadar county", "sibenik knin", "split dalmatia", "dubrovnik neretva",
+        "zadar county", "sibenik knin", "split dalmatia", "dubrovnik neretva", "lika senj",
     ],
-    "HRV::istria and kvarner": ["istria", "primorje gorski kotar", "lika senj"],
+    "HRV::istria and kvarner": ["istria", "primorje gorski kotar"],
     "HUN::central hungary": ["budapest", "pest"],
     "HUN::transdanubia": [
         "gyor moson sopron", "vas", "zala",
@@ -270,13 +282,14 @@ const REGION_GROUP_OVERRIDES = {
         "mures", "salaj", "satu mare", "sibiu", "timis",
     ],
     "ROU::moldavia": [
-        "bacau", "botosani", "iasi", "neamt", "suceava", "vaslui", "vrancea",
+        "bacau", "botosani", "iasi", "neamt", "suceava", "vaslui", "vrancea", "galati",
     ],
     "ROU::wallachia and oltenia": [
         "arges", "buzau", "calarasi", "dambovita", "dolj", "giurgiu",
         "gorj", "ialomita", "mehedinti", "olt", "prahova", "teleorman", "valcea",
+        "braila",
     ],
-    "ROU::dobruja and lower danube": ["braila", "galati", "constanta", "tulcea"],
+    "ROU::dobruja and lower danube": ["constanta", "tulcea"],
 };
 const REGION_GROUPS_RESOLVED = {
     ...REGION_GROUPS,
@@ -284,27 +297,27 @@ const REGION_GROUPS_RESOLVED = {
 };
 const VISUAL_REGION_DEFINITIONS = {
     "ALB::tirana": { label: "Tirana", dataRegionKey: "ALB::tirana", fill: "#8b7d6c" },
-    "ALB::north": { label: "North Albania", dataRegionKey: "ALB::northern albania", fill: "#9c8d7b" },
+    "ALB::north": { label: "N ALB", dataRegionKey: "ALB::northern albania", fill: "#9c8d7b" },
     "ALB::central-coast": { label: "Central Coast", dataRegionKey: "ALB::central coast albania", fill: "#b39a77" },
-    "ALB::south": { label: "South Albania", dataRegionKey: "ALB::southern albania", fill: "#8b6e63" },
+    "ALB::south": { label: "S ALB", dataRegionKey: "ALB::southern albania", fill: "#8b6e63" },
     "BGR::sofia": { label: "Sofia", dataRegionKey: "BGR::sofia", fill: "#7f9961" },
     "BGR::north": { label: "North Bulgaria", dataRegionKey: "BGR::northern bulgaria", fill: "#94ae71" },
     "BGR::south": { label: "South Bulgaria", dataRegionKey: "BGR::southern bulgaria", fill: "#73945c" },
     "BGR::black-sea": { label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#5e88a9" },
     "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
     "BIH::rs": { label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c" },
-    "HRV::zagreb-central": { label: "Central Croatia", dataRegionKey: "HRV::zagreb and central croatia", fill: "#9a7c5a" },
-    "HRV::slavonia": { label: "Slavonia", dataRegionKey: "HRV::slavonia", fill: "#7d6247" },
-    "HRV::dalmatia": { label: "Dalmatia", dataRegionKey: "HRV::dalmatia", fill: "#b18e68" },
-    "HRV::istria-kvarner": { label: "Istria/Kvarner", dataRegionKey: "HRV::istria and kvarner", fill: "#c9a97d" },
+    "HRV::zagreb-central": { label: "CE HRV", dataRegionKey: "HRV::zagreb and central croatia", fill: "#9a7c5a" },
+    "HRV::slavonia": { label: "Slavonija", dataRegionKey: "HRV::slavonia", fill: "#7d6247" },
+    "HRV::dalmatia": { label: "Dalmacija", dataRegionKey: "HRV::dalmatia", fill: "#b18e68" },
+    "HRV::istria-kvarner": { label: "Istrija", dataRegionKey: "HRV::istria and kvarner", fill: "#c9a97d" },
     "HUN::central-hungary": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#d34b4b" },
     "HUN::transdanubia": { label: "Transdanubia", dataRegionKey: "HUN::transdanubia", fill: "#6f63c7" },
     "HUN::north-hungary": { label: "Northern Hungary", dataRegionKey: "HUN::northern hungary", fill: "#81c5d8" },
     "HUN::great-plains": { label: "Great Plains", dataRegionKey: "HUN::great plains", fill: "#41b65a" },
     "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#916b7c" },
-    "MKD::west": { label: "West MKD", dataRegionKey: "MKD::western north macedonia", fill: "#a47c8e" },
-    "MKD::east": { label: "East MKD", dataRegionKey: "MKD::eastern north macedonia", fill: "#7d5868" },
-    "MKD::south": { label: "South MKD", dataRegionKey: "MKD::southern north macedonia", fill: "#b38f9d" },
+    "MKD::west": { label: "W MAC", dataRegionKey: "MKD::western north macedonia", fill: "#a47c8e" },
+    "MKD::east": { label: "SE Macedonia", dataRegionKey: "MKD::eastern north macedonia", fill: "#8d6c9e" },
+    "MKD::south": { label: "SE Macedonia", dataRegionKey: "MKD::southern north macedonia", fill: "#8d6c9e" },
     "SRB::vojvodina": { label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
     "SRB::belgrade": { label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
     "SRB::sz-srb": { label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
@@ -314,7 +327,7 @@ const VISUAL_REGION_DEFINITIONS = {
     "MNE::primorje": { label: "Primorje", dataRegionKey: "MNE::coast", fill: "#5aa6b7" },
     "MNE::zeta": { label: "Zeta", dataRegionKey: "MNE::inland", fill: "#8fca78" },
     "MNE::stara-crna-gora": { label: "Stara Crna Gora", dataRegionKey: "MNE::inland", fill: "#9f7fb7" },
-    "MNE::stara-hercegovina": { label: "Stara Hercegovina", dataRegionKey: "MNE::inland", fill: "#2c8f81" },
+    "MNE::stara-hercegovina": { label: "St HEC", dataRegionKey: "MNE::inland", fill: "#2c8f81" },
     "MNE::brda": { label: "Brda", dataRegionKey: "MNE::inland", fill: "#5e98cf" },
     "MNE::stara-raska": { label: "Stara Raska", dataRegionKey: "MNE::inland", fill: "#c6964d" },
     "ROU::bucharest-ilfov": { label: "Bucharest", dataRegionKey: "ROU::bucharest ilfov", fill: "#87606f" },
@@ -1340,6 +1353,9 @@ function renderRegionLayer(geoData) {
         );
         const view = chooseRegionLabelView(group);
         const labelText = view.abbreviate ? abbreviateRegionLabel(group) : group.label;
+        if (!labelText.trim()) {
+            return null;
+        }
         const metricDetail = view.showDetail ? metricDetailRaw : null;
         const x = group.centroid[0] + offsetX;
         const y = group.centroid[1] + offsetY;
@@ -1367,7 +1383,7 @@ function renderRegionLayer(geoData) {
             </g>
         `,
         };
-    });
+    }).filter(Boolean);
     elements.regionLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 2)
         .map((entry) => entry.html)
         .join("");
@@ -1390,7 +1406,7 @@ function chooseRegionLabelView(group) {
     };
 }
 function abbreviateRegionLabel(group) {
-    if (REGION_LABEL_SHORT[group.visualRegionKey]) {
+    if (Object.prototype.hasOwnProperty.call(REGION_LABEL_SHORT, group.visualRegionKey)) {
         return REGION_LABEL_SHORT[group.visualRegionKey];
     }
     if (!VISUAL_REGION_DEFINITIONS[group.visualRegionKey]) {
@@ -1418,7 +1434,10 @@ function abbreviateRegionLabel(group) {
 function computeRegionLabelPriority(group, view) {
     const area = Number(group.projectedArea ?? 0);
     const share = Number(group.areaShare ?? 0);
-    return area + (view.showDetail ? 800 : 0) + share * 500;
+    return area
+        + (view.showDetail ? 800 : 0)
+        + share * 500
+        + (REGION_LABEL_PRIORITY_BOOST[group.visualRegionKey] ?? 0);
 }
 function estimateLabelBounds({
     x,
