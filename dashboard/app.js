@@ -14,15 +14,17 @@ const TARGET_COUNTRIES = new Set(MAP_COUNTRY_CODES);
 const COUNTRY_LABEL_OFFSETS = {
     ALB: [-12, 10],
     BGR: [18, 4],
-    HRV: [-20, -6],
+    BIH: [16, 2],
+    HRV: [30, -10],
     HUN: [-6, -18],
     MKD: [22, 0],
     ROU: [18, -12],
     SRB: [0, -26],
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
-    "ALB::tirana": [0, -8],
+    "ALB::tirana": [8, -4],
     "ALB::north": [10, -6],
+    "ALB::central-coast": [6, 22],
     "ALB::south": [0, 10],
     "BIH::fbih": [26, 18],
     "BIH::rs": [-30, -16],
@@ -36,8 +38,7 @@ const VISUAL_REGION_LABEL_OFFSETS = {
     "HRV::istria-kvarner": [-14, -2],
     "MKD::skopje": [0, 4],
     "MKD::west": [-12, 0],
-    "MKD::east": [12, 12],
-    "MKD::south": [4, 18],
+    "MKD::se": [10, 16],
     "MNE::boka": [-26, 2],
     "MNE::primorje": [8, 16],
     "MNE::zeta": [26, 0],
@@ -53,38 +54,42 @@ const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
 const REGION_LABEL_PRIORITY_BOOST = {
-    "ALB::tirana": 2200,
+    "ALB::tirana": 9999,
     "HRV::slavonia": 900,
     "HRV::zagreb-central": 500,
     "MKD::skopje": 1200,
 };
+const REGION_LABEL_FORCE_SHOW = new Set([
+    "ALB::tirana",
+    "HRV::slavonia",
+    "MKD::skopje",
+]);
 const VISUAL_REGION_INTERNAL_GUIDES = {
     "BIH::fbih": [
-        [[0.16, 0.22], [0.30, 0.23], [0.42, 0.34]],
-        [[0.46, 0.17], [0.52, 0.31], [0.61, 0.44]],
-        [[0.66, 0.20], [0.73, 0.29], [0.83, 0.35]],
-        [[0.27, 0.51], [0.43, 0.54], [0.59, 0.50]],
-        [[0.43, 0.34], [0.40, 0.56], [0.48, 0.88]],
-        [[0.61, 0.44], [0.57, 0.65], [0.55, 0.90]],
-        [[0.73, 0.33], [0.78, 0.46], [0.88, 0.56]],
+        [[0.18, 0.33], [0.34, 0.31], [0.47, 0.39]],
+        [[0.47, 0.39], [0.60, 0.36], [0.76, 0.42]],
+        [[0.33, 0.30], [0.32, 0.49], [0.25, 0.75]],
+        [[0.47, 0.39], [0.43, 0.60], [0.38, 0.84]],
+        [[0.59, 0.37], [0.62, 0.56], [0.68, 0.82]],
+        [[0.18, 0.58], [0.35, 0.61], [0.54, 0.57]],
     ],
     "BIH::rs": [
-        [[0.32, 0.15], [0.48, 0.21], [0.58, 0.33]],
-        [[0.58, 0.19], [0.63, 0.30], [0.75, 0.31]],
-        [[0.46, 0.33], [0.47, 0.53], [0.39, 0.72]],
-        [[0.39, 0.71], [0.57, 0.72], [0.79, 0.60]],
-        [[0.73, 0.29], [0.80, 0.43], [0.88, 0.52]],
+        [[0.17, 0.24], [0.34, 0.20], [0.52, 0.27]],
+        [[0.55, 0.24], [0.69, 0.28], [0.84, 0.39]],
+        [[0.44, 0.28], [0.42, 0.49], [0.32, 0.73]],
+        [[0.57, 0.29], [0.59, 0.50], [0.70, 0.72]],
+        [[0.34, 0.70], [0.56, 0.67], [0.82, 0.57]],
     ],
     "SRB::kosovo-metohija": [
-        [[0.34, 0.06], [0.44, 0.18], [0.41, 0.39]],
-        [[0.57, 0.10], [0.56, 0.25], [0.55, 0.56]],
-        [[0.79, 0.23], [0.66, 0.31], [0.57, 0.47]],
-        [[0.12, 0.51], [0.31, 0.48], [0.55, 0.47]],
-        [[0.28, 0.92], [0.36, 0.69], [0.50, 0.48]],
+        [[0.44, 0.09], [0.45, 0.24], [0.46, 0.42]],
+        [[0.62, 0.16], [0.64, 0.31], [0.63, 0.57]],
+        [[0.31, 0.33], [0.41, 0.36], [0.46, 0.42]],
+        [[0.46, 0.42], [0.35, 0.58], [0.32, 0.82]],
+        [[0.46, 0.42], [0.55, 0.48], [0.63, 0.57]],
     ],
 };
 const REGION_LABEL_SHORT = {
-    "ALB::central-coast": "Central Coast",
+    "ALB::central-coast": "C ALB",
     "ALB::north": "N ALB",
     "ALB::south": "S ALB",
     "BGR::black-sea": "Black Sea",
@@ -98,8 +103,7 @@ const REGION_LABEL_SHORT = {
     "HRV::istria-kvarner": "Istrija",
     "HRV::slavonia": "Slavonija",
     "HRV::dalmatia": "Dalmacija",
-    "MKD::east": "SE MAC",
-    "MKD::south": "",
+    "MKD::se": "SE MAC",
     "MKD::west": "W MAC",
     "MNE::stara-crna-gora": "Stara C. Gora",
     "MNE::stara-hercegovina": "St HEC",
@@ -219,8 +223,7 @@ const REGION_GROUPS = {
     "ALB::southern albania": ["vlorã«", "gjirokastã«r", "korã§ã«"],
     "MKD::skopje": ["skopje"],
     "MKD::western north macedonia": ["polog", "southwest"],
-    "MKD::eastern north macedonia": ["east", "northeast", "southeast"],
-    "MKD::southern north macedonia": ["pelagonia", "vardar"],
+    "MKD::southeastern north macedonia": ["east", "northeast", "southeast", "pelagonia", "vardar"],
     "BGR::sofia": ["sofia city", "sofia"],
     "BGR::northern bulgaria": [
         "vidin", "vratsa", "montana", "pleven", "lovech", "veliko tarnovo",
@@ -316,8 +319,7 @@ const VISUAL_REGION_DEFINITIONS = {
     "HUN::great-plains": { label: "Great Plains", dataRegionKey: "HUN::great plains", fill: "#41b65a" },
     "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#916b7c" },
     "MKD::west": { label: "W MAC", dataRegionKey: "MKD::western north macedonia", fill: "#a47c8e" },
-    "MKD::east": { label: "SE Macedonia", dataRegionKey: "MKD::eastern north macedonia", fill: "#8d6c9e" },
-    "MKD::south": { label: "SE Macedonia", dataRegionKey: "MKD::southern north macedonia", fill: "#8d6c9e" },
+    "MKD::se": { label: "SE MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8d6c9e" },
     "SRB::vojvodina": { label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
     "SRB::belgrade": { label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
     "SRB::sz-srb": { label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
@@ -380,8 +382,7 @@ const FEATURE_TO_VISUAL_REGION = {
         "HUN::great-plains": REGION_GROUPS_RESOLVED["HUN::great plains"],
         "MKD::skopje": REGION_GROUPS_RESOLVED["MKD::skopje"],
         "MKD::west": REGION_GROUPS_RESOLVED["MKD::western north macedonia"],
-        "MKD::east": REGION_GROUPS_RESOLVED["MKD::eastern north macedonia"],
-        "MKD::south": REGION_GROUPS_RESOLVED["MKD::southern north macedonia"],
+        "MKD::se": REGION_GROUPS_RESOLVED["MKD::southeastern north macedonia"],
         "ROU::bucharest-ilfov": REGION_GROUPS_RESOLVED["ROU::bucharest ilfov"],
         "ROU::transylvania-banat": REGION_GROUPS_RESOLVED["ROU::transylvania and banat"],
         "ROU::moldavia": REGION_GROUPS_RESOLVED["ROU::moldavia"],
@@ -1374,6 +1375,7 @@ function renderRegionLayer(geoData) {
             : "map-region-label-detail";
         return {
             key: group.visualRegionKey,
+            forceShow: REGION_LABEL_FORCE_SHOW.has(group.visualRegionKey),
             priority: computeRegionLabelPriority(group, view),
             box,
             html: `
@@ -1461,7 +1463,10 @@ function estimateLabelBounds({
     };
 }
 function selectNonOverlappingLabels(candidates, padding = 2) {
-    const sorted = [...candidates].sort((a, b) => b.priority - a.priority);
+    const sorted = [...candidates].sort((a, b) => {
+        const forceDiff = Number(Boolean(b.forceShow)) - Number(Boolean(a.forceShow));
+        return forceDiff !== 0 ? forceDiff : b.priority - a.priority;
+    });
     const accepted = [];
     for (const candidate of sorted) {
         if (!accepted.some((entry) => boxesOverlap(entry.box, candidate.box, padding))) {

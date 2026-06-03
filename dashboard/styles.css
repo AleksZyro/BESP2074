@@ -160,8 +160,8 @@ code { font-family: Consolas, "Courier New", monospace; }
 .map-region-shape { stroke: rgba(8, 14, 24, 0.7); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .map-region-guide {
     fill: none;
-    stroke: rgba(10, 16, 26, 0.82);
-    stroke-width: 1.55;
+    stroke: rgba(14, 22, 34, 0.88);
+    stroke-width: 1.75;
     stroke-linejoin: round;
     stroke-linecap: round;
     vector-effect: non-scaling-stroke;
