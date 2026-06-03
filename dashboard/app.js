@@ -36,6 +36,7 @@ const VISUAL_REGION_LABEL_OFFSETS = {
     "HRV::slavonia": [20, 6],
     "HRV::dalmatia": [10, 18],
     "HRV::istria-kvarner": [-14, -2],
+    "SRB::vojvodina": [0, -4],
     "MKD::skopje": [0, 4],
     "MKD::west": [-12, 0],
     "MKD::se": [10, 16],
@@ -55,39 +56,20 @@ const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
 };
 const REGION_LABEL_PRIORITY_BOOST = {
     "ALB::tirana": 9999,
+    "HUN::central-hungary": 1400,
     "HRV::slavonia": 900,
     "HRV::zagreb-central": 500,
     "MKD::skopje": 1200,
+    "SRB::vojvodina": 1100,
 };
 const REGION_LABEL_FORCE_SHOW = new Set([
     "ALB::tirana",
+    "HUN::central-hungary",
     "HRV::slavonia",
     "MKD::skopje",
+    "SRB::vojvodina",
 ]);
-const VISUAL_REGION_INTERNAL_GUIDES = {
-    "BIH::fbih": [
-        [[0.18, 0.33], [0.34, 0.31], [0.47, 0.39]],
-        [[0.47, 0.39], [0.60, 0.36], [0.76, 0.42]],
-        [[0.33, 0.30], [0.32, 0.49], [0.25, 0.75]],
-        [[0.47, 0.39], [0.43, 0.60], [0.38, 0.84]],
-        [[0.59, 0.37], [0.62, 0.56], [0.68, 0.82]],
-        [[0.18, 0.58], [0.35, 0.61], [0.54, 0.57]],
-    ],
-    "BIH::rs": [
-        [[0.17, 0.24], [0.34, 0.20], [0.52, 0.27]],
-        [[0.55, 0.24], [0.69, 0.28], [0.84, 0.39]],
-        [[0.44, 0.28], [0.42, 0.49], [0.32, 0.73]],
-        [[0.57, 0.29], [0.59, 0.50], [0.70, 0.72]],
-        [[0.34, 0.70], [0.56, 0.67], [0.82, 0.57]],
-    ],
-    "SRB::kosovo-metohija": [
-        [[0.44, 0.09], [0.45, 0.24], [0.46, 0.42]],
-        [[0.62, 0.16], [0.64, 0.31], [0.63, 0.57]],
-        [[0.31, 0.33], [0.41, 0.36], [0.46, 0.42]],
-        [[0.46, 0.42], [0.35, 0.58], [0.32, 0.82]],
-        [[0.46, 0.42], [0.55, 0.48], [0.63, 0.57]],
-    ],
-};
+const VISUAL_REGION_INTERNAL_GUIDES = {};
 const REGION_LABEL_SHORT = {
     "ALB::central-coast": "C ALB",
     "ALB::north": "N ALB",
@@ -95,7 +77,7 @@ const REGION_LABEL_SHORT = {
     "BGR::black-sea": "Black Sea",
     "BGR::north": "N Bulgaria",
     "BGR::south": "S Bulgaria",
-    "HUN::central-hungary": "C. Hungary",
+    "HUN::central-hungary": "Budapest",
     "HUN::great-plains": "Great Plains",
     "HUN::north-hungary": "N Hungary",
     "HUN::transdanubia": "Transdanubia",
@@ -313,7 +295,7 @@ const VISUAL_REGION_DEFINITIONS = {
     "HRV::slavonia": { label: "Slavonija", dataRegionKey: "HRV::slavonia", fill: "#7d6247" },
     "HRV::dalmatia": { label: "Dalmacija", dataRegionKey: "HRV::dalmatia", fill: "#b18e68" },
     "HRV::istria-kvarner": { label: "Istrija", dataRegionKey: "HRV::istria and kvarner", fill: "#c9a97d" },
-    "HUN::central-hungary": { label: "Central Hungary", dataRegionKey: "HUN::central hungary", fill: "#d34b4b" },
+    "HUN::central-hungary": { label: "Budapest", dataRegionKey: "HUN::central hungary", fill: "#d34b4b" },
     "HUN::transdanubia": { label: "Transdanubia", dataRegionKey: "HUN::transdanubia", fill: "#6f63c7" },
     "HUN::north-hungary": { label: "Northern Hungary", dataRegionKey: "HUN::northern hungary", fill: "#81c5d8" },
     "HUN::great-plains": { label: "Great Plains", dataRegionKey: "HUN::great plains", fill: "#41b65a" },
