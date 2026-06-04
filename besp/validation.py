@@ -1,18 +1,38 @@
 from besp.models import CountryYearResult, RegionYearResult
 from besp.simulation import (
+    MAX_ELECTION_TENSION_INDEX,
     MAX_GDP_GROWTH,
+    MAX_INFLATION_RATE,
+    MAX_INTEGRATION_INDEX,
+    MAX_ELECTION_ALIGNMENT_INDEX,
+    MAX_SATISFACTION_INDEX,
     MAX_UNEMPLOYMENT_RATE,
+    MIN_ELECTION_ALIGNMENT_INDEX,
+    MIN_ELECTION_TENSION_INDEX,
     MIN_GDP_GROWTH,
+    MIN_INFLATION_RATE,
+    MIN_INTEGRATION_INDEX,
+    MIN_SATISFACTION_INDEX,
     MIN_UNEMPLOYMENT_RATE,
     STATE_SPECS,
 )
 REGION_BOUNDS = {
     "unemployment_rate": (MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE),
     "gdp_growth_rate": (MIN_GDP_GROWTH, MAX_GDP_GROWTH),
+    "integration_index": (MIN_INTEGRATION_INDEX, MAX_INTEGRATION_INDEX),
+    "inflation_rate": (MIN_INFLATION_RATE, MAX_INFLATION_RATE),
+    "satisfaction_index": (MIN_SATISFACTION_INDEX, MAX_SATISFACTION_INDEX),
+    "election_tension_index": (MIN_ELECTION_TENSION_INDEX, MAX_ELECTION_TENSION_INDEX),
+    "election_alignment_index": (MIN_ELECTION_ALIGNMENT_INDEX, MAX_ELECTION_ALIGNMENT_INDEX),
 }
 COUNTRY_BOUNDS = {
     "average_unemployment_rate": (MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE),
     "gdp_growth_rate": (MIN_GDP_GROWTH, MAX_GDP_GROWTH),
+    "average_integration_index": (MIN_INTEGRATION_INDEX, MAX_INTEGRATION_INDEX),
+    "average_inflation_rate": (MIN_INFLATION_RATE, MAX_INFLATION_RATE),
+    "average_satisfaction_index": (MIN_SATISFACTION_INDEX, MAX_SATISFACTION_INDEX),
+    "election_tension_index": (MIN_ELECTION_TENSION_INDEX, MAX_ELECTION_TENSION_INDEX),
+    "election_alignment_index": (MIN_ELECTION_ALIGNMENT_INDEX, MAX_ELECTION_ALIGNMENT_INDEX),
     **{field_name: spec["bounds"] for field_name, spec in STATE_SPECS.items()},
 }
 def append_range_warning(

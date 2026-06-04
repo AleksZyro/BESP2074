@@ -34,6 +34,22 @@ CONTROLLED_DEATH_VARIATION = 0.008
 CONTROLLED_MIGRATION_VARIATION = 0.10
 CONTROLLED_GDP_GROWTH_VARIATION = 0.004
 CONTROLLED_UNEMPLOYMENT_VARIATION = 0.0012
+CONTROLLED_INTEGRATION_VARIATION = 0.018
+CONTROLLED_INFLATION_VARIATION = 0.004
+CONTROLLED_SATISFACTION_VARIATION = 0.020
+CONTROLLED_ELECTION_VARIATION = 0.035
+CONTROLLED_ELECTION_ALIGNMENT_VARIATION = 0.090
+
+MIN_INTEGRATION_INDEX = 0.15
+MAX_INTEGRATION_INDEX = 0.95
+MIN_INFLATION_RATE = -0.03
+MAX_INFLATION_RATE = 0.20
+MIN_SATISFACTION_INDEX = 0.18
+MAX_SATISFACTION_INDEX = 0.95
+MIN_ELECTION_TENSION_INDEX = 0.05
+MAX_ELECTION_TENSION_INDEX = 0.95
+MIN_ELECTION_ALIGNMENT_INDEX = -1.0
+MAX_ELECTION_ALIGNMENT_INDEX = 1.0
 
 MAX_SHOCK_GDP_BIAS = 0.02
 MIN_SHOCK_GDP_BIAS = -0.03
@@ -238,16 +254,27 @@ def evolve_country_state(
     gdp_growth_rate: float,
     average_unemployment_rate: float,
     average_regional_attractiveness: float,
+    average_integration_index: float,
+    average_inflation_rate: float,
+    average_satisfaction_index: float,
+    election_tension_index: float,
 ) -> dict[str, float]:
     growth_gap = gdp_growth_rate - BASE_GDP_GROWTH
     unemployment_gap = average_unemployment_rate - 0.12
     attractiveness_gap = average_regional_attractiveness - 0.50
+    integration_gap = average_integration_index - country.base_integration_index
+    inflation_gap = average_inflation_rate - country.baseline_inflation_rate
+    satisfaction_gap = average_satisfaction_index - country.base_satisfaction_index
+    election_gap = election_tension_index - 0.50
 
     budget_target = (
         country.base_budget_balance_pct_gdp
         + growth_gap * 0.35
         - unemployment_gap * 0.06
         + attractiveness_gap * 0.03
+        + satisfaction_gap * 0.03
+        - max(inflation_gap, 0.0) * 0.18
+        - max(election_gap - 0.10, 0.0) * 0.01
     )
     budget_balance_pct_gdp = evolve_state_metric(
         previous_state,
@@ -269,7 +296,11 @@ def evolve_country_state(
         + growth_gap * 2.20
         - max(unemployment_gap, 0.0) * 1.20
         + attractiveness_gap * 0.80
+        + integration_gap * 0.65
+        + satisfaction_gap * 0.85
         - (previous_state["corruption_index"] - 0.50) * 0.50
+        - max(average_inflation_rate - 0.03, 0.0) * 1.30
+        - max(election_tension_index - 0.65, 0.0) * 0.45
     )
     stability_index = evolve_state_metric(
         previous_state,
@@ -283,6 +314,8 @@ def evolve_country_state(
         - growth_gap * 0.80
         + max(unemployment_gap, 0.0) * 0.25
         - (stability_index - 0.50) * 0.20
+        - integration_gap * 0.35
+        - satisfaction_gap * 0.20
     )
     corruption_index = evolve_state_metric(
         previous_state,
@@ -298,6 +331,10 @@ def evolve_country_state(
         + stability_index * 0.25
         - corruption_index * 0.30
         + attractiveness_gap * 0.70
+        + integration_gap * 0.45
+        + satisfaction_gap * 0.40
+        - max(average_inflation_rate - 0.03, 0.0) * 1.10
+        - max(election_tension_index - 0.65, 0.0) * 0.18
     )
     investment_climate_index = evolve_state_metric(
         previous_state,
@@ -335,6 +372,230 @@ def calculate_controlled_variation_signal(
     return clamp((current_draw * 0.72) + (previous_draw * 0.28), -1.0, 1.0)
 
 
+def resolve_election_window(country: Country, start_year: int) -> dict[str, int | float | bool]:
+    cycle_years = max(country.election_cycle_years, 1)
+    baseline_last_year = int(country.last_election_year)
+
+    if start_year <= baseline_last_year:
+        last_year = baseline_last_year
+        next_year = baseline_last_year + cycle_years
+        progress = 0.0
+        happened_this_year = start_year == baseline_last_year
+    else:
+        cycles_since_baseline = (start_year - baseline_last_year) // cycle_years
+        last_year = baseline_last_year + cycles_since_baseline * cycle_years
+        next_year = last_year + cycle_years
+        progress = clamp((start_year - last_year) / cycle_years, 0.0, 1.0)
+        happened_this_year = start_year == last_year
+
+    return {
+        "last_year": last_year,
+        "next_year": next_year,
+        "cycle_years": cycle_years,
+        "progress": progress,
+        "happened_this_year": happened_this_year,
+    }
+
+
+def calculate_election_cycle_pressure(
+    country: Country,
+    region: Region,
+    start_year: int,
+    unemployment_rate: float,
+    inflation_rate: float,
+    satisfaction_index: float,
+    scenario: SimulationScenario | None = None,
+    variation_signal: float = 0.0,
+) -> float:
+    cycle_years = max(country.election_cycle_years, 1)
+    years_since_last = max(0, start_year - country.last_election_year)
+    years_to_next = (cycle_years - (years_since_last % cycle_years)) % cycle_years
+
+    if years_to_next == 0:
+        base_pressure = 0.82
+    elif years_to_next == 1:
+        base_pressure = 0.68
+    elif years_since_last % cycle_years == 1:
+        base_pressure = 0.56
+    else:
+        base_pressure = 0.36
+
+    social_stress = (
+        max(unemployment_rate - 0.09, 0.0) * 1.25
+        + max(inflation_rate - 0.02, 0.0) * 2.10
+        + max(0.52 - satisfaction_index, 0.0) * 0.90
+    )
+    scenario_bias = scenario.election_tension_bias if scenario else 0.0
+
+    return clamp(
+        base_pressure
+        + (country.election_sensitivity - 0.55) * 0.35
+        + (region.election_sensitivity - 1.0) * 0.18
+        + social_stress
+        + scenario_bias
+        + variation_signal * CONTROLLED_ELECTION_VARIATION,
+        MIN_ELECTION_TENSION_INDEX,
+        MAX_ELECTION_TENSION_INDEX,
+    )
+
+
+def calculate_election_alignment_index(
+    country: Country,
+    region: Region,
+    previous_alignment_index: float,
+    unemployment_rate: float,
+    inflation_rate: float,
+    satisfaction_index: float,
+    election_tension_index: float,
+    election_window: dict[str, int | float | bool],
+    scenario: SimulationScenario | None = None,
+    variation_signal: float = 0.0,
+) -> float:
+    structural_anchor = clamp(
+        country.base_election_alignment_index + region.political_identity_bias,
+        MIN_ELECTION_ALIGNMENT_INDEX,
+        MAX_ELECTION_ALIGNMENT_INDEX,
+    )
+    prior_alignment = clamp(
+        previous_alignment_index if abs(previous_alignment_index) > 1e-9 else structural_anchor,
+        MIN_ELECTION_ALIGNMENT_INDEX,
+        MAX_ELECTION_ALIGNMENT_INDEX,
+    )
+    inflation_gap = inflation_rate - country.baseline_inflation_rate
+    satisfaction_gap = country.base_satisfaction_index - satisfaction_index
+    unemployment_gap = unemployment_rate - country.baseline_unemployment_rate
+    stress_bias = clamp(
+        max(inflation_gap, 0.0) * 1.8
+        + max(unemployment_gap, 0.0) * 1.1
+        + max(satisfaction_gap, 0.0) * 1.2
+        + max(election_tension_index - 0.55, 0.0) * 0.45,
+        0.0,
+        0.38,
+    )
+    direction_seed = prior_alignment if abs(prior_alignment) > 0.08 else structural_anchor
+    direction = 1.0 if direction_seed >= 0 else -1.0
+    scenario_push = (scenario.election_tension_bias if scenario else 0.0) * 2.2
+    election_push = clamp(
+        direction * stress_bias
+        + variation_signal * CONTROLLED_ELECTION_ALIGNMENT_VARIATION
+        + scenario_push,
+        -0.42,
+        0.42,
+    )
+    target_alignment = clamp(
+        structural_anchor + election_push,
+        MIN_ELECTION_ALIGNMENT_INDEX,
+        MAX_ELECTION_ALIGNMENT_INDEX,
+    )
+    cycle_progress = float(election_window["progress"])
+    if election_window["happened_this_year"]:
+        structural_keep = 0.34
+    elif cycle_progress >= 0.75:
+        structural_keep = 0.76
+    else:
+        structural_keep = 0.88
+
+    return clamp(
+        prior_alignment * structural_keep
+        + target_alignment * (1.0 - structural_keep),
+        MIN_ELECTION_ALIGNMENT_INDEX,
+        MAX_ELECTION_ALIGNMENT_INDEX,
+    )
+
+
+def calculate_regional_inflation_rate(
+    country: Country,
+    region: Region,
+    gdp_growth_rate: float,
+    election_tension_index: float,
+    scenario: SimulationScenario | None = None,
+    variation_signal: float = 0.0,
+) -> float:
+    base_inflation = country.baseline_inflation_rate + (scenario.inflation_bias if scenario else 0.0)
+    growth_heat = max(gdp_growth_rate - 0.025, 0.0) * 0.55
+    housing_pressure = max(region.housing_overload - 1.0, 0.0) * 0.08
+    election_pressure = max(election_tension_index - 0.45, 0.0) * 0.015
+
+    return clamp(
+        (
+            base_inflation
+            + growth_heat
+            + housing_pressure
+            + election_pressure
+        ) * region.inflation_sensitivity
+        + variation_signal * CONTROLLED_INFLATION_VARIATION,
+        MIN_INFLATION_RATE,
+        MAX_INFLATION_RATE,
+    )
+
+
+def calculate_next_integration_index(
+    country: Country,
+    region: Region,
+    net_external_migration: int,
+    internal_migration: int,
+    regional_attractiveness: float,
+    inflation_rate: float,
+    election_tension_index: float,
+    scenario: SimulationScenario | None = None,
+    variation_signal: float = 0.0,
+) -> float:
+    current_population = max(region.population, 1)
+    migration_balance_rate = (net_external_migration + internal_migration) / current_population
+    annexation_penalty = current_annexation_penalty(region, "integration")
+    target = (
+        country.base_integration_index
+        + (scenario.integration_bias if scenario else 0.0)
+        + (region.infrastructure - 0.50) * 0.10
+        + (regional_attractiveness - 0.50) * 0.12
+        + (region.satisfaction_index - 0.50) * 0.18
+        - max(-migration_balance_rate, 0.0) * 1.30
+        - max(inflation_rate - 0.03, 0.0) * 0.35
+        - max(election_tension_index - 0.60, 0.0) * 0.20
+        - annexation_penalty
+    )
+
+    return clamp(
+        region.integration_index * 0.72
+        + target * 0.28
+        + variation_signal * CONTROLLED_INTEGRATION_VARIATION,
+        MIN_INTEGRATION_INDEX,
+        MAX_INTEGRATION_INDEX,
+    )
+
+
+def calculate_next_satisfaction_index(
+    country: Country,
+    region: Region,
+    gdp_growth_rate: float,
+    inflation_rate: float,
+    election_tension_index: float,
+    regional_attractiveness: float,
+    scenario: SimulationScenario | None = None,
+    variation_signal: float = 0.0,
+) -> float:
+    annexation_penalty = current_annexation_penalty(region, "satisfaction")
+    target = (
+        country.base_satisfaction_index
+        + (scenario.satisfaction_bias if scenario else 0.0)
+        + (gdp_growth_rate - BASE_GDP_GROWTH) * 2.80
+        - max(region.unemployment_rate - 0.08, 0.0) * 1.15
+        - max(inflation_rate, 0.0) * 1.30
+        + (regional_attractiveness - 0.50) * 0.28
+        + (region.integration_index - 0.50) * 0.22
+        - max(election_tension_index - 0.65, 0.0) * 0.25
+        - annexation_penalty
+    )
+
+    return clamp(
+        region.satisfaction_index * 0.68
+        + target * 0.32
+        + variation_signal * CONTROLLED_SATISFACTION_VARIATION,
+        MIN_SATISFACTION_INDEX,
+        MAX_SATISFACTION_INDEX,
+    )
+
+
 def calculate_housing_penalty(region: Region) -> float:
     overload = region.housing_overload
 
@@ -342,6 +603,23 @@ def calculate_housing_penalty(region: Region) -> float:
         return 0.0
 
     return min((overload - 1.0) * 0.25, 0.15)
+
+
+def current_annexation_penalty(
+    region: Region,
+    channel: str,
+) -> float:
+    remaining_years = max(region.annexation_pressure_years_remaining, 0)
+    total_years = max(region.annexation_pressure_years_total, 0)
+    if remaining_years <= 0 or total_years <= 0:
+        return 0.0
+
+    if channel == "integration":
+        base_penalty = region.annexation_integration_penalty
+    else:
+        base_penalty = region.annexation_satisfaction_penalty
+
+    return base_penalty * (remaining_years / total_years)
 
 
 def calculate_regional_attractiveness(
@@ -502,6 +780,7 @@ def simulate_year(
             continue
 
         country_shock_effect = shock_effects_by_country.get(country.code, _empty_shock_effect())
+        election_window = resolve_election_window(country, start_year)
 
         average_attractiveness = calculate_country_average_attractiveness(country, scenario)
 
@@ -535,7 +814,17 @@ def simulate_year(
                     channel,
                     variation_seed,
                 )
-                for channel in ("birth", "death", "migration", "growth", "unemployment")
+                for channel in (
+                    "birth",
+                    "death",
+                    "migration",
+                    "growth",
+                    "unemployment",
+                    "integration",
+                    "inflation",
+                    "satisfaction",
+                    "election",
+                )
             }
 
             birth_rate = (
@@ -601,6 +890,70 @@ def simulate_year(
                 MAX_UNEMPLOYMENT_RATE,
             )
 
+            provisional_election_tension = calculate_election_cycle_pressure(
+                country,
+                region,
+                start_year,
+                region.unemployment_rate,
+                country.baseline_inflation_rate,
+                region.satisfaction_index,
+                scenario,
+                variations["election"],
+            )
+            inflation_rate = calculate_regional_inflation_rate(
+                country,
+                region,
+                gdp_growth_rate,
+                provisional_election_tension,
+                scenario,
+                variations["inflation"],
+            )
+            region.integration_index = calculate_next_integration_index(
+                country,
+                region,
+                net_external_migration,
+                internal_migration,
+                regional_attractiveness,
+                inflation_rate,
+                provisional_election_tension,
+                scenario,
+                variations["integration"],
+            )
+            region.satisfaction_index = calculate_next_satisfaction_index(
+                country,
+                region,
+                gdp_growth_rate,
+                inflation_rate,
+                provisional_election_tension,
+                regional_attractiveness,
+                scenario,
+                variations["satisfaction"],
+            )
+            election_tension_index = calculate_election_cycle_pressure(
+                country,
+                region,
+                start_year,
+                region.unemployment_rate,
+                inflation_rate,
+                region.satisfaction_index,
+                scenario,
+                variations["election"],
+            )
+            previous_election_alignment = region.election_alignment_index
+            region.election_alignment_index = calculate_election_alignment_index(
+                country,
+                region,
+                previous_election_alignment,
+                region.unemployment_rate,
+                inflation_rate,
+                region.satisfaction_index,
+                election_tension_index,
+                election_window,
+                scenario,
+                variations["election"],
+            )
+            election_alignment_shift = region.election_alignment_index - previous_election_alignment
+
             gdp_per_capita_eur = 0.0
             if region.population > 0:
                 gdp_per_capita_eur = (region.gdp_billion_eur * 1_000_000_000) / region.population
@@ -627,10 +980,23 @@ def simulate_year(
                     population_density=region.population_density,
                     housing_overload=region.housing_overload,
                     regional_attractiveness=regional_attractiveness,
+                    integration_index=region.integration_index,
+                    inflation_rate=inflation_rate,
+                    satisfaction_index=region.satisfaction_index,
+                    election_tension_index=election_tension_index,
+                    election_alignment_index=region.election_alignment_index,
+                    election_alignment_shift=election_alignment_shift,
+                    election_last_year=int(election_window["last_year"]),
+                    election_next_year=int(election_window["next_year"]),
+                    election_cycle_progress=float(election_window["progress"]),
+                    election_happened_this_year=bool(election_window["happened_this_year"]),
                     data_confidence=region.data_confidence,
                     population_note=region.population_note,
                 )
             )
+
+            if region.annexation_pressure_years_remaining > 0:
+                region.annexation_pressure_years_remaining -= 1
 
     return results, shock_events, updated_last_triggered
 
@@ -701,11 +1067,45 @@ def aggregate_country_results(
         average_population_density = average_metric(entries, "population_density")
         average_housing_overload = average_metric(entries, "housing_overload")
         average_regional_attractiveness = average_metric(entries, "regional_attractiveness")
+        average_integration_index = weighted_average_metric(
+            entries,
+            "integration_index",
+            "end_population",
+        )
+        average_inflation_rate = weighted_average_metric(
+            entries,
+            "inflation_rate",
+            "end_population",
+        )
+        average_satisfaction_index = weighted_average_metric(
+            entries,
+            "satisfaction_index",
+            "end_population",
+        )
+        election_alignment_index = weighted_average_metric(
+            entries,
+            "election_alignment_index",
+            "end_population",
+        )
+        election_alignment_shift = weighted_average_metric(
+            entries,
+            "election_alignment_shift",
+            "end_population",
+        )
+        election_tension_index = weighted_average_metric(
+            entries,
+            "election_tension_index",
+            "end_population",
+        )
         average_unemployment_rate = weighted_average_metric(
             entries,
             "unemployment_rate",
             "end_population",
         )
+        election_last_year = int(entries[0].election_last_year) if entries else start_year
+        election_next_year = int(entries[0].election_next_year) if entries else start_year + 4
+        election_cycle_progress = float(entries[0].election_cycle_progress) if entries else 0.0
+        election_happened_this_year = bool(entries[0].election_happened_this_year) if entries else False
 
         country = country_by_code.get(country_code)
         if country is None:
@@ -718,6 +1118,10 @@ def aggregate_country_results(
                 gdp_growth_rate,
                 average_unemployment_rate,
                 average_regional_attractiveness,
+                average_integration_index,
+                average_inflation_rate,
+                average_satisfaction_index,
+                election_tension_index,
             )
             state_by_country_code[country_code] = current_state
             country_name = country.name
@@ -743,6 +1147,16 @@ def aggregate_country_results(
                 average_population_density=average_population_density,
                 average_housing_overload=average_housing_overload,
                 average_regional_attractiveness=average_regional_attractiveness,
+                average_integration_index=average_integration_index,
+                average_inflation_rate=average_inflation_rate,
+                average_satisfaction_index=average_satisfaction_index,
+                election_tension_index=election_tension_index,
+                election_alignment_index=election_alignment_index,
+                election_alignment_shift=election_alignment_shift,
+                election_last_year=election_last_year,
+                election_next_year=election_next_year,
+                election_cycle_progress=election_cycle_progress,
+                election_happened_this_year=election_happened_this_year,
                 budget_balance_pct_gdp=current_state["budget_balance_pct_gdp"],
                 debt_to_gdp=current_state["debt_to_gdp"],
                 stability_index=current_state["stability_index"],

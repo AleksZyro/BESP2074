@@ -15,6 +15,7 @@ def build_simulation_export(
     variation_seed: str = "baseline-2020",
     shock_events: list[ShockEvent] | None = None,
     shocks_enabled: bool = True,
+    baseline_year: int | None = None,
 ) -> dict:
     years: dict[str, dict[str, list[dict]]] = {}
 
@@ -36,6 +37,7 @@ def build_simulation_export(
         "meta": {
             "start_year": start_year,
             "end_year": end_year,
+            "baseline_year": baseline_year if baseline_year is not None else start_year,
             "warning_count": warning_count,
             "scenario": {
                 "code": scenario.code if scenario else "baseline",
@@ -48,8 +50,8 @@ def build_simulation_export(
                 "event_count": len(serialized_shock_events),
             },
             "state_model": {
-                "phase": "8.2",
-                "version": "politics_state_v1_tick_integration",
+                "phase": "10.1",
+                "version": "dynamic_baseline_social_metrics_editor_v1",
             },
         },
         "shock_events": serialized_shock_events,

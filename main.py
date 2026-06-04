@@ -1,17 +1,33 @@
 import argparse
 import secrets
 from pathlib import Path
+
 from besp.exporter import build_simulation_export, save_simulation_export_json
-from besp.loader import load_scenario_map, load_shock_map, load_world
+from besp.loader import (
+    apply_editor_annexation_effects,
+    detect_world_baseline_year,
+    load_scenario_map,
+    load_shock_map,
+    load_world,
+)
 from besp.models import CountryYearResult, RegionYearResult, ShockEvent, SimulationScenario
 from besp.simulation import aggregate_country_results, simulate_period
 from besp.validation import validate_simulation_results
-START_YEAR = 2020
-END_YEAR = 2030
+
+TARGET_SIMULATION_END_YEAR = 2050
+
+
+def resolve_simulation_year_window(data_dir: str = "data") -> tuple[int, int]:
+    start_year = detect_world_baseline_year(data_dir)
+    return start_year, max(TARGET_SIMULATION_END_YEAR, start_year + 1)
+
+
 def print_section(title: str) -> None:
     print()
     print(title)
     print("=" * 72)
+
+
 def print_grouped_results(
     results: list[CountryYearResult] | list[RegionYearResult],
     section_title,
@@ -23,6 +39,8 @@ def print_grouped_results(
             current_year = result.start_year
             print_section(section_title(result))
         print(row_formatter(result))
+
+
 def print_country_year_results(country_results: list[CountryYearResult]) -> None:
     print_grouped_results(
         country_results,
@@ -36,8 +54,17 @@ def print_country_year_results(country_results: list[CountryYearResult]) -> None
             f"attr {result.average_regional_attractiveness:>5.3f}"
         ),
     )
+
+
 def print_region_year_results(results: list[RegionYearResult]) -> None:
-    print_section(f"BESP simulation period: {START_YEAR} -> {END_YEAR}")
+    if not results:
+        print_section("BESP simulation period")
+        print("No region results were produced.")
+        return
+
+    start_year = min(result.start_year for result in results)
+    end_year = max(result.end_year for result in results)
+    print_section(f"BESP simulation period: {start_year} -> {end_year}")
     print_grouped_results(
         results,
         lambda result: f"Regions: {result.start_year} -> {result.end_year}",
@@ -49,6 +76,8 @@ def print_region_year_results(results: list[RegionYearResult]) -> None:
             f"unemp {result.unemployment_rate * 100:>5.1f}%"
         ),
     )
+
+
 def print_validation_warnings(warnings: list[str]) -> None:
     print_section("Validation / sanity checks")
     if not warnings:
@@ -56,6 +85,8 @@ def print_validation_warnings(warnings: list[str]) -> None:
         return
     for warning in warnings:
         print(f"- {warning}")
+
+
 def print_shock_summary(shock_events: list[ShockEvent]) -> None:
     print_section("Shock summary (v1)")
     if not shock_events:
@@ -68,6 +99,8 @@ def print_shock_summary(shock_events: list[ShockEvent]) -> None:
     for (year, country_code), events in sorted(events_by_year_country.items()):
         shock_names = ", ".join(event.shock_name for event in events)
         print(f"{year}-{year + 1} {country_code}: {shock_names}")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run the BESP yearly simulation and write output/latest.json."
@@ -93,12 +126,16 @@ def parse_args() -> argparse.Namespace:
         help="Disable yearly shock draws for this run.",
     )
     return parser.parse_args()
+
+
 def print_available_scenarios(scenarios: dict[str, SimulationScenario]) -> None:
     print("Available BESP scenarios")
     print("=" * 72)
     for scenario in scenarios.values():
         print(f"{scenario.code:<12} | {scenario.name}")
         print(f"  {scenario.description}")
+
+
 def resolve_scenario(
     scenarios: dict[str, SimulationScenario],
     scenario_code: str,
@@ -110,25 +147,32 @@ def resolve_scenario(
     raise SystemExit(
         f"Unknown scenario '{scenario_code}'. Available scenarios: {available}"
     )
+
+
 def resolve_variation_seed(seed: str | None) -> str:
     if seed:
         return seed
     return f"auto-{secrets.token_hex(6)}"
+
+
 def main() -> None:
     args = parse_args()
     scenarios = load_scenario_map("data")
     if args.list_scenarios:
         print_available_scenarios(scenarios)
         return
+
+    start_year, end_year = resolve_simulation_year_window("data")
     scenario = resolve_scenario(scenarios, args.scenario)
     variation_seed = resolve_variation_seed(args.seed)
     shock_map = load_shock_map("data")
     active_shocks = [] if args.disable_shocks else list(shock_map.values())
     countries = load_world("data")
+    apply_editor_annexation_effects(countries)
     region_results, shock_events = simulate_period(
         countries,
-        START_YEAR,
-        END_YEAR,
+        start_year,
+        end_year,
         scenario=scenario,
         variation_seed=variation_seed,
         shock_definitions=active_shocks,
@@ -142,8 +186,8 @@ def main() -> None:
     print_shock_summary(shock_events)
     print_validation_warnings(warnings)
     export_data = build_simulation_export(
-        start_year=START_YEAR,
-        end_year=END_YEAR,
+        start_year=start_year,
+        end_year=end_year,
         country_results=country_results,
         region_results=region_results,
         warning_count=len(warnings),
@@ -151,14 +195,17 @@ def main() -> None:
         variation_seed=variation_seed,
         shock_events=shock_events,
         shocks_enabled=not args.disable_shocks,
+        baseline_year=start_year,
     )
     output_dir = Path("output")
-    output_path = output_dir / f"simulation_{START_YEAR}_{END_YEAR}.json"
+    output_path = output_dir / f"simulation_{start_year}_{end_year}.json"
     latest_output_path = output_dir / "latest.json"
     save_simulation_export_json(export_data, output_path)
     save_simulation_export_json(export_data, latest_output_path)
     print()
     print(f"Structured JSON export saved to: {output_path}")
     print(f"Stable dashboard export saved to: {latest_output_path}")
+
+
 if __name__ == "__main__":
     main()

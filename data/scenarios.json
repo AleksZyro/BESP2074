@@ -8,7 +8,11 @@
     "net_migration_rate_shift": 0.0,
     "gdp_growth_bias": 0.0,
     "unemployment_bias": 0.0,
-    "attractiveness_bias": 0.0
+    "attractiveness_bias": 0.0,
+    "integration_bias": 0.0,
+    "inflation_bias": 0.0,
+    "satisfaction_bias": 0.0,
+    "election_tension_bias": 0.0
   },
   {
     "code": "reform",
@@ -19,7 +23,11 @@
     "net_migration_rate_shift": 0.00045,
     "gdp_growth_bias": 0.0035,
     "unemployment_bias": -0.0016,
-    "attractiveness_bias": 0.018
+    "attractiveness_bias": 0.018,
+    "integration_bias": 0.015,
+    "inflation_bias": -0.003,
+    "satisfaction_bias": 0.020,
+    "election_tension_bias": -0.018
   },
   {
     "code": "stagnation",
@@ -30,6 +38,10 @@
     "net_migration_rate_shift": -0.00055,
     "gdp_growth_bias": -0.003,
     "unemployment_bias": 0.0018,
-    "attractiveness_bias": -0.015
+    "attractiveness_bias": -0.015,
+    "integration_bias": -0.012,
+    "inflation_bias": 0.004,
+    "satisfaction_bias": -0.018,
+    "election_tension_bias": 0.020
   }
 ]

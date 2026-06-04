@@ -24,6 +24,16 @@ class Region:
 
     data_confidence: float = 1.0
     population_note: str = ""
+    integration_index: float = 0.5
+    satisfaction_index: float = 0.5
+    inflation_sensitivity: float = 1.0
+    election_sensitivity: float = 1.0
+    political_identity_bias: float = 0.0
+    election_alignment_index: float = 0.0
+    annexation_pressure_years_remaining: int = 0
+    annexation_pressure_years_total: int = 0
+    annexation_satisfaction_penalty: float = 0.0
+    annexation_integration_penalty: float = 0.0
 
     @property
     def population_density(self) -> float:
@@ -55,6 +65,18 @@ class Country:
     base_budget_balance_pct_gdp: float = -0.03
     base_debt_to_gdp: float = 0.60
     base_investment_climate_index: float = 0.50
+    enabled: bool = True
+    baseline_year: int = 2020
+    baseline_population: int = 0
+    baseline_gdp_scale_vs_2020: float = 1.0
+    baseline_unemployment_rate: float = 0.12
+    baseline_inflation_rate: float = 0.02
+    base_integration_index: float = 0.50
+    base_satisfaction_index: float = 0.50
+    base_election_alignment_index: float = 0.0
+    election_cycle_years: int = 4
+    last_election_year: int = 2020
+    election_sensitivity: float = 0.55
 
     regions: list[Region] = field(default_factory=list)
 
@@ -71,6 +93,10 @@ class SimulationScenario:
     gdp_growth_bias: float = 0.0
     unemployment_bias: float = 0.0
     attractiveness_bias: float = 0.0
+    integration_bias: float = 0.0
+    inflation_bias: float = 0.0
+    satisfaction_bias: float = 0.0
+    election_tension_bias: float = 0.0
 
 
 @dataclass
@@ -137,6 +163,16 @@ class RegionYearResult:
     population_density: float
     housing_overload: float
     regional_attractiveness: float
+    integration_index: float
+    inflation_rate: float
+    satisfaction_index: float
+    election_tension_index: float
+    election_alignment_index: float
+    election_alignment_shift: float
+    election_last_year: int
+    election_next_year: int
+    election_cycle_progress: float
+    election_happened_this_year: bool
     data_confidence: float
     population_note: str
 
@@ -165,6 +201,16 @@ class CountryYearResult:
     average_population_density: float
     average_housing_overload: float
     average_regional_attractiveness: float
+    average_integration_index: float
+    average_inflation_rate: float
+    average_satisfaction_index: float
+    election_tension_index: float
+    election_alignment_index: float
+    election_alignment_shift: float
+    election_last_year: int
+    election_next_year: int
+    election_cycle_progress: float
+    election_happened_this_year: bool
 
     budget_balance_pct_gdp: float
     debt_to_gdp: float
