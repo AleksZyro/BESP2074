@@ -1,48 +1,27 @@
 # BESP - Balkan Economy Simulation Player
 
-Minimal Python foundation for a realistic yearly Balkan socio-economic simulation.
+BESP ist eine realistische, jahresbasierte Balkan-Simulation mit exportgetriebener Kartenansicht. Die Simulation rechnet in Python, exportiert strukturierte JSON-Daten und zeigt sie im lokalen Dashboard inklusive Grenzeditor an.
 
-Project focus:
-- Singleplayer sandbox
-- Realistic, slow-moving annual simulation
-- Regions matter as much as countries
-- Frontend reads precomputed export data, not live simulation state
-- No focus trees, no fantasy events, no absurd alt-history jumps
+## Hauptarbeitsstand
 
-Project status:
-- Phase 1 complete: foundation
-- Phase 2 complete: structured export data
-- Phase 3 complete: economy v1
-- Phase 3.3 complete: validation / calibration pass
-- Phase 4 complete: dashboard v1 without map-first scope creep
-- Phase 5 complete in baseline form: map v1
-- Phase 5.6 complete: timeline and controlled variation bridge phase
-- Phase 5.7 complete: scenario-driven variation inputs
-- Phase 5.8 implemented: export reload and dashboard clarity
-- Phase 5.8.2 complete: local run service and generate-run dashboard flow
-- Phase 6 merged into 5.6: controls are delivered as part of timeline playback
-- Phase 7.1 complete: bounded shock core (economic + climate)
-- Phase 7.2 complete: shock calibration guardrails and testcase verifier
-- Phase 7.3 complete: shock validation and balancing pass
-- Phase 7.4 complete: testcase expansion for export + dashboard flow
-- Phase 7.5 complete: refactor / bloat-reduction pass (net negative)
-- Phase 8.1 complete: politics/state v1 core model and export wiring
-- Phase 8.2 complete: yearly tick integration + state validation pass
-- Phase 8.3 complete: dashboard state-value panels with timeline year sync
-- Phase 8.4 complete: public UI simplification with metric-based map views
-- Phase 9.1 complete: scope expansion v1 with four additional Balkan-adjacent countries
-- Phase 9.2 complete: public map coverage expanded to the new country scope
-- Phase 9.3 complete: HRV/ROU scope expansion with unified regional color families
+- Das Startjahr wird nicht mehr hart auf `2020` oder `2024` fixiert.
+- `tools/refresh_country_baselines.py` prüft `2023-2026` und wählt automatisch das gemeinsame Jahr mit der besten Datenabdeckung.
+- Im aktuellen Datenstand gewinnt `2024` als bestes gemeinsames Basisjahr.
+- Die Simulation führt vier neue Parameter:
+  - `integration`
+  - `inflation`
+  - `satisfaction`
+  - `elections`
+- Mehrfachläufe mit `1-100` Runs sind über den lokalen Service möglich.
+- Auch ohne Schocks liefern verschiedene Seeds verschiedene Verläufe.
+- Gleicher Seed bleibt reproduzierbar.
+- Die Simulation läuft nun vom erkannten Basisjahr bis `2050`.
+- Der Grenzeditor bietet einen einfachen Annexionsmodus: Zielland wählen, Provinzen anklicken, speichern.
+- Frisch annektierte Zielregionen starten mit tieferer Zufriedenheit und erholen sich über mehrere Jahre.
+- Aggregationstests prüfen, dass Länderwerte pro Jahr exakt zur Summe der Regionen passen.
 
-Current scope:
-- Countries and regions as dataclasses
-- JSON start data
-- Loader functions
-- Multi-year annual simulation
-- JSON export for a lightweight dashboard
-- Terminal output plus dashboard with real geodata map layer
+## Aktueller Laenderumfang
 
-Current simulation country scope:
 - Serbia
 - Montenegro
 - Bosnia and Herzegovina
@@ -53,190 +32,176 @@ Current simulation country scope:
 - Croatia
 - Romania
 
-Current simulation behavior:
-- Births and deaths by country base rates and regional modifiers
-- Region-sensitive external migration
-- Population-weighted internal migration between regions of the same country
-- Regional attractiveness based on economy, infrastructure, urbanization, metro pull and housing pressure
-- Bounded yearly variation for births, deaths, migration, GDP growth, and unemployment
-- Scenario-driven variation inputs so runs can follow different plausible paths without degenerating into literal randomness
-- Bounded yearly shocks (Phase 7.1) with realistic, capped effects
-- Shock calibration guardrails (Phase 7.2): cooldowns, event caps per country-year, and bounded severity scaling
-- Country state v1 core (Phase 8.1): budget balance, debt ratio, stability index, corruption index, and investment-climate index
-- State values are step-limited per year (Phase 8.2) for plausible inertial progression
-- Multi-year terminal output with area, density, natural change and migration values
+## Modellumfang
 
-Modeling principles:
-- No focus trees
-- No fantasy events
-- No scripted alternative history
-- Slow yearly changes
-- Standard library only
+### Demografie und Wirtschaft
 
-Dashboard 5.x (map v1):
-- Lives in `dashboard/`
-- Loads `output/latest.json` automatically when served from the repository root
-- Shows export metadata plus simple country and region summary tables
-- Renders real geodata country boundaries (BIH, MNE, SRB) and ADM1 region boundaries
-- Renders Kosovo geodata in the SRB scope to match BESP region data (`Kosovo and Metohija`)
-- Simulation/export scope and public map country coverage now both include ALB, MKD, BGR, and HUN
-- Simulation/export scope and public map country coverage now also include HRV and ROU
-- Country view renders SRB as one continuous block (Kosovo included in SRB scope, no separate country marker)
-- Region view now includes coarse ADM1-to-BESP groupings for ALB, MKD, BGR, and HUN where the geometry can be mapped reasonably
-- Region view now also includes coarse macroregion groupings for HRV and ROU with export-driven hover and metric overlay support
-- Province-style countries now use country-specific color families in region view so ALB/BGR/HUN no longer collapse into near-identical tones
-- Region labels now use deconfliction and priority-based compact mode in dense clusters (name kept first; delta reduced where space is too tight, full detail on hover)
-- Region labels are grouped by BESP region keys to avoid district-label clutter
-- Bosnia map mapping currently assigns Brcko to RS rendering scope
-- Keeps hover details export-driven with country fallback where region mapping is not available
-- Public-facing layout now prioritizes simple timeline + map usage with Advanced controls collapsed by default
-- Map metric buttons (Population, GDP per capita, Unemployment, Attractiveness) recolor country/region layers by selected year values
-- Sidebar KPI cards summarize active scope (Countries/Regions) for selected year in simpler language
-- Standard mode keeps the mixed overview visible, while metric overlays now switch the right column to a single-category view with year-to-year direction arrows
+- Geburten, Todesfälle und Nettoaussenmigration pro Jahr
+- Binnenmigration innerhalb eines Landes über Attraktivitätsunterschiede
+- Regionales BIP, BIP-Wachstum und Arbeitslosigkeit
+- Regionale Attraktivität aus Wirtschaft, Infrastruktur, Urbanisierung, Metro-Pull und Wohnungsdruck
 
-Current dashboard limitations:
-- No live simulation runs in the browser; the dashboard reads exported JSON data
-- No remote/public backend yet; run generation currently uses a local helper service
-- Controlled variation and shocks are bounded by design and not a full policy engine
-- `Reload Export` reloads the latest JSON only; it does not start Python from the browser
-- `Generate Run` uses a local run service to start a fresh simulation without turning browser JavaScript into a shell launcher
+### Neue Sozial- und Politikwerte
 
-Phase 5 map status:
-- Dashboard reads export data only (no duplicated simulation logic in JavaScript)
-- No playback controls, no shocks, no backend/API changes
-- Map rendering is frontend-only and uses preloaded GeoJSON files
+- `integration_index`
+- `inflation_rate`
+- `satisfaction_index`
+- `election_tension_index`
 
-Phase 5.6 - Timeline & Controlled Variation:
-- Add year selection to the dashboard
-- Default dashboard state should start from the earliest exported year instead of the latest
-- Add play / pause / speed controls using already exported yearly data
-- No live recalculation in the frontend
-- Add controlled variation in the simulation core only when explicitly implemented in the next block
-- Variation must be plausible, slow, bounded, reproducible, and sensitive to country / region context
-- This phase absorbs the previously separate idea of a standalone controls-only phase
+Diese Werte wirken aufeinander und fliessen auch in die staatlichen Kennzahlen ein.
 
-Phase 5.6 current implementation:
-- Dashboard starts from the earliest exported year
-- Year selection, previous/next stepping, and play / pause / speed buttons are available
-- Country summary cards now show flags
-- Dashboard no longer shows the old top-right `Loaded ...` status banner
-- Variation is deterministic and bounded, not literal random noise
+### Warum die Startintegration so gesetzt ist
 
-Phase 5.7 - Scenario-driven variation inputs:
-- The simulation can now be run with explicit scenario codes from `data/scenarios.json`
-- The simulation can now be run with an explicit deterministic variation seed
-- If no seed is provided, each new run generates a fresh seed automatically
-- Different seeds and scenarios can produce different plausible end states without introducing chaotic roulette behavior
-- Export metadata now records scenario and variation seed so dashboard output remains explainable
-- Frontend still reads exported JSON only; no live recalculation has been added
+`base_integration_index` ist bewusst kein Zufallswert. Er beschreibt den strukturellen Startzustand eines Landes, bevor die eigentliche Simulation Jahr für Jahr arbeitet. Dafür werden mehrere Faktoren zusammengezogen:
 
-Phase 5.8 - Export Reload:
-- `Play` replays the already exported years from `output/latest.json`
-- `Reload Export` refetches `output/latest.json` and resets the dashboard to the earliest available year
-- New simulation runs are still created outside the dashboard with `py main.py`
-- No browser-to-Python execution or backend bridge is introduced in this phase
+- Nähe zu EU- und Binnenmarktstrukturen
+- institutionelle Stabilität und staatliche Handlungsfähigkeit
+- Korruptionsniveau und Vertrauen in Verwaltung
+- Arbeitsmobilität und grenzüberschreitende Verflechtung
+- innerer Zusammenhalt zwischen Regionen und politischen Lagern
 
-Phase 5.8.2 - Local Run Service:
-- `Generate Run` starts a fresh local simulation through a small Python standard-library service
-- `Reload Export` remains available for explicitly reloading the newest JSON output
-- `Play` still only replays the years of the currently loaded export
-- The dashboard talks to the local run service instead of directly executing shell/Python from frontend code
+Ein höherer Startwert bedeutet im Modell also nicht einfach «besseres Land», sondern dass Integration, Anpassung und die Aufnahme neuer Gebiete anfangs stabiler funktionieren. Ein tieferer Startwert bedeutet mehr Reibung, mehr Spannungen und langsamere Angleichung. Darum fällt nach einer Annexion die Zufriedenheit zuerst ab und erholt sich erst über mehrere Jahre wieder.
 
-Phase 7.1 - Shock System v1 (bounded):
-- Adds plausible annual economic and climate shocks (e.g., recession, energy price shock, tourism slump, flood, heatwave/drought)
-- Shock draws are seed-consistent and bounded (no runaway absurd values)
-- Shock effects are exported as `shock_events` plus shock metadata in `meta.shocks`
-- Shocks can be disabled per run via CLI (`--disable-shocks`) or via the local run service payload
+### Staatsebene
 
-Phase 7.2 - Shock expansion and calibration:
-- Adds cooldown windows per shock type to avoid immediate year-to-year repeats for the same country
-- Caps stacked shocks per country-year and per category-country-year
-- Adds bounded per-event severity scaling so shock strength varies plausibly but remains constrained
-- Adds testcase verifier `tools/verify_shock_events.py` for export-level shock integrity checks
+- `budget_balance_pct_gdp`
+- `debt_to_gdp`
+- `stability_index`
+- `corruption_index`
+- `investment_climate_index`
 
-Phase 5.6 / 5.7 do not include:
-- No shock system
-- No inflation system v1
-- No politics / state system
-- No wild random effects
-- No fantasy events
-- No unbounded extreme values
+### Schocks
 
-Dashboard data flow:
-1. `py main.py` runs the yearly simulation.
-2. Python export pipeline writes `output/simulation_<start>_<end>.json` and `output/latest.json`.
-3. `dashboard/app.js` fetches `output/latest.json`.
-4. `dashboard/app.js` loads GeoJSON from `dashboard/data/`.
-5. The local run service can optionally trigger a fresh simulation run and keep status for the dashboard.
-6. Dashboard renders metadata, tables, timeline playback, reload state, run status, and map hover information.
+- Schocks sind optional und bewusst begrenzt.
+- Ohne Schocks bleiben die Runs trotzdem variabel, weil unterschiedliche Seeds kontrollierte Jahresabweichungen erzeugen.
 
-Scenario examples:
-- `py main.py --scenario baseline`
-- `py main.py --scenario baseline --seed baseline-2020`
-- `py main.py --scenario reform --seed reform-a`
-- `py main.py --scenario stagnation --seed stress-1`
-- `py main.py --scenario baseline --disable-shocks`
-- `py main.py --list-scenarios`
+## Architektur
 
-Current data-selection behavior:
-- `main.py` currently simulates `2020 -> 2030`
-- `output/latest.json` contains all simulated year buckets in that range
-- `output/latest.json` now also records scenario and variation seed in export metadata
-- `output/latest.json` now also records `meta.state_model` for the Phase 8.2 integrated state-core payload
-- Runs without `--seed` now generate a fresh seed automatically, so repeated simulations can diverge in bounded ways
-- `dashboard/app.js` now starts from the earliest available year bucket and can step/play through later buckets
-- Map cards, hover details, and summary tables follow the currently selected export year
-- State cards and state table (Phase 8.3) also follow the currently selected export year
-- Country and region tables now also include ALB, MKD, BGR, and HUN rows after simulation runs
-- Country and region tables now also include HRV and ROU rows after simulation runs
+1. `data/countries.json` und `data/regions.json` definieren Startwerte.
+2. `tools/refresh_country_baselines.py` aktualisiert die Länderbaselines aus World-Bank-Daten.
+3. `main.py` erkennt das beste Basisjahr automatisch und simuliert vom Basisjahr bis `2050`.
+4. `besp/exporter.py` schreibt `output/latest.json`.
+5. `tools/local_run_service.py` liefert Dashboard, Run-API und Grenzeditor-API lokal aus.
+6. `dashboard/index.html` visualisiert Länder, Regionen, Kennzahlen und Mehrfachläufe.
+7. `dashboard/editor.html` bearbeitet GeoJSON-Zuordnungen über persistente Overrides in `dashboard/data/map_assignments.json`.
 
-Map data source:
-- Boundary files in `dashboard/data/` come from geoBoundaries simplified GeoJSON (ADM0/ADM1) for ALB, BGR, BIH, HRV, HUN, MKD, MNE, ROU, SRB, plus XKX (mapped into SRB scope for BESP consistency).
+## Datenaktualisierung
 
-Phase 9.1 - Scope expansion v1:
-- Adds Albania, North Macedonia, Bulgaria, and Hungary to the simulation/export scope
-- Adds coarse starter regions for each new country with capital pull preserved where useful
-- Keeps the expansion intentionally moderate: more playable country breadth first, no premature province explosion
+World-Bank-Baselines neu holen:
 
-Phase 9.2 - Expanded map/data coverage:
-- Adds ADM0 and ADM1 geodata coverage for ALB, MKD, BGR, and HUN
-- Extends public map country coverage to the expanded simulation scope
-- Adds coarse, explainable region grouping for the newly mapped countries
-- Keeps fallback behavior intact where a capital/region split cannot be represented perfectly by the underlying ADM1 geometry
+```powershell
+py tools\refresh_country_baselines.py
+```
 
-Phase 9.3 - HRV/ROU scope expansion and color unification:
-- Adds Croatia and Romania to the simulation/export scope with realistic 2020 baseline values and plausibly declining long-run population trends
-- Adds coarse macroregions for HRV and ROU instead of pretending to model every small province
-- Extends public map coverage to HRV and ROU using ADM0/ADM1 geodata and clean export-driven grouping
-- Unifies region-view color logic so province-style countries use consistent country-specific color families instead of random one-off fills
+Das Skript:
 
-Map testcase fixture:
-- Stable fixture: `dashboard/fixtures/map_fixture_latest.json`
-- Fixture validation script: `tools/verify_map_fixture.py`
-- Run check with `py tools/verify_map_fixture.py`
+- prueft die Jahre `2023`, `2024`, `2025`, `2026`
+- vergleicht die Abdeckung pro Indikator und Land
+- schreibt:
+  - `data/world_bank_baseline_latest.json`
+  - `data/world_bank_baseline_<jahr>.json`
+- aktualisiert `data/countries.json`
 
-Export testcase verifiers:
-- Year-state consistency: `py tools/verify_export_year_state.py`
-- Scenario/seed meta consistency: `py tools/verify_export_meta.py`
-- State dynamics consistency: `py tools/verify_state_dynamics.py`
+## Simulation starten
 
-Shock testcase verifier:
-- Verify latest run with `py tools/verify_shock_events.py`
+Standardlauf:
 
-Local run service verifier:
-- Basic API health: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011`
-- End-to-end run flow: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011 --e2e`
+```powershell
+py main.py --scenario baseline
+```
 
-Quick start:
-1. Run `py main.py` to generate `output/latest.json`.
-2. From the repository root, run `py tools/local_run_service.py --port 8011`.
-3. Open `http://localhost:8011/dashboard/index.html`.
-4. Use `Generate Run` for a new local simulation or `Reload Export` to re-read the newest JSON.
-5. Use `Play` only to replay the loaded years.
-6. Optional export checks: `py tools/verify_export_year_state.py`, `py tools/verify_export_meta.py`, and `py tools/verify_state_dynamics.py`
-7. Optional service health check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011`
-8. Optional local E2E run check: `py tools/verify_local_run_service.py --base-url http://127.0.0.1:8011 --e2e`
-9. Optional shock integrity check after a run: `py tools/verify_shock_events.py`
+Ohne Schocks:
 
-Documentation:
-- See `PROJECT_PHASES.md` for the full up-to-date roadmap, workflow rules, current phase states, and next planned blocks.
+```powershell
+py main.py --scenario baseline --disable-shocks
+```
+
+Deterministisch mit fixem Seed:
+
+```powershell
+py main.py --scenario reform --seed reform-a
+```
+
+Verfuegbare Szenarien anzeigen:
+
+```powershell
+py main.py --list-scenarios
+```
+
+## Dashboard und Grenzeditor
+
+Lokalen Service starten:
+
+```powershell
+py tools\local_run_service.py --port 8011
+```
+
+Danach im Browser:
+
+- Dashboard: [http://127.0.0.1:8011/dashboard/index.html](http://127.0.0.1:8011/dashboard/index.html)
+- Grenzeditor: [http://127.0.0.1:8011/dashboard/editor.html](http://127.0.0.1:8011/dashboard/editor.html)
+
+### Grenzeditor-Prinzip
+
+Der Editor schneidet keine Polygone freihaendig. Stattdessen ordnet er vorhandene ADM-Flaechen neu zu. Das ist fuer diese Hauptarbeit absichtlich stabiler:
+
+- gleiche Topologie wie die Quelldaten
+- nachvollziehbare Overrides
+- kein Risiko durch kaputte selbstgezeichnete Geometrien
+
+Workflow:
+
+1. Features filtern
+2. Flaechen auswaehlen
+3. Ziel-Land, Ziel-Region und Visual-Key setzen
+4. Override speichern
+5. Dashboard neu laden
+
+## Mehrfachlaeufe
+
+Im Dashboard:
+
+- `Runs` zwischen `1` und `100`
+- `Generate Runs` startet mehrere lokale Durchlaeufe
+- die Batch-Zusammenfassung zeigt Min/Max-Spannen und die Zahl unterschiedlicher Seeds
+
+Wichtig:
+
+- gleiche Seeds => gleiche Resultate
+- verschiedene Seeds => verschiedene Verlaeufe
+- Schocks aus => trotzdem keine identischen Ergebnisse, solange der Seed nicht fixiert ist
+
+## Tests und Verifier
+
+Unit Test fuer exakte Laender-/Regionsaggregation:
+
+```powershell
+python -m unittest tests.test_country_region_aggregation
+```
+
+Weitere Checks:
+
+```powershell
+py tools\verify_export_year_state.py
+py tools\verify_state_dynamics.py
+py tools\verify_export_meta.py
+py tools\verify_geo_coverage.py
+py tools\verify_geo_name_normalization.py
+```
+
+Servicecheck:
+
+```powershell
+py tools\verify_local_run_service.py --base-url http://127.0.0.1:8011
+py tools\verify_local_run_service.py --base-url http://127.0.0.1:8011 --e2e
+```
+
+## Commit-Regel fuer die Hauptarbeit
+
+Die bestehende Git-History wird nicht automatisch umgeschrieben. Ab jetzt gilt:
+
+- keine Mikro-Commits fuer jede Kleinigkeit
+- zusammenhaengende Arbeit in einem Block committen
+- Doku, Tests und Code fuer denselben Funktionsblock gemeinsam committen
+
+Das detaillierte Phasenmodell steht in [PROJECT_PHASES.md](C:\Users\Startklar\OneDrive - Alte Kantonsschule Aarau\Desktop\Dokumente\Playground\BESP-Balkan-Economy-Simulation-Player-\PROJECT_PHASES.md).
