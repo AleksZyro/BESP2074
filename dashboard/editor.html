@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BESP Grenzeditor 10.3</title>
+    <link rel="stylesheet" href="./styles.css?v=10.3.0">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <div class="editor-hero-row">
+                <div>
+                    <p class="eyebrow">BESP Editor</p>
+                    <h1>Grenz- und Regionseditor</h1>
+                    <p class="lead">Bestehende GeoJSON-Fl&auml;chen lassen sich hier einem Zielland zuweisen. Der einfache Modus ist f&uuml;r Annexionen gedacht: Zielland w&auml;hlen, Provinzen anklicken, speichern. Nur falls n&ouml;tig gibt es darunter noch manuelle Feinzuteilung.</p>
+                </div>
+                <div class="editor-hero-actions">
+                    <a class="timeline-button timeline-link-button" href="./index.html">Zur&uuml;ck zum Dashboard</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <section class="panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-kicker">Editor</p>
+                        <h2>Arbeitsfl&auml;che</h2>
+                    </div>
+                    <div class="editor-toolbar">
+                        <label class="timeline-select-wrap" for="editor-layer-filter">
+                            <span>Layer</span>
+                            <select id="editor-layer-filter" class="timeline-select">
+                                <option value="all">Alle</option>
+                                <option value="region" selected>Regionen</option>
+                                <option value="country">L&auml;nder</option>
+                            </select>
+                        </label>
+                        <label class="timeline-select-wrap" for="editor-country-filter">
+                            <span>Quelle</span>
+                            <select id="editor-country-filter" class="timeline-select">
+                                <option value="all">Alle L&auml;nder</option>
+                            </select>
+                        </label>
+                        <label class="timeline-select-wrap" for="editor-admin-filter">
+                            <span>ADM</span>
+                            <select id="editor-admin-filter" class="timeline-select">
+                                <option value="all">Alle Level</option>
+                            </select>
+                        </label>
+                        <label class="timeline-select-wrap editor-search-wrap" for="editor-search">
+                            <span>Suche</span>
+                            <input id="editor-search" class="editor-search-input" type="search" placeholder="Name oder Feature-ID">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="editor-layout">
+                    <div class="editor-map-panel">
+                        <div class="editor-map-meta">
+                            <p id="editor-status" class="export-status" aria-live="polite">Lade Editor-Daten ...</p>
+                            <p id="editor-selection-summary" class="timeline-note">Keine Auswahl.</p>
+                        </div>
+                        <div class="map-canvas-wrap editor-map-canvas">
+                            <svg id="editor-map" viewBox="0 0 780 520" aria-label="Grenzeditor-Karte" shape-rendering="geometricPrecision">
+                                <g id="editor-country-outline-layer"></g>
+                                <g id="editor-feature-layer"></g>
+                                <g id="editor-selection-layer"></g>
+                                <g id="editor-label-layer"></g>
+                            </svg>
+                        </div>
+                        <div class="editor-bulk-actions">
+                            <button id="editor-select-visible" class="timeline-button" type="button">Sichtbare ausw&auml;hlen</button>
+                            <button id="editor-clear-selection" class="timeline-button" type="button">Auswahl leeren</button>
+                            <button id="editor-reload" class="timeline-button" type="button">Neu laden</button>
+                            <button id="editor-save" class="timeline-button timeline-button-primary" type="button">&Auml;nderungen speichern</button>
+                        </div>
+                    </div>
+
+                    <div class="editor-side-panel">
+                        <article class="meta-card">
+                            <span class="meta-label">Auswahl</span>
+                            <strong id="editor-selected-title" class="meta-value">Keine Fl&auml;che gew&auml;hlt</strong>
+                            <p id="editor-selected-body" class="meta-note">Klick auf Karte oder Liste, um eine oder mehrere Fl&auml;chen zu w&auml;hlen.</p>
+                        </article>
+
+                        <article class="meta-card">
+                            <span class="meta-label">Annexionsmodus</span>
+                            <strong class="meta-value">Zielland w&auml;hlen</strong>
+                            <p class="meta-note">1. Zielland w&auml;hlen. 2. Provinzen anklicken. 3. Auswahl dem Zielland zuweisen.</p>
+                            <div class="editor-form-grid">
+                                <label class="editor-field">
+                                    <span>Zielland</span>
+                                    <select id="editor-target-country" class="timeline-select">
+                                        <option value="">Kein Zielland</option>
+                                    </select>
+                                </label>
+                                <label class="editor-field">
+                                    <span>Zielregion</span>
+                                    <select id="editor-target-region" class="timeline-select">
+                                        <option value="">Automatisch</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <p id="editor-target-summary" class="meta-note">Noch kein Zielland aktiv.</p>
+                            <div class="editor-form-actions">
+                                <button id="editor-apply-override" class="timeline-button timeline-button-primary" type="button">Auswahl zum Zielland hinzuf&uuml;gen</button>
+                                <button id="editor-remove-override" class="timeline-button" type="button">Zuweisung f&uuml;r Auswahl l&ouml;schen</button>
+                            </div>
+                        </article>
+
+                        <details class="advanced-block">
+                            <summary>Erweitert: manuelle Feinzuteilung</summary>
+                            <div class="advanced-content">
+                                <p class="timeline-note">Nur &ouml;ffnen, wenn die automatische Zielregion nicht reicht. Diese Felder &uuml;berschreiben den einfachen Annexionsmodus gezielt.</p>
+                                <div class="editor-form-grid">
+                                    <label class="editor-field">
+                                        <span>Zielname</span>
+                                        <input id="editor-target-name" class="editor-text-input" type="text" placeholder="optional">
+                                    </label>
+                                    <label class="editor-field">
+                                        <span>BESP-Region</span>
+                                        <select id="editor-target-besp-select" class="timeline-select">
+                                            <option value="">Unver&auml;ndert</option>
+                                        </select>
+                                    </label>
+                                    <label class="editor-field">
+                                        <span>BESP-Key manuell</span>
+                                        <input id="editor-target-besp-key" class="editor-text-input" type="text" placeholder="z. B. SRB::kosovo and metohija">
+                                    </label>
+                                    <label class="editor-field">
+                                        <span>Visual-Key</span>
+                                        <input id="editor-target-visual-key" class="editor-text-input" type="text" placeholder="z. B. SRB::kosovo-metohija">
+                                    </label>
+                                    <label class="editor-field">
+                                        <span>Visual-Label</span>
+                                        <input id="editor-target-visual-label" class="editor-text-input" type="text" placeholder="z. B. Kosovo">
+                                    </label>
+                                    <label class="editor-field">
+                                        <span>Visual-Datenkey</span>
+                                        <input id="editor-target-visual-data-key" class="editor-text-input" type="text" placeholder="z. B. SRB::kosovo and metohija">
+                                    </label>
+                                    <label class="editor-field">
+                                        <span>Visual-Farbe</span>
+                                        <div class="editor-color-row">
+                                            <input id="editor-target-visual-fill" class="editor-text-input" type="text" placeholder="#d4a76b">
+                                            <input id="editor-target-visual-fill-picker" class="editor-color-input" type="color" value="#d4a76b">
+                                        </div>
+                                    </label>
+                                    <label class="toggle-wrap editor-toggle-wrap" for="editor-hidden">
+                                        <input id="editor-hidden" type="checkbox">
+                                        <span>Fl&auml;che ausblenden</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </details>
+
+                        <article class="meta-card">
+                            <span class="meta-label">Vorschau</span>
+                            <pre id="editor-override-preview" class="editor-json-preview">{}</pre>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="editor-feature-list-wrap">
+                    <div class="section-heading">
+                        <div>
+                            <p class="section-kicker">Feature-Liste</p>
+                            <h2>Gefilterte Fl&auml;chen</h2>
+                        </div>
+                    </div>
+                    <div id="editor-feature-list" class="editor-feature-list"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="./config.js?v=10.3.0"></script>
+    <script src="./editor.js?v=10.3.0"></script>
+</body>
+</html>
