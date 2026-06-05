@@ -645,6 +645,7 @@ const dashboardState = {
     currentRegionRows: [],
     editorMode: false,
     editorAssignments: { updated_at: null, overrides: {} },
+    editorTargetCountryCode: "",
     selectedEditorSelectionType: "",
     selectedEditorSelectionKey: "",
     selectedEditorVisualRegionKey: "",
@@ -752,7 +753,7 @@ function bindEditorControls() {
         setEditorMode(!dashboardState.editorMode);
     });
     elements.editorInlineTargetCountry?.addEventListener("change", () => {
-        populateInlineEditorTargetRegions(elements.editorInlineTargetCountry.value);
+        setInlineEditorTargetCountry(elements.editorInlineTargetCountry.value);
         renderInlineEditorPanel();
     });
     elements.editorInlineApply?.addEventListener("click", () => {
@@ -774,21 +775,23 @@ function populateInlineEditorTargetCountries() {
     if (!elements.editorInlineTargetCountry) {
         return;
     }
-    const currentValue = normalizeCountryCode(elements.editorInlineTargetCountry.value);
+    const currentValue = normalizeCountryCode(dashboardState.editorTargetCountryCode || elements.editorInlineTargetCountry.value);
     const countryCodes = getInlineEditorTargetCountryCodes();
     elements.editorInlineTargetCountry.innerHTML = countryCodes
         .map((countryCode) => `<option value="${escapeHtml(countryCode)}">${escapeHtml(COUNTRY_CONFIG[countryCode]?.name ?? countryCode)} (${escapeHtml(displayCountryCode(countryCode))})</option>`)
         .join("");
-    elements.editorInlineTargetCountry.value = countryCodes.includes(currentValue)
+    const nextValue = countryCodes.includes(currentValue)
         ? currentValue
         : (countryCodes[0] ?? "");
+    elements.editorInlineTargetCountry.value = nextValue;
+    dashboardState.editorTargetCountryCode = nextValue;
 }
-function populateInlineEditorTargetRegions(countryCode) {
+function populateInlineEditorTargetRegions(countryCode, preferredVisualRegionKey = "") {
     if (!elements.editorInlineTargetRegion) {
         return;
     }
     const normalizedCountryCode = normalizeCountryCode(countryCode);
-    const currentValue = String(elements.editorInlineTargetRegion.value ?? "");
+    const currentValue = String(preferredVisualRegionKey || elements.editorInlineTargetRegion.value || "");
     const options = INLINE_EDITOR_TARGET_OPTIONS[normalizedCountryCode] ?? [];
     elements.editorInlineTargetRegion.innerHTML = options
         .map((option) => `<option value="${escapeHtml(option.visualRegionKey)}">${escapeHtml(option.label)}</option>`)
@@ -796,6 +799,19 @@ function populateInlineEditorTargetRegions(countryCode) {
     elements.editorInlineTargetRegion.value = options.some((option) => option.visualRegionKey === currentValue)
         ? currentValue
         : (options[0]?.visualRegionKey ?? "");
+}
+function setInlineEditorTargetCountry(countryCode, preferredVisualRegionKey = "") {
+    const normalizedCountryCode = normalizeCountryCode(countryCode);
+    const countryCodes = getInlineEditorTargetCountryCodes();
+    if (!countryCodes.includes(normalizedCountryCode)) {
+        return false;
+    }
+    dashboardState.editorTargetCountryCode = normalizedCountryCode;
+    if (elements.editorInlineTargetCountry) {
+        elements.editorInlineTargetCountry.value = normalizedCountryCode;
+    }
+    populateInlineEditorTargetRegions(normalizedCountryCode, preferredVisualRegionKey);
+    return true;
 }
 function setEditorSelection(type = "", key = "") {
     const normalizedType = type === "country" || type === "region" ? type : "";
@@ -814,24 +830,7 @@ function getInlineEditorSelectedGroup() {
         return null;
     }
     if (selectionType === "country") {
-        const countryCode = normalizeCountryCode(selectionKey);
-        const countryGroup = mapDataCache.countryFeaturesByCode.get(countryCode) ?? null;
-        const regionFeatures = (dashboardState.geoData?.regionFeatures ?? [])
-            .filter((feature) => feature.countryCode === countryCode);
-        const features = [...new Map(
-            [...(countryGroup?.features ?? []), ...regionFeatures]
-                .map((feature) => [feature.featureId, feature])
-        ).values()];
-        if (!features.length) {
-            return null;
-        }
-        return {
-            selectionType,
-            selectionKey: countryCode,
-            countryCode,
-            label: COUNTRY_CONFIG[countryCode]?.name ?? displayCountryCode(countryCode),
-            features,
-        };
+        return null;
     }
     const visualRegionGroup = mapDataCache.visualRegionsByKey.get(selectionKey) ?? null;
     if (!visualRegionGroup) {
@@ -844,11 +843,33 @@ function getInlineEditorSelectedGroup() {
     };
 }
 function getInlineEditorTargetOption() {
-    const countryCode = normalizeCountryCode(elements.editorInlineTargetCountry?.value);
+    const countryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode || elements.editorInlineTargetCountry?.value);
     const visualRegionKey = String(elements.editorInlineTargetRegion?.value ?? "");
     return (INLINE_EDITOR_TARGET_OPTIONS[countryCode] ?? []).find(
         (option) => option.visualRegionKey === visualRegionKey
     ) ?? null;
+}
+function getInlineEditorSourceOwnerCode(group) {
+    const rawCountryCodes = new Set(
+        (group?.features ?? [])
+            .map((feature) => normalizeCountryCode(feature.rawCountryCode))
+            .filter(Boolean)
+    );
+    if (rawCountryCodes.size === 1) {
+        return [...rawCountryCodes][0];
+    }
+    return normalizeCountryCode(group?.countryCode);
+}
+function syncInlineEditorTargetRegionForSource(group) {
+    const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
+    const visualRegionKey = String(group?.visualRegionKey ?? "");
+    if (!targetCountryCode || !visualRegionKey) {
+        return;
+    }
+    const targetOptions = INLINE_EDITOR_TARGET_OPTIONS[targetCountryCode] ?? [];
+    if (targetOptions.some((option) => option.visualRegionKey === visualRegionKey)) {
+        populateInlineEditorTargetRegions(targetCountryCode, visualRegionKey);
+    }
 }
 function setInlineEditorStatus(message, tone = "muted") {
     if (!elements.editorInlineStatus) {
@@ -867,9 +888,13 @@ function renderInlineEditorPanel() {
     populateInlineEditorTargetRegions(elements.editorInlineTargetCountry?.value);
     const selectedGroup = getInlineEditorSelectedGroup();
     const hasSelection = Boolean(selectedGroup);
+    const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
+    const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
+    const sourceOwnerCode = hasSelection ? getInlineEditorSourceOwnerCode(selectedGroup) : "";
+    const sourceAlreadyOwned = hasSelection && sourceOwnerCode === targetCountryCode;
     const selectionPrompt = activeMapMode === "country"
-        ? "Ein sichtbares Land auf der Karte anklicken."
-        : "Eine sichtbare Region auf der Karte anklicken.";
+        ? "Land anklicken, das annektieren soll."
+        : "Region anklicken, die übernommen wird.";
     if (!editorActive) {
         elements.editorInlineSelectionTitle.textContent = "Kein Gebiet gewählt";
         elements.editorInlineSelectionNote.textContent = "Grenzmodus aus.";
@@ -880,22 +905,27 @@ function renderInlineEditorPanel() {
         return;
     }
     const targetOption = getInlineEditorTargetOption();
-    if (hasSelection) {
-        elements.editorInlineSelectionTitle.textContent = `${selectedGroup.label} gewählt`;
-        elements.editorInlineSelectionNote.textContent = `${selectedGroup.features.length} Teilflächen. Zielland und Zielregion wählen, dann übernehmen.`;
-    } else {
+    if (!hasSelection) {
         elements.editorInlineSelectionTitle.textContent = "Kein Gebiet gewählt";
         elements.editorInlineSelectionNote.textContent = selectionPrompt;
     }
-    elements.editorInlineApply.disabled = !hasSelection || !targetOption;
+    if (hasSelection) {
+        elements.editorInlineSelectionTitle.textContent = `${selectedGroup.label} übernehmen`;
+        elements.editorInlineSelectionNote.textContent = sourceAlreadyOwned
+            ? `${targetCountryName} besitzt dieses Gebiet bereits.`
+            : `${selectedGroup.features.length} Teilflächen gehen an ${targetCountryName}.`;
+    }
+    elements.editorInlineApply.disabled = !hasSelection || !targetOption || sourceAlreadyOwned;
     elements.editorInlineReset.disabled = !hasSelection;
     elements.editorInlineSave.disabled = !dashboardState.runServiceAvailable;
     if (!dashboardState.runServiceAvailable) {
         setInlineEditorStatus("Zum Speichern zuerst den lokalen Run-Service starten.", "muted");
     } else if (hasSelection && targetOption) {
-        setInlineEditorStatus(`Ziel: ${COUNTRY_CONFIG[normalizeCountryCode(elements.editorInlineTargetCountry.value)]?.name ?? elements.editorInlineTargetCountry.value} / ${targetOption.label}`, "muted");
+        setInlineEditorStatus(sourceAlreadyOwned
+            ? "Gebiet gehört bereits zu diesem Land."
+            : `${targetCountryName} übernimmt in ${targetOption.label}.`, "muted");
     } else {
-        setInlineEditorStatus("Zielland wählen, Gebiet anklicken, übernehmen.", "muted");
+        setInlineEditorStatus(`${targetCountryName} übernimmt. Region anklicken.`, "muted");
     }
 }
 function buildInlineEditorOverridePatch(targetCountryCode, targetOption) {
@@ -939,21 +969,22 @@ async function refreshGeoFromEditorAssignments(nextSelection = null) {
 async function applyInlineEditorAssignment() {
     try {
         const selectedGroup = getInlineEditorSelectedGroup();
-        const targetCountryCode = normalizeCountryCode(elements.editorInlineTargetCountry?.value);
+        const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode || elements.editorInlineTargetCountry?.value);
         const targetOption = getInlineEditorTargetOption();
         if (!selectedGroup || !targetCountryCode || !targetOption) {
-            setInlineEditorStatus("Zuerst Gebiet und Ziel wählen.", "error");
+            setInlineEditorStatus("Zuerst Land und Region wählen.", "error");
+            return;
+        }
+        const sourceOwnerCode = getInlineEditorSourceOwnerCode(selectedGroup);
+        if (sourceOwnerCode === targetCountryCode) {
+            setInlineEditorStatus("Dieses Gebiet gehört bereits zum übernehmenden Land.", "error");
             return;
         }
         replaceInlineEditorOverridesForGroup(
             selectedGroup,
             buildInlineEditorOverridePatch(targetCountryCode, targetOption)
         );
-        await refreshGeoFromEditorAssignments(
-            activeMapMode === "country"
-                ? { type: "country", key: targetCountryCode }
-                : { type: "region", key: targetOption.visualRegionKey }
-        );
+        await refreshGeoFromEditorAssignments();
         setInlineEditorStatus("Zuordnung lokal übernommen. Mit Speichern dauerhaft sichern.", "success");
     } catch (error) {
         setInlineEditorStatus(`Zuordnung fehlgeschlagen: ${error instanceof Error ? error.message : "Unbekannter Fehler"}`, "error");
@@ -1058,12 +1089,6 @@ function setActiveMetric(metricKey) {
 }
 function setMapMode(mode) {
     activeMapMode = mode === "region" ? "region" : "country";
-    if (dashboardState.editorMode) {
-        const visibleSelectionType = activeMapMode === "country" ? "country" : "region";
-        if (dashboardState.selectedEditorSelectionType !== visibleSelectionType) {
-            clearEditorSelection();
-        }
-    }
     const countryActive = activeMapMode === "country";
     elements.mapModeCountryButton.classList.toggle("map-mode-button-active", countryActive);
     elements.mapModeRegionButton.classList.toggle("map-mode-button-active", !countryActive);
@@ -1076,11 +1101,6 @@ function setEditorMode(enabled) {
     dashboardState.editorMode = Boolean(enabled);
     if (!dashboardState.editorMode) {
         clearEditorSelection();
-    } else {
-        const visibleSelectionType = activeMapMode === "country" ? "country" : "region";
-        if (dashboardState.selectedEditorSelectionType && dashboardState.selectedEditorSelectionType !== visibleSelectionType) {
-            clearEditorSelection();
-        }
     }
     elements.editorModeToggleButton?.classList.toggle("map-mode-button-active", dashboardState.editorMode);
     applyMapModeVisibility();
@@ -1942,6 +1962,10 @@ function renderCountryLayer(geoData) {
     const groupedCountries = [...groupedByCountry.entries()]
         .map(([countryCode, features]) => {
             const countryPath = features.map((feature) => feature.pathD).join(" ");
+            const hoverFeatures = features.filter((feature) => feature.rawCountryCode === countryCode);
+            const hoverPathD = (hoverFeatures.length ? hoverFeatures : features)
+                .map((feature) => feature.pathD)
+                .join(" ");
             const labelFeature = features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
             const centroid = labelFeature?.centroid ?? averageCentroid(features);
             const displayName = labelFeature?.countryCode === "SRB"
@@ -1951,6 +1975,7 @@ function renderCountryLayer(geoData) {
                 countryCode,
                 displayName,
                 pathD: countryPath,
+                hoverPathD,
                 disableHoverOutline: false,
                 centroid,
                 projectedBounds: mergeProjectedBounds(features),
@@ -2592,12 +2617,16 @@ function bindEditorMapEvents() {
                 return;
             }
             const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
-            setEditorSelection("country", countryCode);
+            if (!setInlineEditorTargetCountry(countryCode)) {
+                setInlineEditorStatus("Dieses Land kann im Grenzmodus nicht übernehmen.", "error");
+                return;
+            }
             renderActiveYearState();
             setMapHoverDetails(
-                `${COUNTRY_CONFIG[countryCode]?.name ?? displayCountryCode(countryCode)} gewählt`,
-                "Zielland und Zielregion wählen, dann übernehmen."
+                `${COUNTRY_CONFIG[countryCode]?.name ?? displayCountryCode(countryCode)} übernimmt`,
+                "In die Regionenansicht wechseln und eine fremde Region anklicken."
             );
+            return;
         });
     }
     for (const node of elements.regionLayer.querySelectorAll(".map-region-shape")) {
@@ -2606,11 +2635,13 @@ function bindEditorMapEvents() {
                 return;
             }
             setEditorSelection("region", String(node.getAttribute("data-visual-region-key") ?? ""));
+            syncInlineEditorTargetRegionForSource(getInlineEditorSelectedGroup());
             renderActiveYearState();
             setMapHoverDetails(
-                `${String(node.getAttribute("data-region-name") ?? "Region")} gewählt`,
-                "Zielland und Zielregion wählen, dann übernehmen."
+                `${String(node.getAttribute("data-region-name") ?? "Region")} übernehmen`,
+                "Übernehmen speichert die Region beim gewählten Land lokal vor."
             );
+            return;
         });
     }
 }
@@ -2640,7 +2671,7 @@ function syncHoverOutline(node) {
         : String(
             mapDataCache.countryFeaturesByCode.get(
                 normalizeCountryCode(node.getAttribute("data-country-code"))
-            )?.pathD ?? node.getAttribute("d") ?? ""
+            )?.hoverPathD ?? node.getAttribute("d") ?? ""
         );
     if (!pathD) {
         return;
@@ -2740,9 +2771,11 @@ function resetMapHoverDetails() {
     if (dashboardState.editorMode) {
         const selectedGroup = getInlineEditorSelectedGroup();
         if (selectedGroup) {
+            const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
+            const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
             setMapHoverDetails(
-                `${selectedGroup.label} gewählt`,
-                "Zielland und Zielregion wählen, dann übernehmen."
+                `${selectedGroup.label} übernehmen`,
+                `${targetCountryName} übernimmt diese Region.`
             );
             return;
         }
