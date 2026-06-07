@@ -7,7 +7,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COUNTRIES_PATH = REPO_ROOT / "data" / "countries.json"
 SNAPSHOT_LATEST_PATH = REPO_ROOT / "data" / "world_bank_baseline_latest.json"
-COUNTRY_CODES = ["SRB", "MNE", "BIH", "ALB", "MKD", "BGR", "HUN", "HRV", "ROU"]
+COUNTRY_CODES = ["SRB", "MNE", "BIH", "ALB", "MKD", "BGR", "HUN", "HRV", "ROU", "SVN", "GRC"]
 REFERENCE_GDP_YEAR = 2020
 CANDIDATE_BASELINE_YEARS = [2023, 2024, 2025, 2026]
 WB_COUNTRY_QUERY = ";".join(COUNTRY_CODES)
@@ -30,6 +30,8 @@ ELECTION_METADATA = {
     "HUN": {"last_election_year": 2022, "election_cycle_years": 4, "election_sensitivity": 0.50},
     "HRV": {"last_election_year": 2024, "election_cycle_years": 4, "election_sensitivity": 0.56},
     "ROU": {"last_election_year": 2024, "election_cycle_years": 4, "election_sensitivity": 0.59},
+    "SVN": {"last_election_year": 2022, "election_cycle_years": 4, "election_sensitivity": 0.46},
+    "GRC": {"last_election_year": 2023, "election_cycle_years": 4, "election_sensitivity": 0.60},
 }
 
 

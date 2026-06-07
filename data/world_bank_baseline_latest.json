@@ -12,47 +12,47 @@
   "coverage_report": {
     "2023": {
       "indicator_coverage": {
-        "population": 9,
-        "gdp_usd": 9,
-        "unemployment": 9,
-        "inflation": 9,
-        "birth_rate": 9,
-        "death_rate": 9,
-        "net_migration": 9
+        "population": 11,
+        "gdp_usd": 11,
+        "unemployment": 11,
+        "inflation": 11,
+        "birth_rate": 11,
+        "death_rate": 11,
+        "net_migration": 11
       },
       "full_indicator_count": 7,
-      "complete_country_count": 9,
-      "total_points": 63,
+      "complete_country_count": 11,
+      "total_points": 77,
       "missing_by_country": {}
     },
     "2024": {
       "indicator_coverage": {
-        "population": 9,
-        "gdp_usd": 9,
-        "unemployment": 9,
-        "inflation": 9,
-        "birth_rate": 9,
-        "death_rate": 9,
-        "net_migration": 9
+        "population": 11,
+        "gdp_usd": 11,
+        "unemployment": 11,
+        "inflation": 11,
+        "birth_rate": 11,
+        "death_rate": 11,
+        "net_migration": 11
       },
       "full_indicator_count": 7,
-      "complete_country_count": 9,
-      "total_points": 63,
+      "complete_country_count": 11,
+      "total_points": 77,
       "missing_by_country": {}
     },
     "2025": {
       "indicator_coverage": {
         "population": 0,
         "gdp_usd": 0,
-        "unemployment": 9,
+        "unemployment": 11,
         "inflation": 0,
         "birth_rate": 0,
         "death_rate": 0,
-        "net_migration": 9
+        "net_migration": 11
       },
       "full_indicator_count": 2,
       "complete_country_count": 0,
-      "total_points": 18,
+      "total_points": 22,
       "missing_by_country": {
         "SRB": [
           "population",
@@ -111,6 +111,20 @@
           "death_rate"
         ],
         "ROU": [
+          "population",
+          "gdp_usd",
+          "inflation",
+          "birth_rate",
+          "death_rate"
+        ],
+        "SVN": [
+          "population",
+          "gdp_usd",
+          "inflation",
+          "birth_rate",
+          "death_rate"
+        ],
+        "GRC": [
           "population",
           "gdp_usd",
           "inflation",
@@ -206,6 +220,24 @@
           "net_migration"
         ],
         "ROU": [
+          "population",
+          "gdp_usd",
+          "unemployment",
+          "inflation",
+          "birth_rate",
+          "death_rate",
+          "net_migration"
+        ],
+        "SVN": [
+          "population",
+          "gdp_usd",
+          "unemployment",
+          "inflation",
+          "birth_rate",
+          "death_rate",
+          "net_migration"
+        ],
+        "GRC": [
           "population",
           "gdp_usd",
           "unemployment",
@@ -325,6 +357,30 @@
       "death_rate": 0.0128,
       "net_migration_people": -28466,
       "net_migration_rate": -0.0014941367232205413
+    },
+    "SVN": {
+      "population": 2127400,
+      "gdp_usd_2020": 53384760135.1581,
+      "gdp_usd_2024": 72972015197.3859,
+      "gdp_scale_vs_2020": 1.3669072411796421,
+      "unemployment_rate": 0.037000000000000005,
+      "inflation_rate": 0.0196562656432512,
+      "birth_rate": 0.0079,
+      "death_rate": 0.0101,
+      "net_migration_people": 3319,
+      "net_migration_rate": 0.0015601203346808311
+    },
+    "GRC": {
+      "population": 10405134,
+      "gdp_usd_2020": 191362985554.861,
+      "gdp_usd_2024": 256238371778.118,
+      "gdp_scale_vs_2020": 1.339017423014955,
+      "unemployment_rate": 0.1002,
+      "inflation_rate": 0.0274101875679477,
+      "birth_rate": 0.0066,
+      "death_rate": 0.0121,
+      "net_migration_people": -122772,
+      "net_migration_rate": -0.011799175291735792
     }
   },
   "indicators": {

@@ -8,24 +8,28 @@ EXPECTED_ADM0 = {
     "ALB",
     "BGR",
     "BIH",
+    "GRC",
     "HRV",
     "HUN",
     "MKD",
     "MNE",
     "ROU",
     "SRB",
+    "SVN",
     "XKX",
 }
 EXPECTED_ADM1 = {
     "ALB",
     "BGR",
     "BIH",
+    "GRC",
     "HRV",
     "HUN",
     "MKD",
     "MNE",
     "ROU",
     "SRB",
+    "SVN",
 }
 EXPECTED_EXTRA = {
     ("BIH", "ADM2"),
@@ -64,7 +68,7 @@ def main() -> None:
         fail(f"Missing extra subdivision files: {missing_extra}")
 
     print("[OK] ADM0 coverage exists for all public map countries plus XKX overlay scope.")
-    print("[OK] ADM1 coverage exists for ALB, BGR, BIH, HRV, HUN, MKD, MNE, ROU, and SRB.")
+    print("[OK] ADM1 coverage exists for ALB, BGR, BIH, GRC, HRV, HUN, MKD, MNE, ROU, SRB, and SVN.")
     print("[OK] XKX ADM1 exists, so Kosovo can render real district inner lines inside SRB scope.")
     print("[OK] BIH ADM2 and ADM3 exist, so Bosnia can render cantons in FBiH and finer municipal inner lines in RS scope.")
 

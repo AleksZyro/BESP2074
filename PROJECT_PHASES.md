@@ -122,7 +122,7 @@ Status: in progress
 
 ## Aktueller Codezustand
 
-- Laenderumfang:
+- Länderumfang:
   - Serbia
   - Montenegro
   - Bosnia and Herzegovina
@@ -132,6 +132,8 @@ Status: in progress
   - Hungary
   - Croatia
   - Romania
+  - Slovenia
+  - Greece
 - Export:
   - `output/latest.json`
   - `output/simulation_<start>_<end>.json`
@@ -160,8 +162,8 @@ python -m unittest tests.test_country_region_aggregation
 py tools\local_run_service.py --port 8011
 ```
 
-## Naechste sinnvolle Ausbauschritte
+## Nächste sinnvolle Ausbauschritte
 
 1. Echte Batch-Vergleichsansicht im Dashboard statt nur Min/Max-Zusammenfassung.
-2. Optionaler Polygon-Split-Editor, falls freie Grenzziehung spaeter wirklich noetig wird.
-3. Weitere Datensatz-Refreshes, sobald fuer `2025` oder `2026` genug gemeinsame Weltbankwerte verfuegbar sind.
+2. Optionaler Polygon-Split-Editor, falls freie Grenzziehung später wirklich nötig wird.
+3. Weitere Datensatz-Refreshes, sobald für `2025` oder `2026` genug gemeinsame Weltbankwerte verfügbar sind.

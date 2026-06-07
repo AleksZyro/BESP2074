@@ -7,9 +7,10 @@ BESP ist eine realistische, jahresbasierte Balkan-Simulation mit exportgetrieben
 - Das Startjahr wird nicht mehr hart auf `2020` oder `2024` fixiert.
 - `tools/refresh_country_baselines.py` prüft `2023-2026` und wählt automatisch das gemeinsame Jahr mit der besten Datenabdeckung.
 - Im aktuellen Datenstand gewinnt `2024` als bestes gemeinsames Basisjahr.
-- Die Simulation führt vier neue Parameter:
+- Die Simulation führt fünf neue Parameter:
   - `integration`
   - `inflation`
+  - `corruption`
   - `satisfaction`
   - `elections`
 - Mehrfachläufe mit `1-100` Runs sind über den lokalen Service möglich.
@@ -20,7 +21,7 @@ BESP ist eine realistische, jahresbasierte Balkan-Simulation mit exportgetrieben
 - Frisch annektierte Zielregionen starten mit tieferer Zufriedenheit und erholen sich über mehrere Jahre.
 - Aggregationstests prüfen, dass Länderwerte pro Jahr exakt zur Summe der Regionen passen.
 
-## Aktueller Laenderumfang
+## Aktueller Länderumfang
 
 - Serbia
 - Montenegro
@@ -31,6 +32,8 @@ BESP ist eine realistische, jahresbasierte Balkan-Simulation mit exportgetrieben
 - Hungary
 - Croatia
 - Romania
+- Slovenia
+- Greece
 
 ## Modellumfang
 
@@ -45,10 +48,13 @@ BESP ist eine realistische, jahresbasierte Balkan-Simulation mit exportgetrieben
 
 - `integration_index`
 - `inflation_rate`
+- `corruption_index`
 - `satisfaction_index`
 - `election_tension_index`
 
 Diese Werte wirken aufeinander und fliessen auch in die staatlichen Kennzahlen ein.
+
+`corruption_index` ist bewusst als negativer Index modelliert: tiefer ist besser. Er wirkt auf Stabilität, Investitionsklima, Zufriedenheit und indirekt auf Wachstum. In der Karte ist Korruption deshalb eine eigene Metrik, bleibt aber in der Simulation mit den staatlichen Kennzahlen verknüpft.
 
 ### Warum die Startintegration so gesetzt ist
 
@@ -95,7 +101,7 @@ py tools\refresh_country_baselines.py
 
 Das Skript:
 
-- prueft die Jahre `2023`, `2024`, `2025`, `2026`
+- prüft die Jahre `2023`, `2024`, `2025`, `2026`
 - vergleicht die Abdeckung pro Indikator und Land
 - schreibt:
   - `data/world_bank_baseline_latest.json`
@@ -122,7 +128,7 @@ Deterministisch mit fixem Seed:
 py main.py --scenario reform --seed reform-a
 ```
 
-Verfuegbare Szenarien anzeigen:
+Verfügbare Szenarien anzeigen:
 
 ```powershell
 py main.py --list-scenarios
