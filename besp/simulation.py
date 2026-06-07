@@ -1075,7 +1075,7 @@ def aggregate_country_results(
         average_inflation_rate = weighted_average_metric(
             entries,
             "inflation_rate",
-            "end_population",
+            "end_gdp_billion_eur",
         )
         average_satisfaction_index = weighted_average_metric(
             entries,

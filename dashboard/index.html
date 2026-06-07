@@ -53,6 +53,7 @@
                                 <button class="metric-button" data-metric="attractiveness" type="button">&#10024; Attr.</button>
                                 <button class="metric-button" data-metric="integration" type="button">&#129309; Int.</button>
                                 <button class="metric-button" data-metric="inflation" type="button">&#8597;&#65039; Preise</button>
+                                <button class="metric-button" data-metric="corruption" type="button">&#9878;&#65039; Korr.</button>
                                 <button class="metric-button" data-metric="satisfaction" type="button">&#128578; Zufr.</button>
                                 <button class="metric-button" data-metric="elections" type="button">&#127963;&#65039; Wahl</button>
                             </div>
@@ -69,6 +70,7 @@
                             <g id="region-hover-layer"></g>
                             <g id="region-label-layer"></g>
                         </svg>
+                        <div id="map-context-menu" class="map-context-menu map-hidden" role="menu" aria-label="Kartenaktion"></div>
                     </div>
                     <div class="map-side-panel">
                         <article id="kpi-card" class="meta-card kpi-card">
@@ -91,7 +93,7 @@
                                     <span>&Uuml;bernimmt</span>
                                     <select id="editor-inline-target-country" class="timeline-select"></select>
                                 </label>
-                                <label class="timeline-select-wrap" for="editor-inline-target-region">
+                                <label class="timeline-select-wrap editor-hidden-field" for="editor-inline-target-region">
                                     <span>Einordnung</span>
                                     <select id="editor-inline-target-region" class="timeline-select"></select>
                                 </label>

@@ -63,7 +63,8 @@ def main() -> None:
     state_model_meta = meta.get("state_model")
     if not isinstance(state_model_meta, dict):
         fail("Missing meta.state_model object.")
-    if str(state_model_meta.get("phase", "")).strip() != "8.2":
+    expected_state_phase = "10.1"
+    if str(state_model_meta.get("phase", "")).strip() != expected_state_phase:
         fail(f"Unexpected state_model phase: {state_model_meta!r}")
     if not str(state_model_meta.get("version", "")).strip():
         fail("meta.state_model.version is empty.")
