@@ -72,7 +72,7 @@ const VISUAL_REGION_LABEL_OFFSETS = {
     "SRB::vojvodina": [0, -4],
     "MKD::skopje": [0, 4],
     "MKD::west": [0, -2],
-    "MKD::se": [10, 16],
+    "MKD::se": [14, -2],
     "MNE::coastal-region": [-18, 8],
     "MNE::southern-montenegro": [-12, 8],
     "MNE::northern-montenegro": [-2, -2],
@@ -128,6 +128,7 @@ const REGION_LABEL_PRIORITY_BOOST = {
     "HRV::zagreb-central": 500,
     "MKD::skopje": 1200,
     "MKD::west": 1050,
+    "MKD::se": 2200,
     "MNE::coastal-region": 980,
     "MNE::southern-montenegro": 1600,
     "MNE::northern-montenegro": 980,
@@ -149,6 +150,7 @@ const REGION_LABEL_FORCE_SHOW = new Set([
     "HRV::slavonia",
     "MKD::skopje",
     "MKD::west",
+    "MKD::se",
     "MNE::coastal-region",
     "MNE::southern-montenegro",
     "MNE::northern-montenegro",
@@ -230,12 +232,14 @@ const REAL_SUBDIVISION_VISUAL_REGION_KEYS = new Set([
     "GRC::macedonia-thrace",
     "GRC::peloponnese-west-greece-ionian",
     "GRC::thessalia-central-greece",
+    "SVN::eastern",
+    "SVN::western",
     "SRB::kosovo-metohija",
 ]);
 const REGION_MAP_SOURCE_NOTE =
     "Region view mixes real ADM1 borders with coarse grouped macroregions where necessary.";
 const REGION_MAP_LIMITATION_NOTE =
-    "Kosovo uses one shared region fill with real ADM1 district underlines. Bosnia uses real ADM2 cantons in FBiH and real ADM3 municipal inner lines inside RS. Greece uses real ADM2 underlines inside its macroregions. Brcko is folded into the RS display scope. Some small display areas are split visually from a larger export row, so their deltas are estimated shares rather than separately simulated runs.";
+    "Kosovo uses one shared region fill with real ADM1 district underlines. Bosnia uses real ADM2 cantons in FBiH and real ADM3 municipal inner lines inside RS. Greece uses real ADM2 underlines, and Slovenia uses real NUTS3 underlines inside its macroregions. Brcko is folded into the RS display scope. Some small display areas are split visually from a larger export row, so their deltas are estimated shares rather than separately simulated runs.";
 const REGION_LABEL_SHORT = {
     "ALB::central": "C ALB",
     "ALB::north": "N ALB",
@@ -347,13 +351,15 @@ const GEOJSON_PATHS = {
         (code) => `./data/geoBoundaries-${code}-ADM0_simplified.geojson`
     ),
     region: [
-        ...MAP_COUNTRY_CODES.filter((code) => code !== "BIH" && code !== "GRC").map(
+        ...MAP_COUNTRY_CODES.filter((code) => code !== "BIH" && code !== "GRC" && code !== "SVN").map(
             (code) => `./data/geoBoundaries-${code}-ADM1_simplified.geojson`
         ),
         "./data/geoBoundaries-BIH-ADM1_simplified.geojson",
         "./data/geoBoundaries-BIH-ADM2_simplified.geojson",
         "./data/geoBoundaries-BIH-ADM3_simplified.geojson",
         "./data/geoBoundaries-GRC-ADM2_simplified.geojson",
+        "./data/geoBoundaries-SVN-ADM1_simplified.geojson",
+        "./data/gisco-SVN-NUTS3-2021_simplified.geojson",
         "./data/geoBoundaries-XKX-ADM1_simplified.geojson",
     ],
 };
@@ -661,6 +667,20 @@ const GRC_ADM2_VISUAL_REGIONS = {
     [buildRegionKey("GRC", "Stereas Elladas")]: "GRC::thessalia-central-greece",
     [buildRegionKey("GRC", "Thessalias")]: "GRC::thessalia-central-greece",
     [buildRegionKey("GRC", "Voreioy Aigaioy")]: "GRC::aegean",
+};
+const SVN_NUTS3_VISUAL_REGIONS = {
+    [buildRegionKey("SVN", "Gorenjska")]: "SVN::western",
+    [buildRegionKey("SVN", "Goriška")]: "SVN::western",
+    [buildRegionKey("SVN", "Obalno-kraška")]: "SVN::western",
+    [buildRegionKey("SVN", "Osrednjeslovenska")]: "SVN::western",
+    [buildRegionKey("SVN", "Jugovzhodna Slovenija")]: "SVN::eastern",
+    [buildRegionKey("SVN", "Koroška")]: "SVN::eastern",
+    [buildRegionKey("SVN", "Podravska")]: "SVN::eastern",
+    [buildRegionKey("SVN", "Pomurska")]: "SVN::eastern",
+    [buildRegionKey("SVN", "Posavska")]: "SVN::eastern",
+    [buildRegionKey("SVN", "Primorsko-notranjska")]: "SVN::eastern",
+    [buildRegionKey("SVN", "Savinjska")]: "SVN::eastern",
+    [buildRegionKey("SVN", "Zasavska")]: "SVN::eastern",
 };
 const FEATURE_TO_VISUAL_REGION = {
     ...expandFeatureGroups({
@@ -1894,6 +1914,9 @@ function prepareDetailedRegionFeatures(regionFeatures) {
             if (feature.rawCountryCode === "GRC" && feature.adminLevel === "ADM1") {
                 return false;
             }
+            if (feature.rawCountryCode === "SVN" && feature.adminLevel === "ADM1") {
+                return false;
+            }
             if (
                 feature.rawCountryCode === "BIH"
                 && feature.adminLevel === "ADM2"
@@ -1964,9 +1987,27 @@ function applyDetailedRegionOverride(feature, bihAdm2Parents) {
             overrideVisualRegionFill: definition.fill,
         };
     }
+    if (feature.rawCountryCode === "SVN" && feature.adminLevel === "NUTS3") {
+        const visualRegionKey = SVN_NUTS3_VISUAL_REGIONS[buildRegionKey("SVN", feature.name)] ?? null;
+        const definition = visualRegionKey ? VISUAL_REGION_DEFINITIONS[visualRegionKey] : null;
+        if (!definition) {
+            return feature;
+        }
+        return {
+            ...feature,
+            overrideBespRegionKey: definition.dataRegionKey,
+            overrideVisualRegionKey: visualRegionKey,
+            overrideVisualRegionLabel: definition.label,
+            overrideVisualRegionDataKey: definition.dataRegionKey,
+            overrideVisualRegionFill: definition.fill,
+        };
+    }
     return feature;
 }
 function matchBihAdm2Parent(feature, parentFeatures) {
+    return matchFeatureParent(feature, parentFeatures);
+}
+function matchFeatureParent(feature, parentFeatures) {
     if (!parentFeatures.length) {
         return null;
     }
@@ -2893,7 +2934,7 @@ function buildInternalGuideMarkup(group) {
         <g class="map-region-guide-wrap" pointer-events="none">
             ${group.features.map((feature) => `
                 <path
-                    class="map-region-guide"
+                    class="map-region-guide map-region-guide-real"
                     d="${escapeHtml(feature.pathD)}"
                 ></path>
             `).join("")}

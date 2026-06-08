@@ -37,6 +37,9 @@ EXPECTED_EXTRA = {
     ("GRC", "ADM2"),
     ("XKX", "ADM1"),
 }
+EXPECTED_CUSTOM_FILES = {
+    "gisco-SVN-NUTS3-2021_simplified.geojson",
+}
 
 
 def expected_path(country_code: str, level: str) -> Path:
@@ -67,12 +70,18 @@ def main() -> None:
     )
     if missing_extra:
         fail(f"Missing extra subdivision files: {missing_extra}")
+    missing_custom = sorted(
+        file_name for file_name in EXPECTED_CUSTOM_FILES if not (DATA_DIR / file_name).exists()
+    )
+    if missing_custom:
+        fail(f"Missing custom subdivision files: {missing_custom}")
 
     print("[OK] ADM0 coverage exists for all public map countries plus XKX overlay scope.")
     print("[OK] ADM1 coverage exists for ALB, BGR, BIH, GRC, HRV, HUN, MKD, MNE, ROU, SRB, and SVN.")
     print("[OK] XKX ADM1 exists, so Kosovo can render real district inner lines inside SRB scope.")
     print("[OK] BIH ADM2 and ADM3 exist, so Bosnia can render cantons in FBiH and finer municipal inner lines in RS scope.")
     print("[OK] GRC ADM2 exists, so Greece can render real regional underlines inside macroregions.")
+    print("[OK] SVN NUTS3 exists, so Slovenia can render real statistical underlines inside macroregions.")
 
 
 if __name__ == "__main__":

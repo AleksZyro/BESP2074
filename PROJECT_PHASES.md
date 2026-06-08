@@ -142,7 +142,7 @@ Status: in progress
   - aktueller Refresh-Stand: `2024`
 - Dashboard:
   - `dashboard/index.html`
-  - Griechenland rendert reale ADM2-Unterlinien innerhalb der bestehenden Makroregionen.
+  - Griechenland rendert reale ADM2-Unterlinien, Slowenien reale NUTS3-Unterlinien innerhalb der bestehenden Makroregionen.
 - Grenzeditor:
   - `dashboard/editor.html`
 - Lokaler Service:

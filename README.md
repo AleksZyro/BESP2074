@@ -20,7 +20,7 @@ BESP ist eine realistische, jahresbasierte Balkan-Simulation mit exportgetrieben
 - Der Grenzeditor bietet einen einfachen Annexionsmodus: Zielland wählen, Provinzen anklicken, speichern.
 - Frisch annektierte Zielregionen starten mit tieferer Zufriedenheit und erholen sich über mehrere Jahre.
 - Aggregationstests prüfen, dass Länderwerte pro Jahr exakt zur Summe der Regionen passen.
-- Griechenland nutzt in der Regionenansicht echte ADM2-Unterlinien innerhalb der bestehenden Makroregionen.
+- Griechenland nutzt echte ADM2-Unterlinien und Slowenien echte NUTS3-Unterlinien innerhalb der bestehenden Makroregionen.
 
 ## Aktueller Länderumfang
 

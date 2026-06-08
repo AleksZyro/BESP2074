@@ -228,6 +228,10 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke-linecap: round;
     vector-effect: non-scaling-stroke;
 }
+.map-region-guide-real {
+    stroke: rgba(10, 18, 28, 0.62);
+    stroke-width: 0.95;
+}
 .map-region-guide-label {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     font-size: 9.5px;
