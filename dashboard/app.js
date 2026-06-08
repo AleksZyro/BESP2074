@@ -38,7 +38,7 @@ const COUNTRY_LABEL_ANCHORS = {
 const COUNTRY_LABEL_OFFSETS = {
     ALB: [-2, 2],
     BGR: [4, 2],
-    GRC: [0, 8],
+    GRC: [0, -2],
     BIH: [0, 0],
     HRV: [10, -8],
     HUN: [0, 0],
@@ -47,6 +47,13 @@ const COUNTRY_LABEL_OFFSETS = {
     ROU: [0, 0],
     SRB: [-18, -4],
     SVN: [-2, -2],
+};
+const COUNTRY_LABEL_COORDINATES = {
+    // Athens anchor. Greece has many islands, so bounds/centroids place the label too far from the capital.
+    GRC: [23.7275, 37.9838],
+};
+const COUNTRY_LABEL_FEATURE_NAMES = {
+    GRC: new Set(["attikis", "attica"]),
 };
 const VISUAL_REGION_LABEL_OFFSETS = {
     "ALB::central": [0, 2],
@@ -218,12 +225,17 @@ const VISUAL_REGION_INTERNAL_GUIDES = {
 const REAL_SUBDIVISION_VISUAL_REGION_KEYS = new Set([
     "BIH::fbih",
     "BIH::rs",
+    "GRC::aegean",
+    "GRC::epirus-western-macedonia",
+    "GRC::macedonia-thrace",
+    "GRC::peloponnese-west-greece-ionian",
+    "GRC::thessalia-central-greece",
     "SRB::kosovo-metohija",
 ]);
 const REGION_MAP_SOURCE_NOTE =
     "Region view mixes real ADM1 borders with coarse grouped macroregions where necessary.";
 const REGION_MAP_LIMITATION_NOTE =
-    "Kosovo uses one shared region fill with real ADM1 district underlines. Bosnia uses real ADM2 cantons in FBiH and real ADM3 municipal inner lines inside RS. Brcko is folded into the RS display scope. Some small display areas are split visually from a larger export row, so their deltas are estimated shares rather than separately simulated runs.";
+    "Kosovo uses one shared region fill with real ADM1 district underlines. Bosnia uses real ADM2 cantons in FBiH and real ADM3 municipal inner lines inside RS. Greece uses real ADM2 underlines inside its macroregions. Brcko is folded into the RS display scope. Some small display areas are split visually from a larger export row, so their deltas are estimated shares rather than separately simulated runs.";
 const REGION_LABEL_SHORT = {
     "ALB::central": "C ALB",
     "ALB::north": "N ALB",
@@ -335,12 +347,13 @@ const GEOJSON_PATHS = {
         (code) => `./data/geoBoundaries-${code}-ADM0_simplified.geojson`
     ),
     region: [
-        ...MAP_COUNTRY_CODES.filter((code) => code !== "BIH").map(
+        ...MAP_COUNTRY_CODES.filter((code) => code !== "BIH" && code !== "GRC").map(
             (code) => `./data/geoBoundaries-${code}-ADM1_simplified.geojson`
         ),
         "./data/geoBoundaries-BIH-ADM1_simplified.geojson",
         "./data/geoBoundaries-BIH-ADM2_simplified.geojson",
         "./data/geoBoundaries-BIH-ADM3_simplified.geojson",
+        "./data/geoBoundaries-GRC-ADM2_simplified.geojson",
         "./data/geoBoundaries-XKX-ADM1_simplified.geojson",
     ],
 };
@@ -633,6 +646,22 @@ const REGION_FEATURE_TO_BESP = {
     ...expandFeatureGroups(REGION_GROUPS_RESOLVED),
 };
 const BESP_REGION_KEYS = new Set(Object.values(REGION_FEATURE_TO_BESP));
+const GRC_ADM2_VISUAL_REGIONS = {
+    [buildRegionKey("GRC", "Agion Oros")]: "GRC::agion-oros",
+    [buildRegionKey("GRC", "Anatolikis Makedonias kai Thr*")]: "GRC::macedonia-thrace",
+    [buildRegionKey("GRC", "Attikis")]: "GRC::attica",
+    [buildRegionKey("GRC", "Dytikis Elladas")]: "GRC::peloponnese-west-greece-ionian",
+    [buildRegionKey("GRC", "Dytikis Makedonias")]: "GRC::epirus-western-macedonia",
+    [buildRegionKey("GRC", "Ionion Nison")]: "GRC::peloponnese-west-greece-ionian",
+    [buildRegionKey("GRC", "Ipeiroy")]: "GRC::epirus-western-macedonia",
+    [buildRegionKey("GRC", "Kentrikis Makedonias")]: "GRC::macedonia-thrace",
+    [buildRegionKey("GRC", "Kritis")]: "GRC::crete",
+    [buildRegionKey("GRC", "Notioy Aigaioy")]: "GRC::aegean",
+    [buildRegionKey("GRC", "Peloponnisoy")]: "GRC::peloponnese-west-greece-ionian",
+    [buildRegionKey("GRC", "Stereas Elladas")]: "GRC::thessalia-central-greece",
+    [buildRegionKey("GRC", "Thessalias")]: "GRC::thessalia-central-greece",
+    [buildRegionKey("GRC", "Voreioy Aigaioy")]: "GRC::aegean",
+};
 const FEATURE_TO_VISUAL_REGION = {
     ...expandFeatureGroups({
         "ALB::central": [
@@ -1785,6 +1814,12 @@ async function loadGeoBoundaryData(assignmentPayload = null) {
         throw new Error("No usable GeoJSON features found");
     }
     const projection = createProjection(allGeometryFeatures);
+    const projectedCountryLabelCoordinates = Object.fromEntries(
+        Object.entries(COUNTRY_LABEL_COORDINATES).map(([countryCode, [lon, lat]]) => [
+            countryCode,
+            projection(lon, lat),
+        ])
+    );
     const projectedCountryFeatures = countryFeatures
         .map((feature) => projectFeature(feature, projection, "country"))
         .filter((feature) => feature !== null);
@@ -1794,6 +1829,7 @@ async function loadGeoBoundaryData(assignmentPayload = null) {
     return {
         countryFeatures: projectedCountryFeatures,
         regionFeatures: projectedRegionFeatures,
+        projectedCountryLabelCoordinates,
         mapAssignments: safeAssignments,
     };
 }
@@ -1855,6 +1891,9 @@ function prepareDetailedRegionFeatures(regionFeatures) {
             if (feature.rawCountryCode === "BIH" && feature.adminLevel === "ADM1") {
                 return false;
             }
+            if (feature.rawCountryCode === "GRC" && feature.adminLevel === "ADM1") {
+                return false;
+            }
             if (
                 feature.rawCountryCode === "BIH"
                 && feature.adminLevel === "ADM2"
@@ -1905,6 +1944,21 @@ function applyDetailedRegionOverride(feature, bihAdm2Parents) {
             ...feature,
             overrideBespRegionKey: definition.dataRegionKey,
             overrideVisualRegionKey: "BIH::rs",
+            overrideVisualRegionLabel: definition.label,
+            overrideVisualRegionDataKey: definition.dataRegionKey,
+            overrideVisualRegionFill: definition.fill,
+        };
+    }
+    if (feature.rawCountryCode === "GRC" && feature.adminLevel === "ADM2") {
+        const visualRegionKey = GRC_ADM2_VISUAL_REGIONS[buildRegionKey("GRC", feature.name)] ?? null;
+        const definition = visualRegionKey ? VISUAL_REGION_DEFINITIONS[visualRegionKey] : null;
+        if (!definition) {
+            return feature;
+        }
+        return {
+            ...feature,
+            overrideBespRegionKey: definition.dataRegionKey,
+            overrideVisualRegionKey: visualRegionKey,
             overrideVisualRegionLabel: definition.label,
             overrideVisualRegionDataKey: definition.dataRegionKey,
             overrideVisualRegionFill: definition.fill,
@@ -2390,6 +2444,7 @@ function renderCountryLayer(geoData) {
                 hoverPathD,
                 disableHoverOutline: false,
                 centroid,
+                labelCoordinate: geoData.projectedCountryLabelCoordinates?.[countryCode] ?? null,
                 projectedBounds: mergeProjectedBounds(features),
                 features,
             };
@@ -2499,6 +2554,16 @@ function averageCentroid(features) {
     return [x / features.length, y / features.length];
 }
 function resolveCountryLabelPosition(country) {
+    if (Array.isArray(country.labelCoordinate)) {
+        return country.labelCoordinate;
+    }
+    const preferredNames = COUNTRY_LABEL_FEATURE_NAMES[country.countryCode];
+    if (preferredNames?.size && Array.isArray(country.features)) {
+        const preferredFeature = country.features.find((feature) => preferredNames.has(normalizeRegionName(feature.name)));
+        if (preferredFeature?.centroid) {
+            return preferredFeature.centroid;
+        }
+    }
     const anchor = COUNTRY_LABEL_ANCHORS[country.countryCode];
     const bounds = country.projectedBounds;
     if (!anchor || !bounds) {

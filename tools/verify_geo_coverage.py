@@ -34,6 +34,7 @@ EXPECTED_ADM1 = {
 EXPECTED_EXTRA = {
     ("BIH", "ADM2"),
     ("BIH", "ADM3"),
+    ("GRC", "ADM2"),
     ("XKX", "ADM1"),
 }
 
@@ -71,6 +72,7 @@ def main() -> None:
     print("[OK] ADM1 coverage exists for ALB, BGR, BIH, GRC, HRV, HUN, MKD, MNE, ROU, SRB, and SVN.")
     print("[OK] XKX ADM1 exists, so Kosovo can render real district inner lines inside SRB scope.")
     print("[OK] BIH ADM2 and ADM3 exist, so Bosnia can render cantons in FBiH and finer municipal inner lines in RS scope.")
+    print("[OK] GRC ADM2 exists, so Greece can render real regional underlines inside macroregions.")
 
 
 if __name__ == "__main__":
