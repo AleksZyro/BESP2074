@@ -34,6 +34,10 @@ class Region:
     annexation_pressure_years_total: int = 0
     annexation_satisfaction_penalty: float = 0.0
     annexation_integration_penalty: float = 0.0
+    annexation_source_unemployment_rate: float = 0.0
+    annexation_source_inflation_rate: float = 0.0
+    annexation_source_integration_index: float = 0.0
+    annexation_source_satisfaction_index: float = 0.0
 
     @property
     def population_density(self) -> float:
@@ -135,6 +139,7 @@ class ShockEvent:
     gdp_growth_bias: float
     unemployment_bias: float
     net_migration_rate_shift: float
+    message: str = ""
 
 
 @dataclass

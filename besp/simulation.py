@@ -28,6 +28,8 @@ MAX_GDP_GROWTH = 0.08
 
 MIN_UNEMPLOYMENT_RATE = 0.04
 MAX_UNEMPLOYMENT_RATE = 0.35
+MAX_UNEMPLOYMENT_ANNUAL_STEP = 0.018
+MAX_ANNEXATION_UNEMPLOYMENT_ANNUAL_STEP = 0.010
 
 CONTROLLED_BIRTH_VARIATION = 0.012
 CONTROLLED_DEATH_VARIATION = 0.008
@@ -116,9 +118,56 @@ DEFAULT_COUNTRY_STATE = {
     "investment_climate_index": 0.5,
 }
 
+ORGANIZATION_ACCESSION_EVENTS = {
+    "ALB": (
+        (2030, 0.025, "EU-Kandidatenpfad beschleunigt Reformen"),
+        (2038, 0.055, "EU-Beitrittsfenster hebt Integration"),
+    ),
+    "BIH": (
+        (2032, 0.020, "EU-Reformpaket stabilisiert Institutionen"),
+        (2040, 0.050, "EU-Beitrittsfenster hebt Integration"),
+    ),
+    "GRC": (
+        (2027, 0.020, "EU-Krisenfonds stärkt institutionelle Einbindung"),
+    ),
+    "MKD": (
+        (2031, 0.030, "EU-Verhandlungsfenster stärkt Integration"),
+        (2039, 0.050, "EU-Beitrittsfenster hebt Integration"),
+    ),
+    "MNE": (
+        (2029, 0.035, "EU-Beitrittsfenster stärkt Institutionen"),
+        (2036, 0.055, "EU-Integration vertieft sich"),
+    ),
+    "SRB": (
+        (2033, 0.020, "Regionalmarkt und BRICS/EU-Balance öffnen neue Bindungen"),
+        (2042, 0.035, "Mehrgleisige Aussenbindung hebt Integration"),
+    ),
+}
+
+SHOCK_EVENT_MESSAGES = {
+    "recession": "meldet eine regionale Rezession",
+    "energy_price_shock": "meldet einen Energiepreisschock",
+    "tourism_slump": "verzeichnet eine schwache Tourismussaison",
+    "heatwave_drought": "meldet Hitze und Dürre",
+    "flood_event": "meldet schwere Überschwemmungen",
+    "imf_credit_line": "erhält einen grossen IMF-Kredit",
+}
+
 
 def _empty_shock_effect() -> dict[str, float]:
     return SHOCK_EFFECT_DEFAULTS.copy()
+
+
+def organization_integration_bonus(country_code: str, start_year: int) -> float:
+    events = ORGANIZATION_ACCESSION_EVENTS.get(country_code, ())
+    return sum(bonus for trigger_year, bonus, _message in events if start_year >= trigger_year)
+
+
+def build_shock_event_message(shock: ShockDefinition, country: Country) -> str:
+    base_message = SHOCK_EVENT_MESSAGES.get(shock.code)
+    if base_message:
+        return f"{country.name} {base_message}"
+    return f"{country.name}: {shock.name}"
 
 
 def build_country_shock_effects(
@@ -196,6 +245,7 @@ def build_country_shock_effects(
                     gdp_growth_bias=shock.gdp_growth_bias * severity_scale,
                     unemployment_bias=shock.unemployment_bias * severity_scale,
                     net_migration_rate_shift=shock.net_migration_rate_shift * severity_scale,
+                    message=build_shock_event_message(shock, country),
                 )
             )
 
@@ -451,6 +501,21 @@ def calculate_election_alignment_index(
     scenario: SimulationScenario | None = None,
     variation_signal: float = 0.0,
 ) -> float:
+    baseline_inflation_rate = effective_annexation_context_value(
+        region,
+        country.baseline_inflation_rate,
+        region.annexation_source_inflation_rate,
+    )
+    baseline_unemployment_rate = effective_annexation_context_value(
+        region,
+        country.baseline_unemployment_rate,
+        region.annexation_source_unemployment_rate,
+    )
+    base_satisfaction_index = effective_annexation_context_value(
+        region,
+        country.base_satisfaction_index,
+        region.annexation_source_satisfaction_index,
+    )
     structural_anchor = clamp(
         country.base_election_alignment_index + region.political_identity_bias,
         MIN_ELECTION_ALIGNMENT_INDEX,
@@ -461,9 +526,9 @@ def calculate_election_alignment_index(
         MIN_ELECTION_ALIGNMENT_INDEX,
         MAX_ELECTION_ALIGNMENT_INDEX,
     )
-    inflation_gap = inflation_rate - country.baseline_inflation_rate
-    satisfaction_gap = country.base_satisfaction_index - satisfaction_index
-    unemployment_gap = unemployment_rate - country.baseline_unemployment_rate
+    inflation_gap = inflation_rate - baseline_inflation_rate
+    satisfaction_gap = base_satisfaction_index - satisfaction_index
+    unemployment_gap = unemployment_rate - baseline_unemployment_rate
     stress_bias = clamp(
         max(inflation_gap, 0.0) * 1.8
         + max(unemployment_gap, 0.0) * 1.1
@@ -511,7 +576,11 @@ def calculate_regional_inflation_rate(
     scenario: SimulationScenario | None = None,
     variation_signal: float = 0.0,
 ) -> float:
-    base_inflation = country.baseline_inflation_rate + (scenario.inflation_bias if scenario else 0.0)
+    base_inflation = effective_annexation_context_value(
+        region,
+        country.baseline_inflation_rate,
+        region.annexation_source_inflation_rate,
+    ) + (scenario.inflation_bias if scenario else 0.0)
     growth_heat = max(gdp_growth_rate - 0.025, 0.0) * 0.55
     housing_pressure = max(region.housing_overload - 1.0, 0.0) * 0.08
     election_pressure = max(election_tension_index - 0.45, 0.0) * 0.015
@@ -532,6 +601,7 @@ def calculate_regional_inflation_rate(
 def calculate_next_integration_index(
     country: Country,
     region: Region,
+    start_year: int,
     net_external_migration: int,
     internal_migration: int,
     regional_attractiveness: float,
@@ -543,8 +613,14 @@ def calculate_next_integration_index(
     current_population = max(region.population, 1)
     migration_balance_rate = (net_external_migration + internal_migration) / current_population
     annexation_penalty = current_annexation_penalty(region, "integration")
+    base_integration_index = effective_annexation_context_value(
+        region,
+        country.base_integration_index,
+        region.annexation_source_integration_index,
+    )
     target = (
-        country.base_integration_index
+        base_integration_index
+        + organization_integration_bonus(country.code, start_year)
         + (scenario.integration_bias if scenario else 0.0)
         + (region.infrastructure - 0.50) * 0.10
         + (regional_attractiveness - 0.50) * 0.12
@@ -575,8 +651,13 @@ def calculate_next_satisfaction_index(
     variation_signal: float = 0.0,
 ) -> float:
     annexation_penalty = current_annexation_penalty(region, "satisfaction")
+    base_satisfaction_index = effective_annexation_context_value(
+        region,
+        country.base_satisfaction_index,
+        region.annexation_source_satisfaction_index,
+    )
     target = (
-        country.base_satisfaction_index
+        base_satisfaction_index
         + (scenario.satisfaction_bias if scenario else 0.0)
         + (gdp_growth_rate - BASE_GDP_GROWTH) * 2.80
         - max(region.unemployment_rate - 0.08, 0.0) * 1.15
@@ -620,6 +701,25 @@ def current_annexation_penalty(
         base_penalty = region.annexation_satisfaction_penalty
 
     return base_penalty * (remaining_years / total_years)
+
+
+def current_annexation_source_weight(region: Region) -> float:
+    remaining_years = max(region.annexation_pressure_years_remaining, 0)
+    total_years = max(region.annexation_pressure_years_total, 0)
+    if remaining_years <= 0 or total_years <= 0:
+        return 0.0
+    return clamp(remaining_years / total_years, 0.0, 1.0)
+
+
+def effective_annexation_context_value(
+    region: Region,
+    target_value: float,
+    source_value: float,
+) -> float:
+    source_weight = current_annexation_source_weight(region)
+    if source_weight <= 0.0:
+        return target_value
+    return source_value * source_weight + target_value * (1.0 - source_weight)
 
 
 def calculate_regional_attractiveness(
@@ -720,6 +820,9 @@ def calculate_updated_unemployment_rate(
     gdp_growth_rate: float,
     regional_attractiveness: float,
     scenario: SimulationScenario | None = None,
+    structural_unemployment_rate: float | None = None,
+    extra_unemployment_bias: float = 0.0,
+    max_annual_step: float = MAX_UNEMPLOYMENT_ANNUAL_STEP,
 ) -> float:
     unemployment_change = -gdp_growth_rate * 0.60
 
@@ -728,11 +831,22 @@ def calculate_updated_unemployment_rate(
     elif regional_attractiveness <= 0.40:
         unemployment_change += 0.002
 
-    updated_rate = current_unemployment_rate + unemployment_change
-    if scenario:
-        updated_rate += scenario.unemployment_bias
+    if structural_unemployment_rate is not None:
+        unemployment_change += (
+            clamp(structural_unemployment_rate, MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE)
+            - current_unemployment_rate
+        ) * 0.10
 
-    return clamp(updated_rate, MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE)
+    if scenario:
+        unemployment_change += scenario.unemployment_bias
+    unemployment_change += extra_unemployment_bias
+    unemployment_change = clamp(
+        unemployment_change,
+        -abs(max_annual_step),
+        abs(max_annual_step),
+    )
+
+    return clamp(current_unemployment_rate + unemployment_change, MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE)
 
 
 def sum_metric(entries: list[RegionYearResult], field_name: str) -> float:
@@ -876,26 +990,36 @@ def simulate_year(
                 start_gdp_billion_eur * (1.0 + gdp_growth_rate),
                 0.01,
             )
+            structural_unemployment_rate = effective_annexation_context_value(
+                region,
+                country.baseline_unemployment_rate,
+                region.annexation_source_unemployment_rate,
+            )
             unemployment_rate = calculate_updated_unemployment_rate(
                 region.unemployment_rate,
                 gdp_growth_rate,
                 regional_attractiveness,
                 scenario,
-            )
-            region.unemployment_rate = clamp(
-                unemployment_rate
-                + country_shock_effect["unemployment_bias"]
+                structural_unemployment_rate,
+                country_shock_effect["unemployment_bias"]
                 + variations["unemployment"] * CONTROLLED_UNEMPLOYMENT_VARIATION,
-                MIN_UNEMPLOYMENT_RATE,
-                MAX_UNEMPLOYMENT_RATE,
+                MAX_ANNEXATION_UNEMPLOYMENT_ANNUAL_STEP
+                if current_annexation_source_weight(region) > 0
+                else MAX_UNEMPLOYMENT_ANNUAL_STEP,
             )
+            region.unemployment_rate = unemployment_rate
 
+            structural_inflation_rate = effective_annexation_context_value(
+                region,
+                country.baseline_inflation_rate,
+                region.annexation_source_inflation_rate,
+            )
             provisional_election_tension = calculate_election_cycle_pressure(
                 country,
                 region,
                 start_year,
                 region.unemployment_rate,
-                country.baseline_inflation_rate,
+                structural_inflation_rate,
                 region.satisfaction_index,
                 scenario,
                 variations["election"],
@@ -911,6 +1035,7 @@ def simulate_year(
             region.integration_index = calculate_next_integration_index(
                 country,
                 region,
+                start_year,
                 net_external_migration,
                 internal_migration,
                 regional_attractiveness,
