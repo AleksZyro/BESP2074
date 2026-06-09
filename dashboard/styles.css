@@ -251,6 +251,24 @@ code { font-family: Consolas, "Courier New", monospace; }
     pointer-events: none;
 }
 .map-country-label { font-size: 15px; fill: #f4f8fc; }
+.map-event-badge {
+    pointer-events: none;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.38));
+}
+.map-event-badge-bg {
+    fill: rgba(17, 31, 49, 0.88);
+    stroke: rgba(220, 184, 107, 0.58);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+.map-event-badge-text {
+    fill: #f4f8fc;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 9.8px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+}
 .map-country-label-detail {
     font-size: 11px;
     fill: #eef4fa;

@@ -322,7 +322,7 @@ const METRIC_VIEWS = {
         colorHigh: [58, 132, 124],
     },
     corruption: {
-        label: "Korruption",
+        label: "Korruptionsrisiko",
         buttonLabel: "\u2696\uFE0F Korr.",
         colorLow: [190, 226, 186],
         colorHigh: [151, 80, 64],
@@ -332,6 +332,12 @@ const METRIC_VIEWS = {
         buttonLabel: "\u2195\uFE0F Preise",
         colorLow: [118, 167, 212],
         colorHigh: [182, 78, 64],
+    },
+    debt: {
+        label: "Schuldenquote",
+        buttonLabel: "\uD83C\uDFE6 Schuld.",
+        colorLow: [184, 214, 198],
+        colorHigh: [153, 77, 64],
     },
     satisfaction: {
         label: "Zufriedenheit",
@@ -531,7 +537,7 @@ const VISUAL_REGION_DEFINITIONS = {
     "GRC::macedonia-thrace": { label: "Macedonia-Thrace", dataRegionKey: "GRC::macedonia thrace", fill: "#5b9ba7" },
     "GRC::epirus-western-macedonia": { label: "Epirus-W. Mac.", dataRegionKey: "GRC::epirus western macedonia", fill: "#7aa276" },
     "GRC::thessalia-central-greece": { label: "Thessaly-C. Greece", dataRegionKey: "GRC::thessalia central greece", fill: "#9eb36a" },
-    "GRC::peloponnese-west-greece-ionian": { label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece ionian", fill: "#c19362" },
+    "GRC::peloponnese-west-greece-ionian": { label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece and ionian", fill: "#c19362" },
     "GRC::crete": { label: "Crete", dataRegionKey: "GRC::crete", fill: "#d0a05f" },
     "GRC::aegean": { label: "Aegean", dataRegionKey: "GRC::aegean", fill: "#6aaec4" },
     "GRC::agion-oros": { label: "Athos", dataRegionKey: "GRC::agion oros", fill: "#8b7fa9" },
@@ -553,7 +559,7 @@ const INLINE_EDITOR_TARGET_OPTIONS = Object.freeze({
         { visualRegionKey: "GRC::macedonia-thrace", label: "Macedonia-Thrace", dataRegionKey: "GRC::macedonia thrace", fill: "#5b9ba7" },
         { visualRegionKey: "GRC::epirus-western-macedonia", label: "Epirus-W. Mac.", dataRegionKey: "GRC::epirus western macedonia", fill: "#7aa276" },
         { visualRegionKey: "GRC::thessalia-central-greece", label: "Thessaly-C. Greece", dataRegionKey: "GRC::thessalia central greece", fill: "#9eb36a" },
-        { visualRegionKey: "GRC::peloponnese-west-greece-ionian", label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece ionian", fill: "#c19362" },
+        { visualRegionKey: "GRC::peloponnese-west-greece-ionian", label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece and ionian", fill: "#c19362" },
         { visualRegionKey: "GRC::crete", label: "Crete", dataRegionKey: "GRC::crete", fill: "#d0a05f" },
         { visualRegionKey: "GRC::aegean", label: "Aegean", dataRegionKey: "GRC::aegean", fill: "#6aaec4" },
         { visualRegionKey: "GRC::agion-oros", label: "Athos", dataRegionKey: "GRC::agion oros", fill: "#8b7fa9" },
@@ -620,7 +626,7 @@ const STATE_METRICS = [
     ["budget_balance_pct_gdp", "Ø Budgetsaldo"],
     ["debt_to_gdp", "Ø Schuldenquote"],
     ["stability_index", "Ø Stabilität"],
-    ["corruption_index", "Ø Korruption"],
+    ["corruption_index", "Ø Korruptionsrisiko"],
     ["investment_climate_index", "Ø Investklima"],
 ];
 function expandFeatureGroups(groups, targetMapper = (targetKey) => targetKey) {
@@ -849,6 +855,7 @@ const elements = {
     regionLayer: document.getElementById("region-layer"),
     regionHoverLayer: document.getElementById("region-hover-layer"),
     regionLabelLayer: document.getElementById("region-label-layer"),
+    mapEventLayer: document.getElementById("map-event-layer"),
     mapSummaryCards: document.getElementById("map-summary-cards"),
     stateTableBody: document.getElementById("state-table-body"),
     countryTableBody: document.getElementById("country-table-body"),
@@ -1159,15 +1166,26 @@ function renderInlineEditorPanel() {
 function buildInlineEditorOverridePatch(targetCountryCode, sourceGroup) {
     const definition = VISUAL_REGION_DEFINITIONS[sourceGroup.visualRegionKey] ?? {};
     const dataRegionKey = sourceGroup.dataRegionKey ?? sourceGroup.features?.[0]?.bespRegionKey ?? definition.dataRegionKey ?? null;
+    const sourceBespRegionKeys = Array.isArray(sourceGroup.dataRegionKeys) && sourceGroup.dataRegionKeys.length
+        ? sourceGroup.dataRegionKeys
+        : Array.isArray(definition.dataRegionKeys) && definition.dataRegionKeys.length
+            ? definition.dataRegionKeys
+            : dataRegionKey
+                ? [dataRegionKey]
+                : [];
+    const targetBespRegionKeys = sourceBespRegionKeys.map((regionKey) => rebaseRegionKeyCountry(regionKey, targetCountryCode));
+    const targetDataRegionKey = targetBespRegionKeys[0] ?? (dataRegionKey ? rebaseRegionKeyCountry(dataRegionKey, targetCountryCode) : null);
     return {
         hidden: false,
         targetCountryCode,
         targetName: null,
-        targetBespRegionKey: dataRegionKey,
+        sourceBespRegionKeys,
+        targetBespRegionKey: targetDataRegionKey,
         targetVisualRegionKey: sourceGroup.visualRegionKey,
         targetVisualRegionLabel: sourceGroup.label ?? definition.label ?? sourceGroup.visualRegionKey,
-        targetVisualRegionDataKey: dataRegionKey,
-        targetVisualRegionFill: sourceGroup.fill ?? definition.fill ?? null,
+        targetVisualRegionDataKey: targetDataRegionKey,
+        targetVisualRegionDataKeys: targetBespRegionKeys,
+        targetVisualRegionFill: annexedRegionFill(targetCountryCode),
     };
 }
 function buildCountryOwnerOverridePatch(targetCountryCode) {
@@ -1894,6 +1912,9 @@ function normalizeGeoFeature(feature, layerType, mapAssignments = {}) {
         overrideVisualRegionKey: override?.targetVisualRegionKey ?? null,
         overrideVisualRegionLabel: override?.targetVisualRegionLabel ?? null,
         overrideVisualRegionDataKey: override?.targetVisualRegionDataKey ?? null,
+        overrideVisualRegionDataKeys: Array.isArray(override?.targetVisualRegionDataKeys)
+            ? override.targetVisualRegionDataKeys
+            : null,
         overrideVisualRegionFill: override?.targetVisualRegionFill ?? null,
     };
 }
@@ -1929,6 +1950,14 @@ function prepareDetailedRegionFeatures(regionFeatures) {
         });
 }
 function applyDetailedRegionOverride(feature, bihAdm2Parents) {
+    if (
+        feature.overrideVisualRegionKey
+        || feature.overrideBespRegionKey
+        || feature.overrideVisualRegionDataKey
+        || feature.overrideVisualRegionDataKeys
+    ) {
+        return feature;
+    }
     if (feature.rawCountryCode === "XKX" && feature.adminLevel === "ADM1") {
         const visualRegionKey = KOSOVO_VISUAL_REGION_KEY;
         const definition = VISUAL_REGION_DEFINITIONS[visualRegionKey];
@@ -2124,6 +2153,7 @@ function projectFeature(feature, projection, kind) {
         visualRegionKey: visualRegion?.visualRegionKey ?? null,
         visualRegionLabel: visualRegion?.label ?? null,
         visualRegionDataKey: visualRegion?.dataRegionKey ?? bespRegionKey,
+        visualRegionDataKeys: visualRegion?.dataRegionKeys ?? null,
         visualRegionFill: visualRegion?.fill ?? null,
         pathD,
         centroid,
@@ -2138,7 +2168,9 @@ function resolveProjectedVisualRegion(feature, bespRegionKey) {
             visualRegionKey: feature.overrideVisualRegionKey,
             label: feature.overrideVisualRegionLabel ?? definition?.label ?? feature.name,
             dataRegionKey: feature.overrideVisualRegionDataKey ?? definition?.dataRegionKey ?? bespRegionKey,
-            dataRegionKeys: definition?.dataRegionKeys ?? null,
+            dataRegionKeys: Array.isArray(feature.overrideVisualRegionDataKeys)
+                ? feature.overrideVisualRegionDataKeys
+                : definition?.dataRegionKeys ?? null,
             fill: feature.overrideVisualRegionFill ?? definition?.fill ?? "rgba(126, 143, 161, 0.38)",
         };
     }
@@ -2293,6 +2325,7 @@ function renderActiveYearState() {
     );
     renderCountryLayer(dashboardState.geoData);
     renderRegionLayer(dashboardState.geoData);
+    renderMapEventLayer();
     renderPublicSidebar();
     renderMapSummaryCards();
     bindMapHoverEvents();
@@ -2741,6 +2774,57 @@ function renderRegionLayer(geoData) {
         .map((entry) => entry.html)
         .join("");
 }
+function renderMapEventLayer() {
+    if (!elements.mapEventLayer) {
+        return;
+    }
+    const activeYearKey = getActiveYearKey();
+    if (!activeYearKey || !dashboardState.exportData) {
+        elements.mapEventLayer.innerHTML = "";
+        return;
+    }
+    const activeEvents = getShockEventsForYear(activeYearKey)
+        .filter((event) => mapDataCache.countryFeaturesByCode.has(normalizeCountryCode(event.country_code)))
+        .sort((left, right) => Number(right.severity_scale ?? 0) - Number(left.severity_scale ?? 0))
+        .slice(0, 5);
+    elements.mapEventLayer.innerHTML = activeEvents.map((event, index) => {
+        const countryCode = normalizeCountryCode(event.country_code);
+        const country = mapDataCache.countryFeaturesByCode.get(countryCode);
+        if (!country) {
+            return "";
+        }
+        const [baseX, baseY] = resolveCountryLabelPosition(country);
+        const message = event.message || `${COUNTRY_CONFIG[countryCode]?.name ?? countryCode}: ${event.shock_name ?? "Ereignis"}`;
+        const shortMessage = truncateText(message, 42);
+        const width = clamp(shortMessage.length * 5.8 + 18, 92, 250);
+        const x = clamp(baseX - width / 2, 6, MAP_VIEWBOX_WIDTH - width - 6);
+        const y = clamp(baseY - 44 - index * 2, 12, MAP_VIEWBOX_HEIGHT - 28);
+        return `
+            <g class="map-event-badge" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
+                <rect class="map-event-badge-bg" width="${width.toFixed(1)}" height="24" rx="12"></rect>
+                <text class="map-event-badge-text" x="${(width / 2).toFixed(1)}" y="16">${escapeHtml(shortMessage)}</text>
+            </g>
+        `;
+    }).join("");
+}
+function getShockEventsForYear(yearKey) {
+    const [startYearText] = String(yearKey).split("-");
+    const startYear = Number.parseInt(startYearText, 10);
+    if (!Number.isFinite(startYear)) {
+        return [];
+    }
+    const events = Array.isArray(dashboardState.exportData?.shock_events)
+        ? dashboardState.exportData.shock_events
+        : [];
+    return events.filter((event) => Number(event.start_year) === startYear);
+}
+function truncateText(text, maxLength) {
+    const value = String(text ?? "");
+    if (value.length <= maxLength) {
+        return value;
+    }
+    return `${value.slice(0, Math.max(maxLength - 1, 1))}…`;
+}
 function chooseRegionLabelView(group) {
     const isMetric = !isClassicMetricView();
     const area = Number(group.projectedArea ?? 0);
@@ -2882,11 +2966,20 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
     const groupedVisualRegions = [...groups.entries()].map(([visualRegionKey, features]) => {
         const template = VISUAL_REGION_DEFINITIONS[visualRegionKey];
         const mergedPathD = features.map((feature) => feature.pathD).join(" ");
+        const featureDataRegionKeys = [
+            ...new Set(features.flatMap((feature) => (
+                Array.isArray(feature.visualRegionDataKeys)
+                    ? feature.visualRegionDataKeys
+                    : []
+            ))),
+        ].filter(Boolean);
         return {
             visualRegionKey,
             label: template?.label ?? features[0]?.visualRegionLabel ?? visualRegionKey,
             dataRegionKey: template?.dataRegionKey ?? features[0]?.visualRegionDataKey ?? null,
-            dataRegionKeys: Array.isArray(template?.dataRegionKeys) ? template.dataRegionKeys : null,
+            dataRegionKeys: featureDataRegionKeys.length
+                ? featureDataRegionKeys
+                : Array.isArray(template?.dataRegionKeys) ? template.dataRegionKeys : null,
             countryCode: features[0]?.countryCode ?? "",
             features,
             fill: template?.fill ?? features[0]?.visualRegionFill ?? "rgba(126, 143, 161, 0.5)",
@@ -3497,9 +3590,12 @@ function resetMapHoverDetails() {
         return;
     }
     if (!isClassicMetricView()) {
-        const metricHint = dashboardState.activeMetric === "integration"
-            ? "Startwert basiert auf EU-Nähe, Stabilität, Korruption, Mobilität und innerem Zusammenhalt."
-            : "Über eine Fläche fahren.";
+        let metricHint = "Über eine Fläche fahren.";
+        if (dashboardState.activeMetric === "integration") {
+            metricHint = "Modellscore 0-100 aus EU-Nähe, Stabilität, Korruptionsrisiko, Mobilität und innerem Zusammenhalt.";
+        } else if (dashboardState.activeMetric === "corruption") {
+            metricHint = "Negativer Modellscore 0-100: tiefer bedeutet weniger Korruptionsrisiko.";
+        }
         setMapHoverDetails(
             `${METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metrik"}`,
             metricHint
@@ -3528,7 +3624,7 @@ function renderCountryTable(countryRows) {
             formatInteger(country.end_population), `${formatDecimal(country.end_gdp_billion_eur)} bn EUR`,
             formatPercent(country.gdp_growth_rate), `${formatInteger(Math.round(country.gdp_per_capita_eur))} EUR`,
             formatPercent(country.average_unemployment_rate),
-            formatPercent(country.average_integration_index),
+            formatMetricDisplay(country.average_integration_index, "integration"),
             escapeHtml(formatInflationDirection(country.average_inflation_rate, true)),
             formatPercent(country.average_satisfaction_index),
             escapeHtml(formatElectionTendency(country.election_alignment_index).label),
@@ -3549,13 +3645,13 @@ function renderStatePanels(countryRows) {
     }
     const activeYearKey = getActiveYearKey();
     elements.stateCards.innerHTML = STATE_METRICS
-        .map(([metricKey, label]) => buildStateCard(label, averageMetric(countryRows, metricKey), activeYearKey))
+        .map(([metricKey, label]) => buildStateCard(label, averageMetric(countryRows, metricKey), activeYearKey, metricKey))
         .join("");
     renderTable(
         elements.stateTableBody,
         countryRows,
         EMPTY_TABLE_ROWS.state,
-        (country) => buildTableRow([escapeHtml(country.yearKey), `${escapeHtml(country.country_name)} (${escapeHtml(displayCountryCode(country.country_code))})`, ...STATE_METRICS.map(([metricKey]) => formatStateRatio(country[metricKey]))])
+        (country) => buildTableRow([escapeHtml(country.yearKey), `${escapeHtml(country.country_name)} (${escapeHtml(displayCountryCode(country.country_code))})`, ...STATE_METRICS.map(([metricKey]) => formatStateRatio(country[metricKey], metricKey))])
     );
 }
 function renderRegionTable(regionRows) {
@@ -3568,7 +3664,7 @@ function renderRegionTable(regionRows) {
             formatInteger(region.end_population), `${formatDecimal(region.end_gdp_billion_eur)} bn EUR`,
             formatPercent(region.gdp_growth_rate), formatPercent(region.unemployment_rate),
             formatDecimal(region.regional_attractiveness),
-            formatPercent(region.integration_index),
+            formatMetricDisplay(region.integration_index, "integration"),
             escapeHtml(formatInflationDirection(region.inflation_rate, true)),
             formatPercent(region.satisfaction_index),
             escapeHtml(formatElectionTendency(region.election_alignment_index).label),
@@ -3598,7 +3694,10 @@ function renderPublicSidebar() {
     elements.kpiScope.textContent = scopeLabel;
     elements.kpiScopeNote.textContent = "";
     if (dashboardState.activeMetric === "integration") {
-        elements.kpiScopeNote.textContent = "Startwert aus EU-Nähe, Stabilität, Korruption, Mobilität und innerem Zusammenhalt.";
+        elements.kpiScopeNote.textContent = "Modellscore 0-100 aus EU-Nähe, Stabilität, Korruptionsrisiko, Mobilität und innerem Zusammenhalt.";
+    }
+    if (dashboardState.activeMetric === "corruption") {
+        elements.kpiScopeNote.textContent = "Negativer Modellscore 0-100: tiefer ist besser.";
     }
     if (!sourceRows.length) {
         elements.kpiLabelPopulation.textContent = "Einwohner";
@@ -3951,7 +4050,7 @@ function buildTableRow(cells) {
     return `<tr>${cells.map((cell) => `<td>${cell}</td>`).join("")}</tr>`;
 }
 function clearMapLayers() {
-    for (const layer of [elements.countryLayer, elements.countryHoverLayer, elements.countryLabelLayer, elements.regionLayer, elements.regionHoverLayer, elements.regionLabelLayer]) {
+    for (const layer of [elements.countryLayer, elements.countryHoverLayer, elements.countryLabelLayer, elements.regionLayer, elements.regionHoverLayer, elements.regionLabelLayer, elements.mapEventLayer]) {
         layer.innerHTML = "";
     }
 }
@@ -3976,8 +4075,8 @@ function buildEmptyCard(label, note) {
 function buildEmptyTableRow(colspan, message) {
     return `<tr><td colspan="${colspan}" class="table-empty">${escapeHtml(message)}</td></tr>`;
 }
-function buildStateCard(label, value, activeYearKey) {
-    const safeValue = value === null ? "-" : formatPercent(value);
+function buildStateCard(label, value, activeYearKey, metricKey = "") {
+    const safeValue = value === null ? "-" : formatStateRatio(value, metricKey);
     const note = activeYearKey ? `Jahr ${escapeHtml(activeYearKey)}` : "Kein Jahr gewählt";
     return `
         <article class="meta-card">
@@ -4024,14 +4123,17 @@ function weightedAverageMetric(rows, valueKey, weightKey) {
     }
     return totalWeight > 0 ? (weightedSum / totalWeight) : Number.NaN;
 }
-function formatStateRatio(value) {
+function formatStateRatio(value, metricKey = "") {
     const numeric = Number(value);
-    return Number.isFinite(numeric) ? formatPercent(numeric) : "-";
+    if (!Number.isFinite(numeric)) {
+        return "-";
+    }
+    return metricKey === "corruption_index" ? formatIndexScore(numeric) : formatPercent(numeric);
 }
 function describeCountrySummary(countryData, includeUnemployment = true) {
     const base = `population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}`;
     return includeUnemployment
-        ? `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}, integration ${formatPercent(countryData.average_integration_index)}, inflation ${formatPercent(countryData.average_inflation_rate)}, satisfaction ${formatPercent(countryData.average_satisfaction_index)}, elections ${formatPercent(countryData.election_tension_index)}.`
+        ? `Population ${formatInteger(countryData.end_population)}, GDP ${formatDecimal(countryData.end_gdp_billion_eur)} bn EUR, growth ${formatPercent(countryData.gdp_growth_rate)}, unemployment ${formatPercent(countryData.average_unemployment_rate)}, integration ${formatMetricDisplay(countryData.average_integration_index, "integration")}, inflation ${formatPercent(countryData.average_inflation_rate)}, satisfaction ${formatPercent(countryData.average_satisfaction_index)}, elections ${formatPercent(countryData.election_tension_index)}.`
         : `${base}.`;
 }
 function describeClassicYearChange(currentRow, previousRow) {
@@ -4135,7 +4237,7 @@ function aggregateMetricForScope(rows, metricKey) {
         const gdp = sumMetric(rows, "end_gdp_billion_eur");
         return population > 0 ? (gdp * 1_000_000_000) / population : Number.NaN;
     }
-    const weightKey = metricKey === "inflation" ? "end_gdp_billion_eur" : "end_population";
+    const weightKey = ["inflation", "debt"].includes(metricKey) ? "end_gdp_billion_eur" : "end_population";
     let weightedSum = 0;
     let totalWeight = 0;
     for (const row of rows) {
@@ -4249,7 +4351,7 @@ function metricTrend(metricKey, currentValue, previousValue) {
     }
     const delta = current - previous;
     const magnitude = metricTrendMagnitude(metricKey, current, previous, delta);
-    const lowerIsBetter = new Set(["unemployment", "inflation", "corruption"]);
+    const lowerIsBetter = new Set(["unemployment", "inflation", "corruption", "debt"]);
     const isPositiveDirection = lowerIsBetter.has(metricKey) ? delta < 0 : delta > 0;
     if (magnitude === "neutral") {
         return {
@@ -4313,7 +4415,11 @@ function formatMetricDelta(currentValue, previousValue, metricKey, labelScale) {
     if (metricKey === "unemployment") {
         return `${delta >= 0 ? "+" : ""}${formatPercent(delta)}`;
     }
-    if (metricKey === "integration" || metricKey === "inflation" || metricKey === "satisfaction" || metricKey === "corruption") {
+    if (metricKey === "integration" || metricKey === "corruption") {
+        const scoreDelta = delta * 100;
+        return `${scoreDelta >= 0 ? "+" : ""}${scoreDelta.toFixed(1)} Punkte`;
+    }
+    if (metricKey === "inflation" || metricKey === "satisfaction" || metricKey === "debt") {
         return `${delta >= 0 ? "+" : ""}${formatPercent(delta)}`;
     }
     if (metricKey === "elections") {
@@ -4400,6 +4506,11 @@ function groupBy(items, keyBuilder) {
 }
 function buildRegionKey(countryCode, regionName) {
     return `${normalizeCountryCode(countryCode)}::${normalizeRegionName(regionName)}`;
+}
+function rebaseRegionKeyCountry(regionKey, targetCountryCode) {
+    const normalizedTargetCode = normalizeCountryCode(targetCountryCode);
+    const [, regionName = ""] = String(regionKey ?? "").split("::");
+    return regionName ? `${normalizedTargetCode}::${normalizeRegionName(regionName)}` : "";
 }
 function displayCountryCode(countryCode) {
     const normalized = normalizeCountryCode(countryCode);
@@ -4512,6 +4623,8 @@ function metricValueFromCountry(countryData, metricKey) {
             return Number(countryData.corruption_index);
         case "inflation":
             return Number(countryData.average_inflation_rate);
+        case "debt":
+            return Number(countryData.debt_to_gdp);
         case "satisfaction":
             return Number(countryData.average_satisfaction_index);
         case "elections":
@@ -4539,6 +4652,8 @@ function metricValueFromRegion(regionData, metricKey) {
             return Number(regionData.corruption_index);
         case "inflation":
             return Number(regionData.inflation_rate);
+        case "debt":
+            return Number(regionData.debt_to_gdp);
         case "satisfaction":
             return Number(regionData.satisfaction_index);
         case "elections":
@@ -4611,6 +4726,20 @@ function baseCountryFill(countryCode) {
     };
     return palette[normalized] ?? DEFAULT_FILL;
 }
+function withFillOpacity(fill, opacity) {
+    const match = String(fill ?? "").match(/rgba?\(([^)]+)\)/i);
+    if (!match) {
+        return fill;
+    }
+    const parts = match[1].split(",").map((part) => Number.parseFloat(part.trim()));
+    if (parts.length < 3 || parts.slice(0, 3).some((part) => !Number.isFinite(part))) {
+        return fill;
+    }
+    return `rgba(${Math.round(parts[0])}, ${Math.round(parts[1])}, ${Math.round(parts[2])}, ${opacity})`;
+}
+function annexedRegionFill(countryCode) {
+    return withFillOpacity(baseCountryFill(countryCode), 0.82);
+}
 function extractStartYear(row) {
     if (typeof row.start_year === "number") {
         return row.start_year;
@@ -4620,6 +4749,10 @@ function extractStartYear(row) {
 }
 function formatInteger(value) {
     return integerFormatter.format(value);
+}
+function formatIndexScore(value) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? `${Math.round(numeric * 100)}/100` : "-";
 }
 function formatMetricDisplay(value, metricKey) {
     const numeric = Number(value);
@@ -4641,7 +4774,10 @@ function formatMetricDisplay(value, metricKey) {
     if (metricKey === "elections") {
         return formatElectionTendency(numeric).label;
     }
-    if (metricKey === "integration" || metricKey === "satisfaction" || metricKey === "corruption") {
+    if (metricKey === "integration" || metricKey === "corruption") {
+        return formatIndexScore(numeric);
+    }
+    if (metricKey === "satisfaction") {
         return formatPercent(numeric);
     }
     return formatPercent(numeric);
