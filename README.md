@@ -55,7 +55,7 @@ BESP ist eine realistische, jahresbasierte Balkan-Simulation mit exportgetrieben
 
 Diese Werte wirken aufeinander und fliessen auch in die staatlichen Kennzahlen ein.
 
-`corruption_index` ist bewusst als negativer Index modelliert: tiefer ist besser. Er wirkt auf Stabilität, Investitionsklima, Zufriedenheit und indirekt auf Wachstum. In der Karte ist Korruption deshalb eine eigene Metrik, bleibt aber in der Simulation mit den staatlichen Kennzahlen verknüpft.
+`corruption_index` ist bewusst als negativer Index modelliert: tiefer ist besser. Er wirkt auf Stabilität, Investitionsklima, Zufriedenheit und indirekt auf Wachstum. In der Karte heisst die Metrik deshalb Korruptionsrisiko und wird als Modellscore `0/100` bis `100/100` angezeigt, nicht als realer Prozentwert.
 
 ### Warum die Startintegration so gesetzt ist
 
@@ -67,7 +67,13 @@ Diese Werte wirken aufeinander und fliessen auch in die staatlichen Kennzahlen e
 - Arbeitsmobilität und grenzüberschreitende Verflechtung
 - innerer Zusammenhalt zwischen Regionen und politischen Lagern
 
-Ein höherer Startwert bedeutet im Modell also nicht einfach «besseres Land», sondern dass Integration, Anpassung und die Aufnahme neuer Gebiete anfangs stabiler funktionieren. Ein tieferer Startwert bedeutet mehr Reibung, mehr Spannungen und langsamere Angleichung. Darum fällt nach einer Annexion die Zufriedenheit zuerst ab und erholt sich erst über mehrere Jahre wieder.
+Ein höherer Startwert bedeutet im Modell also nicht einfach «besseres Land», sondern dass Integration, Anpassung und die Aufnahme neuer Gebiete anfangs stabiler funktionieren. Ein tieferer Startwert bedeutet mehr Reibung, mehr Spannungen und langsamere Angleichung. In der UI wird Integration deshalb als Modellscore `0/100` bis `100/100` angezeigt, nicht als echte Integrationsquote.
+
+Annexionen sind nicht pauschal negativ. Der kurzfristige Effekt hängt vom Zielland, vom übernommenen Gebiet, von der wirtschaftlichen Ausgangslage, von Stabilität/Korruption und von gezielten Identitäts-Affinitäten ab. Diese Affinitäten werden nur für einzelne plausible Fälle modelliert, nicht flächendeckend für jede Ethnie. Beispiel: Republika Srpska zu Serbien bekommt wegen Identitätsnähe und stärkerem Zielstaat eher einen Zufriedenheits- und Integrationsbonus. Western North Macedonia zu Albanien bekommt ebenfalls einen Bonus, aber schwächer. Unplausible oder wirtschaftlich schlechtere Annexionen erzeugen weiterhin Reibung.
+
+Wirtschaftliche Kennzahlen springen nach einer Annexion nicht sofort vollständig auf Zielstaat-Niveau. Arbeitslosigkeit, Inflation sowie die Zufriedenheits- und Integrationsanker blenden den alten Kontext über die Annexionsjahre aus. Dadurch wird ein neues Gebiet politisch sofort neu zugeordnet, wirtschaftlich aber schrittweise integriert.
+
+Organisationen wirken als langfristige Integrationspfade. Einige Länder können im Verlauf der Simulation durch EU-, Regionalmarkt- oder BRICS-nahe Entwicklungen zusätzliche Integrationsdynamik bekommen. Das ist kein harter Beitrittsschalter, sondern ein kleiner Bonus auf den strukturellen Integrationspfad.
 
 ### Staatsebene
 
@@ -77,10 +83,13 @@ Ein höherer Startwert bedeutet im Modell also nicht einfach «besseres Land», 
 - `corruption_index`
 - `investment_climate_index`
 
+`debt_to_gdp` wird als Schuldenquote angezeigt. Für Karten- und Übersichtsaggregate wird die Schuldenquote BIP-gewichtet berechnet, nicht als einfacher Durchschnitt, weil eine kleine Region wirtschaftlich nicht gleich stark zählt wie eine grosse Volkswirtschaft.
+
 ### Schocks
 
 - Schocks sind optional und bewusst begrenzt.
 - Ohne Schocks bleiben die Runs trotzdem variabel, weil unterschiedliche Seeds kontrollierte Jahresabweichungen erzeugen.
+- Einzelne Schocks können kurze Kartenmeldungen erzeugen, z.B. ein IMF-Kredit oder ein Energiepreisschock. Diese Meldungen sind reine Simulationsereignisse aus `output/latest.json`, keine externen Live-News.
 
 ## Architektur
 
