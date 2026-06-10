@@ -88,7 +88,7 @@ const SIMPLE_TARGET_OPTIONS = Object.freeze({
     MKD: [
         { visualRegionKey: "MKD::west", label: "W MAC", dataRegionKey: "MKD::western north macedonia", fill: "#b78361" },
         { visualRegionKey: "MKD::skopje", label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#865c71" },
-        { visualRegionKey: "MKD::se", label: "SE MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8f6aa7" },
+        { visualRegionKey: "MKD::se", label: "E MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8f6aa7" },
     ],
     MNE: [
         { visualRegionKey: "MNE::coastal-region", label: "CS MON", dataRegionKey: "MNE::coast", fill: "#66aebe" },

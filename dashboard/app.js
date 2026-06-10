@@ -277,7 +277,7 @@ const REGION_LABEL_SHORT = {
     "HRV::istria-kvarner": "Istrija",
     "HRV::slavonia": "Slavonija",
     "HRV::dalmatia": "Dalmacija",
-    "MKD::se": "SE MAC",
+    "MKD::se": "E MAC",
     "MKD::west": "W MAC",
     "MNE::coastal-region": "CS MON",
     "MNE::southern-montenegro": "S MON",
@@ -308,7 +308,7 @@ const REGION_LABEL_TRANSLATIONS = {
     "HRV::istria-kvarner": { en: { short: "Istria", long: "Istria and Kvarner" }, de: { short: "Istrien", long: "Istrien und Kvarner" } },
     "HRV::slavonia": { en: { short: "Slavonia", long: "Slavonia" }, de: { short: "Slawonien", long: "Slawonien" } },
     "HRV::dalmatia": { en: { short: "Dalmatia", long: "Dalmatia" }, de: { short: "Dalmatien", long: "Dalmatien" } },
-    "MKD::se": { en: { short: "SE MAC", long: "Southeastern Macedonia" }, de: { short: "SO MAC", long: "Südostmazedonien" } },
+    "MKD::se": { en: { short: "E MAC", long: "Eastern Macedonia" }, de: { short: "O MAC", long: "Ostmazedonien" } },
     "MKD::skopje": { en: { short: "Skopje", long: "Skopje" }, de: { short: "Skopje", long: "Skopje" } },
     "MKD::west": { en: { short: "W MAC", long: "Western Macedonia" }, de: { short: "W MAC", long: "Westmazedonien" } },
     "MNE::coastal-region": { en: { short: "CS MON", long: "Coastal Montenegro" }, de: { short: "K MON", long: "Küstenmontenegro" } },
@@ -824,8 +824,8 @@ const REGION_GROUPS = {
     "ALB::central coast albania": ["durrã«s", "elbasan", "fier", "berat"],
     "ALB::southern albania": ["vlorã«", "gjirokastã«r", "korã§ã«"],
     "MKD::skopje": ["skopje"],
-    "MKD::western north macedonia": ["polog", "southwest", "pelagonia"],
-    "MKD::southeastern north macedonia": ["east", "northeast", "southeast", "vardar"],
+    "MKD::western north macedonia": ["polog", "southwest"],
+    "MKD::southeastern north macedonia": ["east", "northeast", "southeast", "pelagonia", "vardar"],
     "BGR::sofia": ["sofia city", "sofia"],
     "BGR::northern bulgaria": [
         "vidin", "vratsa", "montana", "pleven", "lovech", "veliko tarnovo",
@@ -928,7 +928,7 @@ const VISUAL_REGION_DEFINITIONS = {
     "HUN::great-plains": { label: "Great Plains", dataRegionKey: "HUN::great plains", fill: "#41b65a" },
     "MKD::skopje": { label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#865c71" },
     "MKD::west": { label: "W MAC", dataRegionKey: "MKD::western north macedonia", fill: "#b78361" },
-    "MKD::se": { label: "SE MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8f6aa7" },
+    "MKD::se": { label: "E MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8f6aa7" },
     "SRB::vojvodina": { label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
     "SRB::belgrade": { label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
     "SRB::sz-srb": { label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
@@ -994,7 +994,7 @@ const INLINE_EDITOR_TARGET_OPTIONS = Object.freeze({
     MKD: [
         { visualRegionKey: "MKD::west", label: "W MAC", dataRegionKey: "MKD::western north macedonia", fill: "#b78361" },
         { visualRegionKey: "MKD::skopje", label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#865c71" },
-        { visualRegionKey: "MKD::se", label: "SE MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8f6aa7" },
+        { visualRegionKey: "MKD::se", label: "E MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8f6aa7" },
     ],
     MNE: [
         { visualRegionKey: "MNE::coastal-region", label: "CS MON", dataRegionKey: "MNE::coast", fill: "#66aebe" },
@@ -1142,6 +1142,7 @@ const FEATURE_TO_VISUAL_REGION = {
     [buildRegionKey("SRB", "District of Prishtina")]: KOSOVO_VISUAL_REGION_KEY,
     [buildRegionKey("SRB", "District of Ferizaj")]: KOSOVO_VISUAL_REGION_KEY,
     [buildRegionKey("SRB", "District of Gjilan")]: KOSOVO_VISUAL_REGION_KEY,
+    [buildRegionKey("MKD", "Pelagonia")]: "MKD::west",
     [buildRegionKey("SVN", "Zahodna Slovenija")]: "SVN::western",
     [buildRegionKey("SVN", "Vzhodna")]: "SVN::eastern",
     [buildRegionKey("GRC", "Attica")]: "GRC::attica",
@@ -2542,12 +2543,14 @@ function applyDetailedRegionOverride(feature, bihAdm2Parents) {
         if (!definition) {
             return feature;
         }
+        const sourceBespRegionKey = resolveBespRegionKey(feature.countryCode, feature.properties?.shapeParent ?? feature.name)
+            ?? definition.dataRegionKey;
         return {
             ...feature,
-            overrideBespRegionKey: definition.dataRegionKey,
+            overrideBespRegionKey: sourceBespRegionKey,
             overrideVisualRegionKey: visualRegionKey,
             overrideVisualRegionLabel: definition.label,
-            overrideVisualRegionDataKey: definition.dataRegionKey,
+            overrideVisualRegionDataKey: sourceBespRegionKey,
             overrideVisualRegionFill: definition.fill,
         };
     }
@@ -3767,21 +3770,26 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
     const groupedVisualRegions = [...groups.entries()].map(([visualRegionKey, features]) => {
         const template = VISUAL_REGION_DEFINITIONS[visualRegionKey];
         const mergedPathD = features.map((feature) => feature.pathD).join(" ");
-        const featureDataRegionKeys = [
-            ...new Set(features.flatMap((feature) => (
-                Array.isArray(feature.visualRegionDataKeys)
-                    ? feature.visualRegionDataKeys
-                    : []
-            ))),
-        ].filter(Boolean);
+        const dataRegionAreas = new Map();
+        for (const feature of features) {
+            const keys = Array.isArray(feature.visualRegionDataKeys) && feature.visualRegionDataKeys.length
+                ? feature.visualRegionDataKeys
+                : [feature.visualRegionDataKey ?? template?.dataRegionKey].filter(Boolean);
+            const featureAreaShare = Math.max(Number(feature.projectedArea ?? 0), 0) / Math.max(keys.length, 1);
+            for (const key of keys) {
+                dataRegionAreas.set(key, (dataRegionAreas.get(key) ?? 0) + featureAreaShare);
+            }
+        }
+        const featureDataRegionKeys = [...dataRegionAreas.keys()].filter(Boolean);
         const overrideFill = features.find((feature) => feature.visualRegionFill)?.visualRegionFill ?? null;
         return {
             visualRegionKey,
             label: template?.label ?? features[0]?.visualRegionLabel ?? visualRegionKey,
-            dataRegionKey: template?.dataRegionKey ?? features[0]?.visualRegionDataKey ?? null,
+            dataRegionKey: featureDataRegionKeys[0] ?? template?.dataRegionKey ?? features[0]?.visualRegionDataKey ?? null,
             dataRegionKeys: featureDataRegionKeys.length
                 ? featureDataRegionKeys
                 : Array.isArray(template?.dataRegionKeys) ? template.dataRegionKeys : null,
+            dataRegionAreas: Object.fromEntries(dataRegionAreas),
             countryCode: features[0]?.countryCode ?? "",
             sourceCountryCode: features[0]?.rawCountryCode ?? features[0]?.sourceCountryCode ?? features[0]?.countryCode ?? "",
             features,
@@ -3794,11 +3802,16 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
     });
     const areaTotalsByDataKey = new Map();
     for (const group of groupedVisualRegions) {
-        if (Array.isArray(group.dataRegionKeys) && group.dataRegionKeys.length > 0) {
+        const entries = Object.entries(group.dataRegionAreas ?? {});
+        if (entries.length) {
+            for (const [dataRegionKey, area] of entries) {
+                areaTotalsByDataKey.set(dataRegionKey, (areaTotalsByDataKey.get(dataRegionKey) ?? 0) + area);
+            }
             continue;
         }
-        const total = areaTotalsByDataKey.get(group.dataRegionKey) ?? 0;
-        areaTotalsByDataKey.set(group.dataRegionKey, total + group.projectedArea);
+        if (group.dataRegionKey) {
+            areaTotalsByDataKey.set(group.dataRegionKey, (areaTotalsByDataKey.get(group.dataRegionKey) ?? 0) + group.projectedArea);
+        }
     }
     return groupedVisualRegions.map((group) => {
         const withOwner = (displayData) => displayData
@@ -3810,11 +3823,21 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
                 country_name: countryDisplayName(group.countryCode, displayData.country_name ?? group.countryCode),
             }
             : null;
-        if (Array.isArray(group.dataRegionKeys) && group.dataRegionKeys.length > 0) {
+        const dataRegionShares = Object.entries(group.dataRegionAreas ?? {})
+            .map(([regionKey, area]) => {
+                const totalArea = areaTotalsByDataKey.get(regionKey) ?? 0;
+                return {
+                    regionKey,
+                    share: totalArea > 0 ? area / totalArea : 1,
+                };
+            })
+            .filter((entry) => entry.regionKey && entry.share > 0);
+        if (dataRegionShares.length) {
             return {
                 ...group,
-                areaShare: 1,
-                displayData: withOwner(buildVisualRegionDisplayData(group, 1, regionSourceMap)),
+                areaShare: dataRegionShares.reduce((sum, entry) => sum + entry.share, 0),
+                dataRegionShares,
+                displayData: withOwner(buildVisualRegionDisplayData({ ...group, dataRegionShares }, 1, regionSourceMap)),
             };
         }
         const totalArea = areaTotalsByDataKey.get(group.dataRegionKey) ?? 0;
@@ -3939,6 +3962,18 @@ function resolveVisualRegionAnchor(group) {
     ];
 }
 function buildVisualRegionDisplayData(group, areaShare, regionSourceMap) {
+    if (Array.isArray(group.dataRegionShares) && group.dataRegionShares.length > 0) {
+        const sourceRows = group.dataRegionShares
+            .map(({ regionKey, share }) => {
+                const source = regionSourceMap.get(regionKey) ?? null;
+                return source ? scaleVisualRegionSourceRow(source, share) : null;
+            })
+            .filter(Boolean);
+        if (!sourceRows.length) {
+            return null;
+        }
+        return aggregateVisualRegionRows(group, sourceRows);
+    }
     if (Array.isArray(group.dataRegionKeys) && group.dataRegionKeys.length > 0) {
         const sourceRows = group.dataRegionKeys
             .map((regionKey) => regionSourceMap.get(regionKey) ?? null)
@@ -3953,26 +3988,33 @@ function buildVisualRegionDisplayData(group, areaShare, regionSourceMap) {
         return null;
     }
     const share = Number.isFinite(areaShare) && areaShare > 0 ? areaShare : 1;
-    const scaledPopulation = Math.max(0, Math.round(source.end_population * share));
-    const scaledStartPopulation = Math.max(0, Math.round(source.start_population * share));
-    const scaledEndGdp = source.end_gdp_billion_eur * share;
-    const scaledStartGdp = source.start_gdp_billion_eur * share;
+    const scaledSource = scaleVisualRegionSourceRow(source, share);
     return {
-        ...source,
+        ...scaledSource,
         visual_region_key: group.visualRegionKey,
         region_name: group.label,
         source_region_name: VISUAL_REGION_SOURCE_NAME_OVERRIDES[group.visualRegionKey] ?? source.region_name,
+        is_visual_split: normalizeRegionName(group.label) !== normalizeRegionName(source.region_name),
+    };
+}
+function scaleVisualRegionSourceRow(source, share) {
+    const safeShare = Number.isFinite(share) && share > 0 ? share : 1;
+    const scaledPopulation = Math.max(0, Math.round(source.end_population * safeShare));
+    const scaledStartPopulation = Math.max(0, Math.round(source.start_population * safeShare));
+    const scaledEndGdp = source.end_gdp_billion_eur * safeShare;
+    const scaledStartGdp = source.start_gdp_billion_eur * safeShare;
+    return {
+        ...source,
         start_population: scaledStartPopulation,
         end_population: scaledPopulation,
-        births: Math.round(source.births * share),
-        deaths: Math.round(source.deaths * share),
-        natural_change: Math.round(source.natural_change * share),
-        net_external_migration: Math.round(source.net_external_migration * share),
-        internal_migration: Math.round(source.internal_migration * share),
+        births: Math.round(source.births * safeShare),
+        deaths: Math.round(source.deaths * safeShare),
+        natural_change: Math.round(source.natural_change * safeShare),
+        net_external_migration: Math.round(source.net_external_migration * safeShare),
+        internal_migration: Math.round(source.internal_migration * safeShare),
         start_gdp_billion_eur: scaledStartGdp,
         end_gdp_billion_eur: scaledEndGdp,
         gdp_per_capita_eur: scaledPopulation > 0 ? (scaledEndGdp * 1_000_000_000) / scaledPopulation : 0,
-        is_visual_split: normalizeRegionName(group.label) !== normalizeRegionName(source.region_name),
     };
 }
 function aggregateVisualRegionRows(group, sourceRows) {
@@ -5440,7 +5482,7 @@ function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
     return {
         visualRegionKey,
         label: definition?.label ?? featureRegionName,
-        dataRegionKey: definition?.dataRegionKey ?? bespRegionKey,
+        dataRegionKey: bespRegionKey ?? definition?.dataRegionKey,
         fill: definition?.fill ?? "rgba(126, 143, 161, 0.38)",
     };
 }
