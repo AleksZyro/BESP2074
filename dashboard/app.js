@@ -909,7 +909,7 @@ const VISUAL_REGION_DEFINITIONS = {
     "ALB::north": { label: "N ALB", dataRegionKey: "ALB::northern albania", fill: "#7f8d62" },
     "ALB::south": { label: "S ALB", dataRegionKey: "ALB::southern albania", fill: "#b67658" },
     "BGR::sofia": { label: "Sofia", dataRegionKey: "BGR::sofia", fill: "#63718d" },
-    "BGR::north": { label: "North Bulgaria", dataRegionKey: "BGR::northern bulgaria", fill: "#a2bb60" },
+    "BGR::north": { label: "North Bulgaria", dataRegionKey: "BGR::northern bulgaria", fill: "#c58b4a" },
     "BGR::south": { label: "South Bulgaria", dataRegionKey: "BGR::southern bulgaria", fill: "#6f9250" },
     "BGR::black-sea": { label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#4e83a5" },
     "BIH::fbih": { label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
@@ -961,7 +961,7 @@ const INLINE_EDITOR_TARGET_OPTIONS = Object.freeze({
     ],
     BGR: [
         { visualRegionKey: "BGR::sofia", label: "Sofia", dataRegionKey: "BGR::sofia", fill: "#63718d" },
-        { visualRegionKey: "BGR::north", label: "N BUL", dataRegionKey: "BGR::northern bulgaria", fill: "#a2bb60" },
+        { visualRegionKey: "BGR::north", label: "N BUL", dataRegionKey: "BGR::northern bulgaria", fill: "#c58b4a" },
         { visualRegionKey: "BGR::south", label: "S BUL", dataRegionKey: "BGR::southern bulgaria", fill: "#6f9250" },
         { visualRegionKey: "BGR::black-sea", label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#4e83a5" },
     ],
