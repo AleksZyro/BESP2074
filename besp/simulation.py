@@ -19,10 +19,10 @@ METRO_PULL_WEIGHT = 0.20
 INTERNAL_MIGRATION_STRENGTH = 0.02
 MAX_INTERNAL_MIGRATION_RATE = 0.012
 
-BASE_GDP_GROWTH = 0.008
+BASE_GDP_GROWTH = 0.012
 ATTRACTIVENESS_GDP_MULTIPLIER = 0.05
 HOUSING_GDP_PENALTY = 0.03
-UNEMPLOYMENT_GDP_DRAG = 0.02
+UNEMPLOYMENT_GDP_DRAG = 0.012
 
 MIN_GDP_GROWTH = -0.03
 MAX_GDP_GROWTH = 0.08
@@ -30,7 +30,8 @@ MAX_GDP_GROWTH = 0.08
 MIN_UNEMPLOYMENT_RATE = 0.04
 MAX_UNEMPLOYMENT_RATE = 0.35
 MAX_UNEMPLOYMENT_ANNUAL_STEP = 0.018
-MAX_ANNEXATION_UNEMPLOYMENT_ANNUAL_STEP = 0.010
+MAX_ANNEXATION_UNEMPLOYMENT_ANNUAL_STEP = 0.005
+MAX_ANNEXATION_INFLATION_ANNUAL_STEP = 0.006
 
 CONTROLLED_BIRTH_VARIATION = 0.012
 CONTROLLED_DEATH_VARIATION = 0.008
@@ -66,8 +67,11 @@ MAX_SHOCK_BIRTH_MULTIPLIER = 1.06
 MIN_SHOCK_BIRTH_MULTIPLIER = 0.94
 MAX_SHOCK_DEATH_MULTIPLIER = 1.08
 MIN_SHOCK_DEATH_MULTIPLIER = 0.94
-MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR = 2
+MAX_SHOCK_EVENTS_PER_YEAR = 3
+MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR = 1
 MAX_SHOCK_EVENTS_PER_CATEGORY_COUNTRY_YEAR = 1
+SHOCK_EVENT_PROBABILITY_SCALE = 0.45
+MIN_EFFECTIVE_SHOCK_COOLDOWN_YEARS = 4
 SHOCK_EFFECT_DEFAULTS = {
     "birth_multiplier": 1.0,
     "death_multiplier": 1.0,
@@ -367,9 +371,13 @@ def build_country_shock_effects(
     countries_by_code = {country.code: country for country in countries}
 
     for country in countries:
+        if len(events) >= MAX_SHOCK_EVENTS_PER_YEAR:
+            break
         selected_count = 0
         selected_categories: dict[str, int] = {}
         for shock in shock_definitions:
+            if len(events) >= MAX_SHOCK_EVENTS_PER_YEAR:
+                break
             if selected_count >= MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR:
                 break
 
@@ -382,12 +390,23 @@ def build_country_shock_effects(
             last_triggered_year = updated_last_triggered.get((country.code, shock.code))
             if last_triggered_year is not None:
                 years_since_last = start_year - last_triggered_year
-                if years_since_last <= max(shock.cooldown_years, 0):
+                effective_cooldown_years = max(
+                    shock.cooldown_years,
+                    MIN_EFFECTIVE_SHOCK_COOLDOWN_YEARS,
+                )
+                if years_since_last <= effective_cooldown_years:
                     continue
 
             base_probability = clamp(shock.annual_probability, 0.0, 1.0)
             country_weight = shock.country_weight_overrides.get(country.code, 1.0)
-            probability = clamp(base_probability * country_weight, 0.0, 0.75)
+            if base_probability >= 1.0:
+                probability = clamp(country_weight, 0.0, 1.0)
+            else:
+                probability = clamp(
+                    base_probability * country_weight * SHOCK_EVENT_PROBABILITY_SCALE,
+                    0.0,
+                    0.35,
+                )
 
             draw_rng = random.Random(
                 f"{variation_seed}|shock-draw|{start_year}|{country.code}|{shock.code}"
@@ -788,7 +807,7 @@ def calculate_regional_inflation_rate(
     housing_pressure = max(region.housing_overload - 1.0, 0.0) * 0.08
     election_pressure = max(election_tension_index - 0.45, 0.0) * 0.015
 
-    return clamp(
+    raw_inflation = clamp(
         (
             base_inflation
             + growth_heat
@@ -796,6 +815,19 @@ def calculate_regional_inflation_rate(
             + election_pressure
         ) * region.inflation_sensitivity
         + variation_signal * CONTROLLED_INFLATION_VARIATION,
+        MIN_INFLATION_RATE,
+        MAX_INFLATION_RATE,
+    )
+    previous_inflation = (
+        region.inflation_rate
+        if abs(region.inflation_rate) > 1e-9
+        else clamp(base_inflation, MIN_INFLATION_RATE, MAX_INFLATION_RATE)
+    )
+    return smooth_annexation_rate(
+        region,
+        previous_inflation,
+        raw_inflation,
+        MAX_ANNEXATION_INFLATION_ANNUAL_STEP,
         MIN_INFLATION_RATE,
         MAX_INFLATION_RATE,
     )
@@ -864,7 +896,7 @@ def calculate_next_satisfaction_index(
         + (scenario.satisfaction_bias if scenario else 0.0)
         + (gdp_growth_rate - BASE_GDP_GROWTH) * 2.80
         - max(region.unemployment_rate - 0.08, 0.0) * 1.15
-        - max(inflation_rate, 0.0) * 1.30
+        - max(inflation_rate - 0.025, 0.0) * 0.95
         + (regional_attractiveness - 0.50) * 0.28
         + (region.integration_index - 0.50) * 0.22
         - max(election_tension_index - 0.65, 0.0) * 0.25
@@ -911,7 +943,8 @@ def current_annexation_source_weight(region: Region) -> float:
     total_years = max(region.annexation_pressure_years_total, 0)
     if remaining_years <= 0 or total_years <= 0:
         return 0.0
-    return clamp(remaining_years / total_years, 0.0, 1.0)
+    linear_weight = clamp(remaining_years / total_years, 0.0, 1.0)
+    return clamp(linear_weight ** 0.55, 0.0, 1.0)
 
 
 def effective_annexation_context_value(
@@ -923,6 +956,24 @@ def effective_annexation_context_value(
     if source_weight <= 0.0:
         return target_value
     return source_value * source_weight + target_value * (1.0 - source_weight)
+
+
+def smooth_annexation_rate(
+    region: Region,
+    previous_value: float,
+    target_value: float,
+    max_annual_step: float,
+    minimum: float,
+    maximum: float,
+) -> float:
+    if current_annexation_source_weight(region) <= 0.0:
+        return clamp(target_value, minimum, maximum)
+    bounded_delta = clamp(
+        target_value - previous_value,
+        -abs(max_annual_step),
+        abs(max_annual_step),
+    )
+    return clamp(previous_value + bounded_delta, minimum, maximum)
 
 
 def calculate_regional_attractiveness(
@@ -1235,6 +1286,7 @@ def simulate_year(
                 scenario,
                 variations["inflation"],
             )
+            region.inflation_rate = inflation_rate
             region.integration_index = calculate_next_integration_index(
                 country,
                 region,

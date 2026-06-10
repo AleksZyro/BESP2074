@@ -1,6 +1,6 @@
 import unittest
 
-from besp.loader import load_scenario_map, load_world
+from besp.loader import load_scenario_map, load_shock_map, load_world
 from besp.models import Country, Region, ShockDefinition
 from besp.simulation import build_country_shock_effects, simulate_period
 from main import resolve_simulation_year_window
@@ -161,6 +161,28 @@ class ShockEventRegionExportTests(unittest.TestCase):
         self.assertLess(effects["SRB"]["gdp_growth_bias"], 0)
         self.assertLess(effects["HRV"]["gdp_growth_bias"], 0)
         self.assertGreater(effects["HRV"]["unemployment_bias"], 0)
+
+    def test_default_shocks_are_capped_to_avoid_event_spam(self) -> None:
+        start_year, end_year = resolve_simulation_year_window("data")
+        countries = load_world("data")
+        scenario = load_scenario_map("data")["baseline"]
+        shocks = list(load_shock_map("data").values())
+
+        _results, events = simulate_period(
+            countries,
+            start_year,
+            end_year,
+            scenario=scenario,
+            variation_seed="event-frequency-cap",
+            shock_definitions=shocks,
+        )
+
+        events_by_year: dict[int, int] = {}
+        for event in events:
+            events_by_year[event.start_year] = events_by_year.get(event.start_year, 0) + 1
+
+        self.assertTrue(events)
+        self.assertLessEqual(max(events_by_year.values()), 3)
 
 
 if __name__ == "__main__":

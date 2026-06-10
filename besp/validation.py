@@ -16,6 +16,7 @@ from besp.simulation import (
     MIN_UNEMPLOYMENT_RATE,
     STATE_SPECS,
 )
+BOUND_TOLERANCE = 1e-9
 REGION_BOUNDS = {
     "unemployment_rate": (MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE),
     "gdp_growth_rate": (MIN_GDP_GROWTH, MAX_GDP_GROWTH),
@@ -43,7 +44,7 @@ def append_range_warning(
     minimum: float,
     maximum: float,
 ) -> None:
-    if minimum <= value <= maximum:
+    if minimum - BOUND_TOLERANCE <= value <= maximum + BOUND_TOLERANCE:
         return
     warnings.append(
         f"{year_label}: {field_name} {value:.3f} is outside "

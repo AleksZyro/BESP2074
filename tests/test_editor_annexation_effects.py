@@ -187,7 +187,7 @@ class EditorAnnexationEffectsTests(unittest.TestCase):
         )
         self.assertLessEqual(
             abs(annexed_rs.unemployment_rate - initial_annexed_unemployment),
-            0.0101,
+            0.0051,
         )
 
 

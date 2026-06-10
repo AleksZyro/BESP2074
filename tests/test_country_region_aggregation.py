@@ -157,6 +157,29 @@ class CountryRegionAggregationTests(unittest.TestCase):
         ]
         self.assertNotEqual(first_signature, second_signature)
 
+    def test_baseline_run_keeps_plausible_positive_development(self) -> None:
+        country_results = self.run_country_results("balanced-development")
+        first_by_country = {}
+        last_by_country = {}
+        for row in country_results:
+            first_by_country.setdefault(row.country_code, row)
+            last_by_country[row.country_code] = row
+
+        improved_gdp_per_capita = sum(
+            1
+            for country_code, first_row in first_by_country.items()
+            if last_by_country[country_code].gdp_per_capita_eur > first_row.gdp_per_capita_eur
+        )
+        stable_or_better_unemployment = sum(
+            1
+            for country_code, first_row in first_by_country.items()
+            if last_by_country[country_code].average_unemployment_rate
+            <= first_row.average_unemployment_rate + 0.015
+        )
+
+        self.assertGreaterEqual(improved_gdp_per_capita, 8)
+        self.assertGreaterEqual(stable_or_better_unemployment, 7)
+
 
 if __name__ == "__main__":
     unittest.main()

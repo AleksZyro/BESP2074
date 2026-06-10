@@ -7,11 +7,11 @@ const MAP_ASSIGNMENTS_PATH = "./data/map_assignments.json";
 const RUN_SERVICE_OFFLINE_MESSAGE =
     "Static preview. Start `tools/local_run_service.py` before generating new numbers, then reload the export.";
 const PLAYBACK_HELP_MESSAGE =
-    "Play replays loaded years. New numbers come from local runs.";
+    "Play replays loaded years. At the final year, Play starts a fresh local run when the service is available.";
 const RUN_SERVICE_OFFLINE_TEXT =
     "Static preview. Start `tools/local_run_service.py` before generating new numbers, then reload the export.";
 const PLAYBACK_HELP_TEXT =
-    "Play replays loaded years. New numbers come from local runs.";
+    "Play replays loaded years. At the final year, Play starts a fresh local run when the service is available.";
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 10;
@@ -482,6 +482,7 @@ const I18N = {
         "status.reload": "Reload Export",
         "status.reloading": "Reloading...",
         "status.run": "Generate Runs",
+        "status.newRun": "New run",
         "status.running": "Running...",
         "metric.population": "Population",
         "metric.gdp": "GDP",
@@ -604,6 +605,7 @@ const I18N = {
         "status.reload": "Export neu laden",
         "status.reloading": "Lade neu...",
         "status.run": "Runs starten",
+        "status.newRun": "Neuer Run",
         "status.running": "Läuft...",
         "metric.population": "Einwohner",
         "metric.gdp": "BIP",
@@ -1580,6 +1582,7 @@ function buildInlineEditorOverridePatch(targetCountryCode, sourceGroup) {
                 : [];
     const targetBespRegionKeys = sourceBespRegionKeys.map((regionKey) => rebaseRegionKeyCountry(regionKey, targetCountryCode));
     const targetDataRegionKey = targetBespRegionKeys[0] ?? (dataRegionKey ? rebaseRegionKeyCountry(dataRegionKey, targetCountryCode) : null);
+    const displayDataRegionKey = sourceBespRegionKeys[0] ?? dataRegionKey ?? null;
     return {
         hidden: false,
         targetCountryCode,
@@ -1588,8 +1591,8 @@ function buildInlineEditorOverridePatch(targetCountryCode, sourceGroup) {
         targetBespRegionKey: targetDataRegionKey,
         targetVisualRegionKey: sourceGroup.visualRegionKey,
         targetVisualRegionLabel: sourceGroup.label ?? definition.label ?? sourceGroup.visualRegionKey,
-        targetVisualRegionDataKey: targetDataRegionKey,
-        targetVisualRegionDataKeys: targetBespRegionKeys,
+        targetVisualRegionDataKey: displayDataRegionKey,
+        targetVisualRegionDataKeys: sourceBespRegionKeys,
         targetVisualRegionFill: annexedRegionFill(targetCountryCode),
     };
 }
@@ -1726,7 +1729,7 @@ function bindPlaybackControls() {
         if (dashboardState.playbackTimer) {
             stopPlayback();
         } else {
-            startPlayback();
+            void startPlayback();
         }
     });
     elements.reloadExportButton.addEventListener("click", () => {
@@ -1908,11 +1911,15 @@ function setPlaybackSpeed(nextSpeed) {
         restartPlaybackTimer();
     }
 }
-function startPlayback() {
+async function startPlayback() {
     if (!dashboardState.yearKeys.length || dashboardState.playbackTimer) {
         return;
     }
     if (dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1) {
+        if (dashboardState.runServiceAvailable && !dashboardState.isGeneratingRun) {
+            await triggerGenerateRun({ runCount: 1, reason: "play-final-year" });
+            return;
+        }
         dashboardState.currentYearIndex = 0;
         renderActiveYearState();
     }
@@ -1951,7 +1958,10 @@ function updatePlaybackControls() {
         dashboardState.isReloading
         || !hasYears
         || dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1;
-    elements.playbackToggleButton.disabled = dashboardState.isReloading || dashboardState.yearKeys.length < 2;
+    elements.playbackToggleButton.disabled =
+        dashboardState.isReloading
+        || dashboardState.isGeneratingRun
+        || dashboardState.yearKeys.length < 2;
     elements.reloadExportButton.disabled = dashboardState.isReloading;
     elements.currentYearPill.textContent = activeYearKey || t("status.noYear");
     elements.reloadExportButton.textContent = dashboardState.isReloading ? t("status.reloading") : t("status.reload");
@@ -1960,7 +1970,12 @@ function updatePlaybackControls() {
     elements.runScenarioSelect.disabled = runControlsDisabled;
     elements.runCountInput.disabled = runControlsDisabled;
     elements.runShocksEnabled.disabled = runControlsDisabled;
-    elements.playbackToggleButton.textContent = dashboardState.playbackTimer ? "Pause" : "Play";
+    const atFinalYear = hasYears && dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1;
+    elements.playbackToggleButton.textContent = dashboardState.playbackTimer
+        ? "Pause"
+        : atFinalYear && dashboardState.runServiceAvailable
+            ? t("status.newRun")
+            : "Play";
     for (const button of elements.speedButtons) {
         const speed = Number.parseInt(button.dataset.speed ?? "1", 10);
         button.classList.toggle("speed-button-active", speed === dashboardState.playbackSpeed);
@@ -2078,20 +2093,26 @@ function applyRunStatus(runStatus) {
     }
     setExportStatus(dashboardState.runServiceAvailable ? PLAYBACK_HELP_MESSAGE : RUN_SERVICE_OFFLINE_MESSAGE, "muted");
 }
-async function triggerGenerateRun() {
+async function triggerGenerateRun({ runCount = null, reason = "manual" } = {}) {
     if (!dashboardState.runServiceAvailable || dashboardState.isGeneratingRun) {
         return;
     }
-    const runCount = Math.max(
+    const requestedRunCount = runCount ?? elements.runCountInput?.value ?? "1";
+    const safeRunCount = Math.max(
         1,
-        Math.min(100, Number.parseInt(String(elements.runCountInput?.value ?? "1"), 10) || 1)
+        Math.min(100, Number.parseInt(String(requestedRunCount), 10) || 1)
     );
-    if (elements.runCountInput) {
-        elements.runCountInput.value = String(runCount);
+    if (elements.runCountInput && reason === "manual") {
+        elements.runCountInput.value = String(safeRunCount);
     }
     dashboardState.isGeneratingRun = true;
     updatePlaybackControls();
-    setExportStatus(`Starte ${runCount} lokale Simulationsdurchlaeufe ...`, "loading");
+    setExportStatus(
+        reason === "play-final-year"
+            ? "Starte neuen Ergebnisrun ..."
+            : `Starte ${safeRunCount} lokale Simulationsdurchlaeufe ...`,
+        "loading"
+    );
     try {
         const response = await fetch(RUN_TRIGGER_PATH, {
             method: "POST",
@@ -2102,7 +2123,7 @@ async function triggerGenerateRun() {
             body: JSON.stringify({
                 scenario: elements.runScenarioSelect.value || "baseline",
                 shocks_enabled: elements.runShocksEnabled.checked,
-                run_count: runCount,
+                run_count: safeRunCount,
             }),
         });
         const payload = await response.json();

@@ -17,6 +17,7 @@ class Region:
 
     gdp_billion_eur: float = 0.0
     unemployment_rate: float = 0.0
+    inflation_rate: float = 0.0
 
     birth_rate_modifier: float = 1.0
     death_rate_modifier: float = 1.0
