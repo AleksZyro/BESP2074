@@ -25,6 +25,20 @@ const EVENT_LETTER_OFFSETS = [
 ];
 const BALKAN_CONFIG = window.BALKAN_CONFIG ?? { activeMapCountryCodes: [], plannedMapCountryCodes: [], countries: {} };
 const COUNTRY_CONFIG = BALKAN_CONFIG.countries ?? {};
+const COUNTRY_NAME_TRANSLATIONS = Object.freeze({
+    ALB: { de: "Albanien" },
+    BGR: { de: "Bulgarien" },
+    BIH: { de: "Bosnien und Herzegowina" },
+    GRC: { de: "Griechenland" },
+    HRV: { de: "Kroatien" },
+    HUN: { de: "Ungarn" },
+    MKD: { de: "Nordmazedonien" },
+    MNE: { de: "Montenegro" },
+    ROU: { de: "Rumänien" },
+    SRB: { de: "Serbien" },
+    SVN: { de: "Slowenien" },
+    XKX: { de: "Kosovo" },
+});
 const MAP_COUNTRY_CODES = Array.isArray(BALKAN_CONFIG.activeMapCountryCodes)
     ? [...BALKAN_CONFIG.activeMapCountryCodes]
     : ["ALB", "BGR", "BIH", "HRV", "HUN", "MKD", "MNE", "ROU", "SRB"];
@@ -484,10 +498,32 @@ const I18N = {
         "status.run": "Generate Runs",
         "status.newRun": "New run",
         "status.running": "Running...",
+        "status.on": "on",
+        "status.off": "off",
         "theme.light": "Light",
         "theme.dark": "Dark",
         "theme.switchLight": "Switch to light mode",
         "theme.switchDark": "Switch to dark mode",
+        "meta.selectedYear": "Selected year",
+        "meta.startYear": "Start year",
+        "meta.endYear": "End year",
+        "meta.scenario": "Scenario",
+        "meta.seed": "Seed",
+        "meta.shocks": "Shocks",
+        "meta.shockEvents": "Shock events",
+        "meta.countryRows": "Country rows",
+        "meta.regionRows": "Region rows",
+        "meta.yearBlocks": "Year blocks",
+        "meta.warnings": "Warnings",
+        "meta.mapBase": "Map base",
+        "meta.expansion": "Expansion",
+        "meta.note": "Note",
+        "meta.expansionActive": "SVN and GRC active",
+        "state.budget": "Ø Budget balance",
+        "state.debt": "Ø Debt ratio",
+        "state.stability": "Ø Stability",
+        "state.corruption": "Ø Corruption risk",
+        "state.investment": "Ø Investment climate",
         "metric.population": "Population",
         "metric.gdp": "GDP",
         "metric.jobs": "Jobs",
@@ -611,10 +647,32 @@ const I18N = {
         "status.run": "Runs starten",
         "status.newRun": "Neuer Run",
         "status.running": "Läuft...",
+        "status.on": "ein",
+        "status.off": "aus",
         "theme.light": "Hell",
         "theme.dark": "Dunkel",
         "theme.switchLight": "Zu Hellmodus wechseln",
         "theme.switchDark": "Zu Dunkelmodus wechseln",
+        "meta.selectedYear": "Ausgewähltes Jahr",
+        "meta.startYear": "Startjahr",
+        "meta.endYear": "Endjahr",
+        "meta.scenario": "Szenario",
+        "meta.seed": "Seed",
+        "meta.shocks": "Schocks",
+        "meta.shockEvents": "Schock-Ereignisse",
+        "meta.countryRows": "Ländereinträge",
+        "meta.regionRows": "Regionseinträge",
+        "meta.yearBlocks": "Jahresblöcke",
+        "meta.warnings": "Warnungen",
+        "meta.mapBase": "Kartengrundlage",
+        "meta.expansion": "Erweiterung",
+        "meta.note": "Hinweis",
+        "meta.expansionActive": "SVN und GRC aktiv",
+        "state.budget": "Ø Budgetsaldo",
+        "state.debt": "Ø Schuldenquote",
+        "state.stability": "Ø Stabilität",
+        "state.corruption": "Ø Korruptionsrisiko",
+        "state.investment": "Ø Investklima",
         "metric.population": "Einwohner",
         "metric.gdp": "BIP",
         "metric.jobs": "Jobs",
@@ -976,11 +1034,11 @@ const INLINE_EDITOR_DEFAULT_TARGET_REGION = Object.freeze({
     SVN: "SVN::western",
 });
 const STATE_METRICS = [
-    ["budget_balance_pct_gdp", "Ø Budgetsaldo"],
-    ["debt_to_gdp", "Ø Schuldenquote"],
-    ["stability_index", "Ø Stabilität"],
-    ["corruption_index", "Ø Korruptionsrisiko"],
-    ["investment_climate_index", "Ø Investklima"],
+    ["budget_balance_pct_gdp", "state.budget"],
+    ["debt_to_gdp", "state.debt"],
+    ["stability_index", "state.stability"],
+    ["corruption_index", "state.corruption"],
+    ["investment_climate_index", "state.investment"],
 ];
 function expandFeatureGroups(groups, targetMapper = (targetKey) => targetKey) {
     return Object.fromEntries(
@@ -1374,7 +1432,7 @@ function bindEditorControls() {
 function getInlineEditorTargetCountryCodes() {
     return Object.keys(INLINE_EDITOR_TARGET_OPTIONS)
         .filter((countryCode) => COUNTRY_CONFIG[countryCode]?.planned !== true)
-        .sort((left, right) => (COUNTRY_CONFIG[left]?.name ?? left).localeCompare(COUNTRY_CONFIG[right]?.name ?? right));
+        .sort((left, right) => countryDisplayName(left, left).localeCompare(countryDisplayName(right, right)));
 }
 function populateInlineEditorTargetCountries() {
     if (!elements.editorInlineTargetCountry) {
@@ -1383,7 +1441,7 @@ function populateInlineEditorTargetCountries() {
     const currentValue = normalizeCountryCode(dashboardState.editorTargetCountryCode || elements.editorInlineTargetCountry.value);
     const countryCodes = getInlineEditorTargetCountryCodes();
     elements.editorInlineTargetCountry.innerHTML = countryCodes
-        .map((countryCode) => `<option value="${escapeHtml(countryCode)}">${escapeHtml(COUNTRY_CONFIG[countryCode]?.name ?? countryCode)} (${escapeHtml(displayCountryCode(countryCode))})</option>`)
+        .map((countryCode) => `<option value="${escapeHtml(countryCode)}">${escapeHtml(countryDisplayName(countryCode, countryCode))} (${escapeHtml(displayCountryCode(countryCode))})</option>`)
         .join("");
     const nextValue = countryCodes.includes(currentValue)
         ? currentValue
@@ -1515,7 +1573,7 @@ function renderInlineEditorPanelLegacyUnused() {
     const selectedGroup = getInlineEditorSelectedGroup();
     const hasSelection = Boolean(selectedGroup);
     const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
-    const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
+    const targetCountryName = countryDisplayName(targetCountryCode, displayCountryCode(targetCountryCode));
     const sourceOwnerCode = hasSelection ? getInlineEditorSourceOwnerCode(selectedGroup) : "";
     const sourceAlreadyOwned = hasSelection && sourceOwnerCode === targetCountryCode;
     const selectionPrompt = activeMapMode === "country"
@@ -1565,7 +1623,7 @@ function renderInlineEditorPanel() {
     const selectedGroup = getInlineEditorSelectedGroup();
     const hasSelection = Boolean(selectedGroup);
     const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
-    const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
+    const targetCountryName = countryDisplayName(targetCountryCode, displayCountryCode(targetCountryCode));
     const targetSelected = Boolean(dashboardState.editorTargetCountrySelected && targetCountryCode);
     const sourceOwnerCode = hasSelection ? getInlineEditorSourceOwnerCode(selectedGroup) : "";
     const sourceAlreadyOwned = hasSelection && targetSelected && sourceOwnerCode === targetCountryCode;
@@ -2743,20 +2801,20 @@ function renderMetaCards(exportData, countryRowCount, regionRowCount, activeYear
     const scenarioMeta = exportData.meta?.scenario ?? {};
     const shockMeta = exportData.meta?.shocks ?? {};
     elements.metaCards.innerHTML = [
-        ["Selected year", activeYearKey || "-"],
-        ["Start year", exportData.meta.start_year],
-        ["End year", exportData.meta.end_year],
-        ["Scenario", scenarioMeta.name],
-        ["Seed", scenarioMeta.variation_seed],
-        ["Shocks", shockMeta.enabled ? "on" : "off"],
-        ["Shock-Events", formatInteger(shockMeta.event_count ?? 0)],
-        ["Country rows", formatInteger(countryRowCount)],
-        ["Region rows", formatInteger(regionRowCount)],
-        ["Year blocks", formatInteger(Object.keys(exportData.years).length)],
-        ["Warnings", formatInteger(exportData.meta.warning_count ?? 0)],
-        ["Map base", "ADM0/ADM1/ADM2/ADM3 + groups"],
-        ["Expansion", "SVN and GRC active"],
-        ["Note", geoWarning],
+        [t("meta.selectedYear"), activeYearKey || "-"],
+        [t("meta.startYear"), exportData.meta.start_year],
+        [t("meta.endYear"), exportData.meta.end_year],
+        [t("meta.scenario"), scenarioMeta.name],
+        [t("meta.seed"), scenarioMeta.variation_seed],
+        [t("meta.shocks"), shockMeta.enabled ? t("status.on") : t("status.off")],
+        [t("meta.shockEvents"), formatInteger(shockMeta.event_count ?? 0)],
+        [t("meta.countryRows"), formatInteger(countryRowCount)],
+        [t("meta.regionRows"), formatInteger(regionRowCount)],
+        [t("meta.yearBlocks"), formatInteger(Object.keys(exportData.years).length)],
+        [t("meta.warnings"), formatInteger(exportData.meta.warning_count ?? 0)],
+        [t("meta.mapBase"), "ADM0/ADM1/ADM2/ADM3 + groups"],
+        [t("meta.expansion"), t("meta.expansionActive")],
+        [t("meta.note"), geoWarning],
     ].map(([label, value]) => hasDisplayValue(value) ? buildMetaCard(label, value) : "").join("");
 }
 function renderActiveYearState() {
@@ -2865,7 +2923,7 @@ function aggregateCountryRowsFromVisualRegions(visualRegionGroups, sourceCountry
         nextRows.push({
             ...group.displayData,
             country_code: ownerCode,
-            country_name: COUNTRY_CONFIG[ownerCode]?.name ?? group.displayData.country_name ?? ownerCode,
+            country_name: countryDisplayName(ownerCode, group.displayData.country_name ?? ownerCode),
         });
         groupsByOwner.set(ownerCode, nextRows);
     }
@@ -2884,7 +2942,7 @@ function aggregateCountryRowsFromVisualRegions(visualRegionGroups, sourceCountry
         return {
             ...row,
             source_country_code: sourceOwnerCode,
-            source_country_name: sourceCountryRow.country_name ?? row.source_country_name ?? row.country_name,
+            source_country_name: countryDisplayName(sourceOwnerCode, sourceCountryRow.country_name ?? row.source_country_name ?? row.country_name),
             corruption_index: Number(sourceCountryRow.corruption_index ?? row.corruption_index),
             stability_index: Number(sourceCountryRow.stability_index ?? row.stability_index),
             investment_climate_index: Number(sourceCountryRow.investment_climate_index ?? row.investment_climate_index),
@@ -2921,7 +2979,7 @@ function aggregateCountryDisplayRow(countryCode, rows, baseCountryRow) {
         yearKey: base.yearKey ?? rows[0]?.yearKey ?? "",
         start_year: Number(base.start_year ?? rows[0]?.start_year ?? 0),
         end_year: Number(base.end_year ?? rows[0]?.end_year ?? 0),
-        country_name: COUNTRY_CONFIG[countryCode]?.name ?? base.country_name ?? countryCode,
+        country_name: countryDisplayName(countryCode, base.country_name ?? countryCode),
         country_code: countryCode,
         start_population: startPopulation,
         end_population: endPopulation,
@@ -3005,7 +3063,7 @@ function renderCountryLayer(geoData) {
                 ?? (geoData.countryFeatures ?? []).find((feature) => feature.countryCode === countryCode);
             const labelFeature = baseCountryFeature ?? features.find((feature) => feature.rawCountryCode === countryCode) ?? features[0];
             const centroid = labelFeature?.centroid ?? averageCentroid(features);
-            const displayName = COUNTRY_CONFIG[countryCode]?.name ?? labelFeature?.name ?? countryCode;
+            const displayName = countryDisplayName(countryCode, labelFeature?.name ?? countryCode);
             return {
                 countryCode,
                 displayName,
@@ -3749,7 +3807,7 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
                 source_country_code: displayData.source_country_code ?? group.sourceCountryCode ?? displayData.country_code,
                 source_country_name: displayData.source_country_name ?? displayData.country_name,
                 country_code: group.countryCode,
-                country_name: COUNTRY_CONFIG[group.countryCode]?.name ?? displayData.country_name ?? group.countryCode,
+                country_name: countryDisplayName(group.countryCode, displayData.country_name ?? group.countryCode),
             }
             : null;
         if (Array.isArray(group.dataRegionKeys) && group.dataRegionKeys.length > 0) {
@@ -4005,7 +4063,7 @@ function bindEditorMapEvents() {
             }
             renderActiveYearState();
             setMapHoverDetails(
-                tf("editor.targetAnnexes", { country: COUNTRY_CONFIG[countryCode]?.name ?? displayCountryCode(countryCode) }),
+                tf("editor.targetAnnexes", { country: countryDisplayName(countryCode, displayCountryCode(countryCode)) }),
                 t("editor.switchRegionHint")
             );
             return;
@@ -4038,11 +4096,11 @@ function bindMapSelectionEvents() {
         });
         node.addEventListener("contextmenu", (event) => {
             const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
-            const countryName = COUNTRY_CONFIG[countryCode]?.name ?? displayCountryCode(countryCode);
+            const countryName = countryDisplayName(countryCode, displayCountryCode(countryCode));
             const canUseAsTarget = getInlineEditorTargetCountryCodes().includes(countryCode);
             const hasExplicitTarget = Boolean(dashboardState.editorMode && dashboardState.editorTargetCountrySelected);
             const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
-            const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
+            const targetCountryName = countryDisplayName(targetCountryCode, displayCountryCode(targetCountryCode));
             const isCurrentTarget = hasExplicitTarget && countryCode === targetCountryCode;
             const canAnnexCountry = Boolean(hasExplicitTarget && !isCurrentTarget && getAnnexableRegionGroupsForCountry(countryCode).length);
             const annexCountryAction = {
@@ -4089,7 +4147,7 @@ function bindMapSelectionEvents() {
             const regionName = String(node.getAttribute("data-region-name") ?? "Region");
             const group = mapDataCache.visualRegionsByKey.get(visualRegionKey) ?? null;
             const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode || elements.editorInlineTargetCountry?.value);
-            const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
+            const targetCountryName = countryDisplayName(targetCountryCode, displayCountryCode(targetCountryCode));
             const sourceOwnerCode = group ? getInlineEditorSourceOwnerCode(group) : "";
             const targetReady = Boolean(dashboardState.editorMode && dashboardState.editorTargetCountrySelected && targetCountryCode);
             const canAnnex = Boolean(group && targetReady && sourceOwnerCode !== targetCountryCode);
@@ -4127,7 +4185,7 @@ function selectInlineEditorTargetCountryFromMap(countryCode, { switchToRegion = 
         setInlineEditorStatus(t("editor.countryCannotAnnex"), "error");
         return false;
     }
-    const countryName = COUNTRY_CONFIG[normalizedCountryCode]?.name ?? displayCountryCode(normalizedCountryCode);
+    const countryName = countryDisplayName(normalizedCountryCode, displayCountryCode(normalizedCountryCode));
     if (switchToRegion) {
         setMapMode("region");
     } else {
@@ -4189,8 +4247,8 @@ async function annexCountryToSelectedCountry(sourceCountryCode) {
         hideMapContextMenu();
         return;
     }
-    const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
-    const sourceCountryName = COUNTRY_CONFIG[normalizedSourceCode]?.name ?? displayCountryCode(normalizedSourceCode);
+    const targetCountryName = countryDisplayName(targetCountryCode, displayCountryCode(targetCountryCode));
+    const sourceCountryName = countryDisplayName(normalizedSourceCode, displayCountryCode(normalizedSourceCode));
     replaceInlineEditorOverridesForCountry(normalizedSourceCode, targetCountryCode);
     clearEditorSelection();
     hideMapContextMenu();
@@ -4272,14 +4330,14 @@ function renderCountryHover(countryCode, countryData) {
     const previousCountry = mapDataCache.previousCountriesByCode.get(normalizeCountryCode(countryData.country_code)) ?? null;
     if (!isClassicMetricView()) {
         setMapHoverDetails(
-            `${countryData.country_name} (${displayCountryCode(countryData.country_code)}) · ${countryData.yearKey}`,
+            `${countryDisplayName(countryData.country_code, countryData.country_name)} (${displayCountryCode(countryData.country_code)}) · ${countryData.yearKey}`,
             buildMetricHoverHtml(dashboardState.activeMetric, countryData, previousCountry, "country"),
             true
         );
         return;
     }
     setMapHoverDetails(
-        `${countryData.country_name} (${displayCountryCode(countryData.country_code)}) · ${countryData.yearKey}`,
+        `${countryDisplayName(countryData.country_code, countryData.country_name)} (${displayCountryCode(countryData.country_code)}) · ${countryData.yearKey}`,
         buildClassicHoverHtml(countryData, previousCountry),
         true
     );
@@ -4328,7 +4386,7 @@ function resetMapHoverDetails() {
         const selectedGroup = getInlineEditorSelectedGroup();
         if (selectedGroup) {
             const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
-            const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
+            const targetCountryName = countryDisplayName(targetCountryCode, displayCountryCode(targetCountryCode));
             setMapHoverDetails(
                 tf("editor.targetAnnexes", { country: selectedGroup.label }),
                 tf("editor.countryAnnexesRegion", { country: targetCountryName, region: selectedGroup.label })
@@ -4378,7 +4436,7 @@ function renderCountryTable(countryRows) {
         countryRows,
         EMPTY_TABLE_ROWS.countryExport,
         (country) => buildTableRow([
-            escapeHtml(country.yearKey), `${escapeHtml(countryFlag(country.country_code))} ${escapeHtml(country.country_name)} (${escapeHtml(displayCountryCode(country.country_code))})`,
+            escapeHtml(country.yearKey), `${escapeHtml(countryFlag(country.country_code))} ${escapeHtml(countryDisplayName(country.country_code, country.country_name))} (${escapeHtml(displayCountryCode(country.country_code))})`,
             formatInteger(country.end_population), `${formatDecimal(country.end_gdp_billion_eur)} bn EUR`,
             formatPercent(country.gdp_growth_rate), `${formatInteger(Math.round(country.gdp_per_capita_eur))} EUR`,
             formatPercent(country.average_unemployment_rate),
@@ -4403,13 +4461,13 @@ function renderStatePanels(countryRows) {
     }
     const activeYearKey = getActiveYearKey();
     elements.stateCards.innerHTML = STATE_METRICS
-        .map(([metricKey, label]) => buildStateCard(label, averageMetric(countryRows, metricKey), activeYearKey, metricKey))
+        .map(([metricKey, labelKey]) => buildStateCard(t(labelKey), averageMetric(countryRows, metricKey), activeYearKey, metricKey))
         .join("");
     renderTable(
         elements.stateTableBody,
         countryRows,
         EMPTY_TABLE_ROWS.state,
-        (country) => buildTableRow([escapeHtml(country.yearKey), `${escapeHtml(country.country_name)} (${escapeHtml(displayCountryCode(country.country_code))})`, ...STATE_METRICS.map(([metricKey]) => formatStateRatio(country[metricKey], metricKey))])
+        (country) => buildTableRow([escapeHtml(country.yearKey), `${escapeHtml(countryDisplayName(country.country_code, country.country_name))} (${escapeHtml(displayCountryCode(country.country_code))})`, ...STATE_METRICS.map(([metricKey]) => formatStateRatio(country[metricKey], metricKey))])
     );
 }
 function renderRegionTable(regionRows) {
@@ -4514,7 +4572,7 @@ function renderMapSummaryCards() {
                 const previousCountryRow = mapDataCache.previousCountriesByCode.get(countryCode) ?? null;
                 return isClassic
                     ? buildClassicSummaryCard(
-                        `${countryFlag(countryCode)} ${countryRow.country_name} (${displayCountryCode(countryCode)})`,
+                        `${countryFlag(countryCode)} ${countryDisplayName(countryCode, countryRow.country_name)} (${displayCountryCode(countryCode)})`,
                         [
                             `Population ${formatInteger(countryRow.end_population)}`,
                             `GDP ${formatDecimal(countryRow.end_gdp_billion_eur)} bn EUR`,
@@ -4523,7 +4581,7 @@ function renderMapSummaryCards() {
                         countryRow.yearKey
                     )
                     : buildMetricSummaryCard(
-                        `${countryFlag(countryCode)} ${countryRow.country_name} (${displayCountryCode(countryCode)})`,
+                        `${countryFlag(countryCode)} ${countryDisplayName(countryCode, countryRow.country_name)} (${displayCountryCode(countryCode)})`,
                         dashboardState.activeMetric,
                         metricValueFromCountry(countryRow, dashboardState.activeMetric),
                         previousCountryRow ? metricValueFromCountry(previousCountryRow, dashboardState.activeMetric) : Number.NaN,
@@ -5286,6 +5344,16 @@ function rebaseRegionKeyCountry(regionKey, targetCountryCode) {
 function displayCountryCode(countryCode) {
     const normalized = normalizeCountryCode(countryCode);
     return COUNTRY_DISPLAY_CODES[normalized] ?? normalized;
+}
+function countryDisplayName(countryCode, fallback = "") {
+    const normalized = normalizeCountryCode(countryCode);
+    if (dashboardState.language === "de") {
+        return COUNTRY_NAME_TRANSLATIONS[normalized]?.de
+            ?? COUNTRY_CONFIG[normalized]?.name
+            ?? fallback
+            ?? normalized;
+    }
+    return COUNTRY_CONFIG[normalized]?.name ?? fallback ?? normalized;
 }
 function normalizeCountryCode(countryCode) {
     return String(countryCode ?? "").trim().toUpperCase();

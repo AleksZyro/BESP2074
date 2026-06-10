@@ -17,6 +17,9 @@ class DashboardI18nTests(unittest.TestCase):
         self.assertIn("language-flag-de", html)
         self.assertNotIn("🇨🇭", html)
         self.assertIn("const I18N", app_js)
+        self.assertIn("COUNTRY_NAME_TRANSLATIONS", app_js)
+        self.assertIn("Bosnien und Herzegowina", app_js)
+        self.assertIn("Rumänien", app_js)
         self.assertIn("en:", app_js)
         self.assertIn("de:", app_js)
         self.assertIn("function applyTheme", app_js)
@@ -28,6 +31,10 @@ class DashboardI18nTests(unittest.TestCase):
             "event.regions",
             "metric.current",
             "editor.chooseCountry",
+            "meta.selectedYear",
+            "meta.countryRows",
+            "state.budget",
+            "state.debt",
         ]:
             self.assertIn(key, app_js)
 
