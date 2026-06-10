@@ -118,6 +118,19 @@ const VISUAL_REGION_LABEL_OFFSETS = {
 const VISUAL_REGION_SOURCE_NAME_OVERRIDES = {
     "SRB::sz-srb": "Sumadija and Western Serbia",
 };
+const VISUAL_REGION_CORRECTIONS = Object.freeze([
+    {
+        key: "BIH::gorazde-ustipraca-tip",
+        visualRegionKey: "BIH::fbih",
+        coordinates: [
+            [18.936, 43.724],
+            [18.982, 43.729],
+            [18.973, 43.706],
+            [18.947, 43.697],
+            [18.936, 43.709],
+        ],
+    },
+]);
 const KOSOVO_VISUAL_REGION_KEY = "SRB::kosovo-metohija";
 const KOSOVO_VISUAL_REGION_KEYS = new Set([KOSOVO_VISUAL_REGION_KEY]);
 const VISUAL_REGION_LABEL_ANCHORS = {
@@ -2385,9 +2398,14 @@ async function loadGeoBoundaryData(assignmentPayload = null) {
     const projectedRegionFeatures = regionFeatures
         .map((feature) => projectFeature(feature, projection, "region"))
         .filter((feature) => feature !== null);
+    const projectedRegionCorrections = VISUAL_REGION_CORRECTIONS.map((correction) => ({
+        ...correction,
+        pathD: polygonToPath([correction.coordinates], projection, false),
+    }));
     return {
         countryFeatures: projectedCountryFeatures,
         regionFeatures: projectedRegionFeatures,
+        regionCorrections: projectedRegionCorrections,
         projectedCountryLabelCoordinates,
         mapAssignments: safeAssignments,
     };
@@ -3318,7 +3336,8 @@ function renderRegionLayer(geoData) {
         `;
         })
         .join("");
-    elements.regionLayer.innerHTML = regionBackfillMarkup + regionShapeMarkup;
+    const regionCorrectionMarkup = buildRegionCorrectionMarkup(geoData, groupedRegions, regionMetricRange);
+    elements.regionLayer.innerHTML = regionBackfillMarkup + regionShapeMarkup + regionCorrectionMarkup;
     const labelCandidates = groupedRegions.map((group) => {
         const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
         const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
@@ -3404,6 +3423,30 @@ function buildRegionBackfillMarkup(geoData, regionMetricRange) {
         `;
         })
         .join("");
+}
+function buildRegionCorrectionMarkup(geoData, groupedRegions, regionMetricRange) {
+    const groupsByKey = new Map(groupedRegions.map((group) => [group.visualRegionKey, group]));
+    return (geoData?.regionCorrections ?? []).map((correction) => {
+        const group = groupsByKey.get(correction.visualRegionKey) ?? null;
+        const baseFill = group?.fill ?? "rgba(126, 143, 161, 0.5)";
+        const fill = dashboardState.activeMetric === "classic"
+            ? baseFill
+            : mapMetricFill(
+                metricValueFromRegion(group?.displayData ?? null, dashboardState.activeMetric),
+                regionMetricRange,
+                dashboardState.activeMetric,
+                baseFill
+            );
+        return `
+            <path
+                class="map-region-correction"
+                data-visual-region-key="${escapeHtml(correction.visualRegionKey)}"
+                d="${escapeHtml(correction.pathD)}"
+                fill="${escapeHtml(fill)}"
+                fill-rule="evenodd"
+            ></path>
+        `;
+    }).join("");
 }
 function renderMapEventLayer() {
     if (!elements.mapEventLayer) {
