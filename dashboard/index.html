@@ -14,9 +14,21 @@
                 <h1>Balkan Economy Simulation</h1>
                 <p class="lead" data-i18n="hero.lead">Calibrated Balkan simulation to 2050 with multiple runs, political dynamics, regional events, and an integrated border mode. The data model and map logic are prepared for Slovenia and Greece.</p>
             </div>
-            <div class="language-toggle" role="group" aria-label="Language">
-                <button id="language-en" class="language-button language-button-active" type="button" data-language="en">EN</button>
-                <button id="language-de" class="language-button" type="button" data-language="de">DE</button>
+            <div class="app-controls">
+                <div class="language-toggle" role="group" aria-label="Language">
+                    <button id="language-en" class="language-button language-button-active" type="button" data-language="en" aria-label="English">
+                        <span class="language-flag" aria-hidden="true">🇬🇧</span>
+                        <span>EN</span>
+                    </button>
+                    <button id="language-de" class="language-button" type="button" data-language="de" aria-label="Deutsch">
+                        <span class="language-flag" aria-hidden="true">🇨🇭</span>
+                        <span>DE</span>
+                    </button>
+                </div>
+                <button id="theme-toggle" class="theme-toggle-button" type="button" aria-pressed="false" aria-label="Switch to light mode">
+                    <span id="theme-toggle-icon" aria-hidden="true">☀️</span>
+                    <span id="theme-toggle-label">Light</span>
+                </button>
             </div>
         </header>
         <main class="dashboard-grid">

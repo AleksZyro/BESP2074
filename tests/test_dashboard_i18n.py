@@ -12,9 +12,13 @@ class DashboardI18nTests(unittest.TestCase):
 
         self.assertIn('id="language-en"', html)
         self.assertIn('id="language-de"', html)
+        self.assertIn('id="theme-toggle"', html)
+        self.assertIn("🇬🇧", html)
+        self.assertIn("🇨🇭", html)
         self.assertIn("const I18N", app_js)
         self.assertIn("en:", app_js)
         self.assertIn("de:", app_js)
+        self.assertIn("function applyTheme", app_js)
 
         for key in [
             "mode.countries",

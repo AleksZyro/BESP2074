@@ -484,6 +484,10 @@ const I18N = {
         "status.run": "Generate Runs",
         "status.newRun": "New run",
         "status.running": "Running...",
+        "theme.light": "Light",
+        "theme.dark": "Dark",
+        "theme.switchLight": "Switch to light mode",
+        "theme.switchDark": "Switch to dark mode",
         "metric.population": "Population",
         "metric.gdp": "GDP",
         "metric.jobs": "Jobs",
@@ -607,6 +611,10 @@ const I18N = {
         "status.run": "Runs starten",
         "status.newRun": "Neuer Run",
         "status.running": "Läuft...",
+        "theme.light": "Hell",
+        "theme.dark": "Dunkel",
+        "theme.switchLight": "Zu Hellmodus wechseln",
+        "theme.switchDark": "Zu Dunkelmodus wechseln",
         "metric.population": "Einwohner",
         "metric.gdp": "BIP",
         "metric.jobs": "Jobs",
@@ -1135,6 +1143,7 @@ const dashboardState = {
     regionRowCount: 0,
     activeMetric: "classic",
     language: window.localStorage?.getItem("bespLanguage") === "de" ? "de" : "en",
+    theme: window.localStorage?.getItem("bespTheme") === "light" ? "light" : "dark",
     selectedEventIndex: -1,
     currentCountryRows: [],
     currentRegionRows: [],
@@ -1171,6 +1180,9 @@ const elements = {
     speedButtons: Array.from(document.querySelectorAll(".speed-button")),
     metricButtons: Array.from(document.querySelectorAll(".metric-button")),
     languageButtons: Array.from(document.querySelectorAll(".language-button")),
+    themeToggleButton: document.getElementById("theme-toggle"),
+    themeToggleIcon: document.getElementById("theme-toggle-icon"),
+    themeToggleLabel: document.getElementById("theme-toggle-label"),
     mapHoverTitle: document.getElementById("map-hover-title"),
     mapHoverBody: document.getElementById("map-hover-body"),
     mapRoot: document.getElementById("country-map"),
@@ -1223,9 +1235,11 @@ const EMPTY_TABLE_ROWS = {
     regionExport: buildEmptyTableRow(12, "No region values were found in the export."),
 };
 document.addEventListener("DOMContentLoaded", () => {
+    applyTheme();
     applyLanguage();
     decorateMetricButtons();
     bindLanguageControls();
+    bindThemeControls();
     bindMapModeEvents();
     bindPlaybackControls();
     bindEditorControls();
@@ -1272,6 +1286,7 @@ function applyLanguage() {
             : (view.buttonLabelEn ?? view.buttonLabel);
     }
     decorateMetricButtons();
+    applyTheme();
 }
 function bindLanguageControls() {
     for (const button of elements.languageButtons) {
@@ -1290,6 +1305,27 @@ function bindLanguageControls() {
             }
         });
     }
+}
+function applyTheme() {
+    const isLight = dashboardState.theme === "light";
+    document.documentElement.dataset.theme = dashboardState.theme;
+    if (elements.themeToggleButton) {
+        elements.themeToggleButton.setAttribute("aria-pressed", isLight ? "true" : "false");
+        elements.themeToggleButton.setAttribute("aria-label", isLight ? t("theme.switchDark") : t("theme.switchLight"));
+    }
+    if (elements.themeToggleIcon) {
+        elements.themeToggleIcon.textContent = isLight ? "🌙" : "☀️";
+    }
+    if (elements.themeToggleLabel) {
+        elements.themeToggleLabel.textContent = isLight ? t("theme.dark") : t("theme.light");
+    }
+}
+function bindThemeControls() {
+    elements.themeToggleButton?.addEventListener("click", () => {
+        dashboardState.theme = dashboardState.theme === "light" ? "dark" : "light";
+        window.localStorage?.setItem("bespTheme", dashboardState.theme);
+        applyTheme();
+    });
 }
 function bindMapModeEvents() {
     elements.mapModeCountryButton.addEventListener("click", () => {
