@@ -1,1 +1,1 @@
-"""BESP - Balkan Economy Simulation Player."""
+"""BESP2074 - Balkan Economy Simulation Player."""

@@ -1,8 +1,8 @@
-# BESP Project Phases
+# BESP2074 Project Phases
 
 ## Projektziel
 
-BESP ist eine realistische, jahresbasierte Balkan-Simulation mit:
+BESP2074 ist eine realistische, jahresbasierte Balkan-Simulation mit:
 
 - exportgetriebener Visualisierung
 - klarer Trennung zwischen Python-Simulation und Frontend

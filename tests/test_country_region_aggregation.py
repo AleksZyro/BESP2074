@@ -21,6 +21,10 @@ class CountryRegionAggregationTests(unittest.TestCase):
         )
         return aggregate_country_results(region_results, countries)
 
+    def test_simulation_window_ends_in_2074(self) -> None:
+        _start_year, end_year = resolve_simulation_year_window("data")
+        self.assertEqual(end_year, 2074)
+
     def test_country_totals_match_region_sums_for_every_year(self) -> None:
         start_year, end_year = resolve_simulation_year_window("data")
         countries = load_world("data")

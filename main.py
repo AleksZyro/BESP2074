@@ -14,7 +14,7 @@ from besp.models import CountryYearResult, RegionYearResult, ShockEvent, Simulat
 from besp.simulation import aggregate_country_results, simulate_period
 from besp.validation import validate_simulation_results
 
-TARGET_SIMULATION_END_YEAR = 2050
+TARGET_SIMULATION_END_YEAR = 2074
 
 
 def resolve_simulation_year_window(data_dir: str = "data") -> tuple[int, int]:
@@ -58,13 +58,13 @@ def print_country_year_results(country_results: list[CountryYearResult]) -> None
 
 def print_region_year_results(results: list[RegionYearResult]) -> None:
     if not results:
-        print_section("BESP simulation period")
+        print_section("BESP2074 simulation period")
         print("No region results were produced.")
         return
 
     start_year = min(result.start_year for result in results)
     end_year = max(result.end_year for result in results)
-    print_section(f"BESP simulation period: {start_year} -> {end_year}")
+    print_section(f"BESP2074 simulation period: {start_year} -> {end_year}")
     print_grouped_results(
         results,
         lambda result: f"Regions: {result.start_year} -> {result.end_year}",
@@ -103,7 +103,7 @@ def print_shock_summary(shock_events: list[ShockEvent]) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run the BESP yearly simulation and write output/latest.json."
+        description="Run the BESP2074 yearly simulation and write output/latest.json."
     )
     parser.add_argument(
         "--scenario",
@@ -129,7 +129,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def print_available_scenarios(scenarios: dict[str, SimulationScenario]) -> None:
-    print("Available BESP scenarios")
+    print("Available BESP2074 scenarios")
     print("=" * 72)
     for scenario in scenarios.values():
         print(f"{scenario.code:<12} | {scenario.name}")

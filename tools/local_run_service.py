@@ -233,7 +233,7 @@ class RunManager:
                     finished_at=timestamp_now() if run_index + 1 >= run_count else None,
                 )
 RUN_MANAGER = RunManager()
-class BESPRequestHandler(SimpleHTTPRequestHandler):
+class BESP2074RequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(REPO_ROOT), **kwargs)
     def do_GET(self) -> None:
@@ -307,7 +307,7 @@ class BESPRequestHandler(SimpleHTTPRequestHandler):
         super().log_message(format, *args)
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Serve BESP locally with a small run service and static dashboard files."
+        description="Serve BESP2074 locally with a small run service and static dashboard files."
     )
     parser.add_argument(
         "--port",
@@ -319,12 +319,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     os.chdir(REPO_ROOT)
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), BESPRequestHandler)
-    print(f"BESP local run service listening on http://127.0.0.1:{args.port}/dashboard/index.html")
+    server = ThreadingHTTPServer(("127.0.0.1", args.port), BESP2074RequestHandler)
+    print(f"BESP2074 local run service listening on http://127.0.0.1:{args.port}/dashboard/index.html")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nShutting down BESP local run service.")
+        print("\nShutting down BESP2074 local run service.")
     finally:
         server.server_close()
 if __name__ == "__main__":

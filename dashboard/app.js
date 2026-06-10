@@ -478,7 +478,7 @@ const METRIC_VIEWS = {
 };
 const I18N = {
     en: {
-        "hero.lead": "Calibrated Balkan simulation to 2050 with multiple runs, political dynamics, regional events, and an integrated border mode.",
+        "hero.lead": "Calibrated Balkan simulation to 2074 with multiple runs, political dynamics, rarer regional events, and an integrated border mode.",
         "map.kicker": "Map",
         "timeline.year": "Year",
         "mode.countries": "Countries",
@@ -539,7 +539,7 @@ const I18N = {
         "status.exportReloadedStatic": "Export reloaded. {summary}. Without the local service, scenario and shocks stay unchanged.",
         "status.exportLoadFailed": "Latest export could not be loaded. Reload under Advanced or start new runs.",
         "status.exportLoadFailedDetail": "Latest export could not be loaded. Start the local service in the project root, then reload.",
-        "status.invalidExport": "Invalid BESP export structure",
+        "status.invalidExport": "Invalid BESP2074 export structure",
         "theme.light": "Light",
         "theme.dark": "Dark",
         "theme.switchLight": "Switch to light mode",
@@ -639,7 +639,7 @@ const I18N = {
         "editor.countryAnnexedBody": "{target} takes the country; regions remain visible.",
         "editor.noExportCountry": "No matching country row found for this map area.",
         "editor.noExportArea": "No matching export row found for region or country.",
-        "editor.noRegionData": "No assigned BESP data",
+        "editor.noRegionData": "No assigned BESP2074 data",
         "editor.noRegionRows": "No region data",
         "editor.loadRegions": "Load an export to render the region map.",
         "editor.localAssignmentSaved": "Assignment applied locally. Save to persist it.",
@@ -654,7 +654,7 @@ const I18N = {
         "error.unknown": "Unknown error",
     },
     de: {
-        "hero.lead": "Kalibrierte Balkan-Simulation bis 2050 mit mehreren Runs, politischer Dynamik, regionalen Ereignissen und integriertem Grenzmodus.",
+        "hero.lead": "Kalibrierte Balkan-Simulation bis 2074 mit mehreren Runs, politischer Dynamik, selteneren regionalen Ereignissen und integriertem Grenzmodus.",
         "map.kicker": "Karte",
         "timeline.year": "Jahr",
         "mode.countries": "Länder",
@@ -715,7 +715,7 @@ const I18N = {
         "status.exportReloadedStatic": "Export neu geladen. {summary}. Ohne lokalen Service bleiben Szenario und Schocks unverändert.",
         "status.exportLoadFailed": "Der neueste Export konnte nicht geladen werden. Unter Erweitert neu laden oder neue Runs starten.",
         "status.exportLoadFailedDetail": "Der neueste Export konnte nicht geladen werden. Starte den lokalen Service im Projektordner und lade danach neu.",
-        "status.invalidExport": "Ungültige BESP-Exportstruktur",
+        "status.invalidExport": "Ungültige BESP2074-Exportstruktur",
         "theme.light": "Hell",
         "theme.dark": "Dunkel",
         "theme.switchLight": "Zu Hellmodus wechseln",
@@ -815,7 +815,7 @@ const I18N = {
         "editor.countryAnnexedBody": "{target} übernimmt das Land; die Regionen bleiben als eigene Regionen sichtbar.",
         "editor.noExportCountry": "Kein passender Landeseintrag für diese Kartenfläche gefunden.",
         "editor.noExportArea": "Kein passender Exporteintrag für Region oder Land gefunden.",
-        "editor.noRegionData": "Keine zugeordneten BESP-Daten",
+        "editor.noRegionData": "Keine zugeordneten BESP2074-Daten",
         "editor.noRegionRows": "Keine Regionsdaten",
         "editor.loadRegions": "Lade einen Export, um die Regionenkarte zu rendern.",
         "editor.localAssignmentSaved": "Zuordnung lokal übernommen. Mit Speichern dauerhaft sichern.",
@@ -2489,7 +2489,7 @@ function normalizeGeoFeature(feature, layerType, mapAssignments = {}) {
     const adminLevel = String(properties.shapeType ?? "").trim().toUpperCase();
     let countryCode = rawCountryCode;
     let name = String(properties.shapeName ?? "").trim();
-    // BESP models Kosovo as part of SRB scope. We keep that mapping in the frontend layer only.
+    // BESP2074 models Kosovo as part of SRB scope. We keep that mapping in the frontend layer only.
     if (rawCountryCode === "XKX") {
         countryCode = "SRB";
         if (layerType === "region" && adminLevel === "ADM0") {

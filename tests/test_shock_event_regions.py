@@ -182,7 +182,7 @@ class ShockEventRegionExportTests(unittest.TestCase):
             events_by_year[event.start_year] = events_by_year.get(event.start_year, 0) + 1
 
         self.assertTrue(events)
-        self.assertLessEqual(max(events_by_year.values()), 3)
+        self.assertLessEqual(max(events_by_year.values()), 2)
 
 
 if __name__ == "__main__":

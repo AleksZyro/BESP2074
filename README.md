@@ -1,122 +1,65 @@
-# BESP - Balkan Economy Simulation Player
+# BESP2074 - Balkan Economy Simulation Player
 
-BESP ist eine realistische, jahresbasierte Balkan-Simulation mit exportgetriebener Kartenansicht. Die Simulation rechnet in Python, exportiert strukturierte JSON-Daten und zeigt sie im lokalen Dashboard inklusive Grenzeditor an.
+BESP2074 ist eine jahresbasierte Balkan-Simulation mit Python-Modell, JSON-Export und lokalem Dashboard. Das Projekt simuliert Länder und Regionen vom automatisch erkannten Basisjahr bis `2074`, zeigt Kennzahlen auf einer interaktiven Karte und enthält einen Grenzeditor für lokale Annexionsszenarien.
 
-## Hauptarbeitsstand
+## Stand
 
-- Das Startjahr wird nicht mehr hart auf `2020` oder `2024` fixiert.
-- `tools/refresh_country_baselines.py` prüft `2023-2026` und wählt automatisch das gemeinsame Jahr mit der besten Datenabdeckung.
-- Im aktuellen Datenstand gewinnt `2024` als bestes gemeinsames Basisjahr.
-- Die Simulation führt fünf neue Parameter:
-  - `integration`
-  - `inflation`
-  - `corruption`
-  - `satisfaction`
-  - `elections`
-- Mehrfachläufe mit `1-100` Runs sind über den lokalen Service möglich.
-- Auch ohne Schocks liefern verschiedene Seeds verschiedene Verläufe.
-- Gleicher Seed bleibt reproduzierbar.
-- Die Simulation läuft nun vom erkannten Basisjahr bis `2050`.
-- Der Grenzeditor bietet einen einfachen Annexionsmodus: Zielland wählen, Provinzen anklicken, speichern.
-- Frisch annektierte Zielregionen starten mit tieferer Zufriedenheit und erholen sich über mehrere Jahre.
-- Aggregationstests prüfen, dass Länderwerte pro Jahr exakt zur Summe der Regionen passen.
-- Griechenland nutzt echte ADM2-Unterlinien und Slowenien echte NUTS3-Unterlinien innerhalb der bestehenden Makroregionen.
+- Automatische Baseline-Erkennung aus den vorhandenen Daten.
+- Simulation bis `2074`.
+- Länder-, Regionen- und Staatskennzahlen pro Jahr.
+- Mehrfachläufe mit reproduzierbaren Seeds.
+- Optionale, seltenere Schocks und Event-Briefe aus dem Simulationsoutput.
+- Grenzeditor für lokale Gebietszuordnungen.
+- Smooth Annexionsdynamik: Bevölkerung und GDP wechseln direkt, Raten und Scores nähern sich über mehrere Jahre an.
+- Dashboard mit Länder-, Regions-, KPI-, Border-, Dark- und Light-Mode.
 
-## Aktueller Länderumfang
+## Länderumfang
 
-- Serbia
-- Montenegro
-- Bosnia and Herzegovina
 - Albania
-- North Macedonia
+- Bosnia and Herzegovina
 - Bulgaria
-- Hungary
 - Croatia
-- Romania
-- Slovenia
 - Greece
+- Hungary
+- Montenegro
+- North Macedonia
+- Romania
+- Serbia
+- Slovenia
 
-## Modellumfang
+## Modell
 
-### Demografie und Wirtschaft
+BESP2074 rechnet jährlich:
 
-- Geburten, Todesfälle und Nettoaussenmigration pro Jahr
-- Binnenmigration innerhalb eines Landes über Attraktivitätsunterschiede
-- Regionales BIP, BIP-Wachstum und Arbeitslosigkeit
-- Regionale Attraktivität aus Wirtschaft, Infrastruktur, Urbanisierung, Metro-Pull und Wohnungsdruck
+- Bevölkerung, Geburten, Todesfälle und Migration
+- regionales GDP und GDP pro Kopf
+- Arbeitslosigkeit und Attraktivität
+- Integration, Inflation, Zufriedenheit, Korruption und Wahlspannung
+- Budget, Schuldenquote, Stabilität und Investitionsklima auf Staatsebene
 
-### Neue Sozial- und Politikwerte
+Die Simulation ist bewusst nicht rein pessimistisch. Länder können sich je nach Ausgangslage, Szenario, Seed und Schocks verbessern oder verschlechtern. Schocks sind temporäre Modellereignisse und sollen Runs beeinflussen, aber nicht dauerhaft jeden Verlauf zerstören.
 
-- `integration_index`
-- `inflation_rate`
-- `corruption_index`
-- `satisfaction_index`
-- `election_tension_index`
+## Events und Schocks
 
-Diese Werte wirken aufeinander und fliessen auch in die staatlichen Kennzahlen ein.
+Schocks sind optional. Im Standardlauf sind sie aktiviert, aber bewusst seltener eingestellt:
 
-`corruption_index` ist bewusst als negativer Index modelliert: tiefer ist besser. Er wirkt auf Stabilität, Investitionsklima, Zufriedenheit und indirekt auf Wachstum. In der Karte heisst die Metrik deshalb Korruptionsrisiko und wird als Modellscore `0/100` bis `100/100` angezeigt, nicht als realer Prozentwert.
+- maximal zwei Event-Briefe pro Jahr
+- längerer Mindest-Cooldown zwischen ähnlichen Schocks
+- tiefere Standardwahrscheinlichkeiten in `data/shocks.json`
+- grenzübergreifende Events können in mehreren betroffenen Ländern einen Brief anzeigen
 
-### Warum die Startintegration so gesetzt ist
-
-`base_integration_index` ist bewusst kein Zufallswert. Er beschreibt den strukturellen Startzustand eines Landes, bevor die eigentliche Simulation Jahr für Jahr arbeitet. Dafür werden mehrere Faktoren zusammengezogen:
-
-- Nähe zu EU- und Binnenmarktstrukturen
-- institutionelle Stabilität und staatliche Handlungsfähigkeit
-- Korruptionsniveau und Vertrauen in Verwaltung
-- Arbeitsmobilität und grenzüberschreitende Verflechtung
-- innerer Zusammenhalt zwischen Regionen und politischen Lagern
-
-Ein höherer Startwert bedeutet im Modell also nicht einfach «besseres Land», sondern dass Integration, Anpassung und die Aufnahme neuer Gebiete anfangs stabiler funktionieren. Ein tieferer Startwert bedeutet mehr Reibung, mehr Spannungen und langsamere Angleichung. In der UI wird Integration deshalb als Modellscore `0/100` bis `100/100` angezeigt, nicht als echte Integrationsquote.
-
-Annexionen sind nicht pauschal negativ. Der kurzfristige Effekt hängt vom Zielland, vom übernommenen Gebiet, von der wirtschaftlichen Ausgangslage, von Stabilität/Korruption und von gezielten Identitäts-Affinitäten ab. Diese Affinitäten werden nur für einzelne plausible Fälle modelliert, nicht flächendeckend für jede Ethnie. Beispiel: Republika Srpska zu Serbien bekommt wegen Identitätsnähe und stärkerem Zielstaat eher einen Zufriedenheits- und Integrationsbonus. Western North Macedonia zu Albanien bekommt ebenfalls einen Bonus, aber schwächer. Unplausible oder wirtschaftlich schlechtere Annexionen erzeugen weiterhin Reibung.
-
-Wirtschaftliche Kennzahlen springen nach einer Annexion nicht sofort vollständig auf Zielstaat-Niveau. Arbeitslosigkeit, Inflation sowie die Zufriedenheits- und Integrationsanker blenden den alten Kontext über die Annexionsjahre aus. Dadurch wird ein neues Gebiet politisch sofort neu zugeordnet, wirtschaftlich aber schrittweise integriert.
-
-Organisationen wirken als langfristige Integrationspfade. Einige Länder können im Verlauf der Simulation durch EU-, Regionalmarkt- oder BRICS-nahe Entwicklungen zusätzliche Integrationsdynamik bekommen. Das ist kein harter Beitrittsschalter, sondern ein kleiner Bonus auf den strukturellen Integrationspfad.
-
-### Staatsebene
-
-- `budget_balance_pct_gdp`
-- `debt_to_gdp`
-- `stability_index`
-- `corruption_index`
-- `investment_climate_index`
-
-`debt_to_gdp` wird als Schuldenquote angezeigt. Für Karten- und Übersichtsaggregate wird die Schuldenquote BIP-gewichtet berechnet, nicht als einfacher Durchschnitt, weil eine kleine Region wirtschaftlich nicht gleich stark zählt wie eine grosse Volkswirtschaft.
-
-### Schocks
-
-- Schocks sind optional und bewusst begrenzt.
-- Ohne Schocks bleiben die Runs trotzdem variabel, weil unterschiedliche Seeds kontrollierte Jahresabweichungen erzeugen.
-- Einzelne Schocks können kurze Kartenmeldungen erzeugen, z.B. ein IMF-Kredit oder ein Energiepreisschock. Diese Meldungen sind reine Simulationsereignisse aus `output/latest.json`, keine externen Live-News.
+Die Event-Daten kommen aus `output/latest.json`. Das Frontend erfindet keine eigenen Events.
 
 ## Architektur
 
 1. `data/countries.json` und `data/regions.json` definieren Startwerte.
-2. `tools/refresh_country_baselines.py` aktualisiert die Länderbaselines aus World-Bank-Daten.
-3. `main.py` erkennt das beste Basisjahr automatisch und simuliert vom Basisjahr bis `2050`.
-4. `besp/exporter.py` schreibt `output/latest.json`.
-5. `tools/local_run_service.py` liefert Dashboard, Run-API und Grenzeditor-API lokal aus.
-6. `dashboard/index.html` visualisiert Länder, Regionen, Kennzahlen und Mehrfachläufe.
-7. `dashboard/editor.html` bearbeitet GeoJSON-Zuordnungen über persistente Overrides in `dashboard/data/map_assignments.json`.
-
-## Datenaktualisierung
-
-World-Bank-Baselines neu holen:
-
-```powershell
-py tools\refresh_country_baselines.py
-```
-
-Das Skript:
-
-- prüft die Jahre `2023`, `2024`, `2025`, `2026`
-- vergleicht die Abdeckung pro Indikator und Land
-- schreibt:
-  - `data/world_bank_baseline_latest.json`
-  - `data/world_bank_baseline_<jahr>.json`
-- aktualisiert `data/countries.json`
+2. `data/scenarios.json` definiert Szenarien.
+3. `data/shocks.json` definiert optionale Schocks.
+4. `main.py` erkennt das Basisjahr und simuliert bis `2074`.
+5. `besp/exporter.py` schreibt strukturierte JSON-Exporte.
+6. `tools/local_run_service.py` liefert Dashboard, Run-API und Editor-API lokal aus.
+7. `dashboard/index.html` zeigt Karte, Zeitachse, KPIs und Mehrfachläufe.
+8. `dashboard/editor.html` verwaltet lokale Karten-Overrides.
 
 ## Simulation starten
 
@@ -138,13 +81,13 @@ Deterministisch mit fixem Seed:
 py main.py --scenario reform --seed reform-a
 ```
 
-Verfügbare Szenarien anzeigen:
+Szenarien anzeigen:
 
 ```powershell
 py main.py --list-scenarios
 ```
 
-## Dashboard und Grenzeditor
+## Dashboard starten
 
 Lokalen Service starten:
 
@@ -152,50 +95,40 @@ Lokalen Service starten:
 py tools\local_run_service.py --port 8011
 ```
 
-Danach im Browser:
+Danach öffnen:
 
 - Dashboard: [http://127.0.0.1:8011/dashboard/index.html](http://127.0.0.1:8011/dashboard/index.html)
 - Grenzeditor: [http://127.0.0.1:8011/dashboard/editor.html](http://127.0.0.1:8011/dashboard/editor.html)
 
-### Grenzeditor-Prinzip
+## Grenzeditor
 
-Der Editor schneidet keine Polygone freihändig. Stattdessen ordnet er vorhandene ADM-Flächen neu zu. Das ist für diese Hauptarbeit absichtlich stabiler:
-
-- gleiche Topologie wie die Quelldaten
-- nachvollziehbare Overrides
-- kein Risiko durch kaputte selbstgezeichnete Geometrien
+Der Editor schneidet keine neuen Polygone. Er ordnet vorhandene ADM-Flächen neu zu. Dadurch bleibt die Kartentopologie stabil.
 
 Workflow:
 
-1. Features filtern
-2. Flaechen auswaehlen
-3. Ziel-Land, Ziel-Region und Visual-Key setzen
-4. Override speichern
-5. Dashboard neu laden
+1. Region oder Land auswählen.
+2. Zielland und Zielregion setzen.
+3. Annexionszuordnung lokal anwenden.
+4. Speichern.
+5. Simulation oder Dashboard neu laden.
 
-## Mehrfachlaeufe
+## Mehrfachläufe
 
-Im Dashboard:
+Im Dashboard können `1` bis `100` Runs erzeugt werden. Gleicher Seed bleibt reproduzierbar, unterschiedliche Seeds erzeugen unterschiedliche Verläufe. Wenn die Zeitachse am Ende angekommen ist, kann `Play` den nächsten vorhandenen Run laden oder einen neuen Ergebnisrun starten.
 
-- `Runs` zwischen `1` und `100`
-- `Generate Runs` startet mehrere lokale Durchlaeufe
-- die Batch-Zusammenfassung zeigt Min/Max-Spannen und die Zahl unterschiedlicher Seeds
+## Tests
 
-Wichtig:
-
-- gleiche Seeds => gleiche Resultate
-- verschiedene Seeds => verschiedene Verlaeufe
-- Schocks aus => trotzdem keine identischen Ergebnisse, solange der Seed nicht fixiert ist
-
-## Tests und Verifier
-
-Unit Test fuer exakte Laender-/Regionsaggregation:
+Empfohlene Abschlusschecks:
 
 ```powershell
-python -m unittest tests.test_country_region_aggregation
+python -m pytest
+node --check dashboard/app.js
+node --check dashboard/config.js
+node --check dashboard/editor.js
+py main.py --scenario baseline --seed test-local
 ```
 
-Weitere Checks:
+Weitere Verifier:
 
 ```powershell
 py tools\verify_export_year_state.py
@@ -205,19 +138,16 @@ py tools\verify_geo_coverage.py
 py tools\verify_geo_name_normalization.py
 ```
 
-Servicecheck:
+## Daten aktualisieren
+
+World-Bank-Baselines neu holen:
 
 ```powershell
-py tools\verify_local_run_service.py --base-url http://127.0.0.1:8011
-py tools\verify_local_run_service.py --base-url http://127.0.0.1:8011 --e2e
+py tools\refresh_country_baselines.py
 ```
 
-## Commit-Regel fuer die Hauptarbeit
+Das Skript prüft die Jahre `2023` bis `2026`, wählt die beste gemeinsame Datenabdeckung und aktualisiert die Baseline-Dateien.
 
-Die bestehende Git-History wird nicht automatisch umgeschrieben. Ab jetzt gilt:
+## Projektstatus
 
-- keine Mikro-Commits fuer jede Kleinigkeit
-- zusammenhaengende Arbeit in einem Block committen
-- Doku, Tests und Code fuer denselben Funktionsblock gemeinsam committen
-
-Das detaillierte Phasenmodell steht in [PROJECT_PHASES.md](C:\Users\Startklar\OneDrive - Alte Kantonsschule Aarau\Desktop\Dokumente\Playground\BESP-Balkan-Economy-Simulation-Player-\PROJECT_PHASES.md).
+BESP2074 ist als lokales Abschlussprojekt vorbereitet. Die wichtigsten Arbeitsbereiche sind Simulation, Export, Dashboard, Grenzeditor, Mehrfachläufe, Events, Kartenlogik und Tests.
