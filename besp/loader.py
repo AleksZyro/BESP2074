@@ -13,6 +13,8 @@ ANNEXATION_MAX_SATISFACTION_BOOST = -0.12
 ANNEXATION_BASE_INTEGRATION_DRAG = 0.030
 ANNEXATION_MAX_INTEGRATION_DRAG = 0.09
 ANNEXATION_MAX_INTEGRATION_BOOST = -0.08
+ANNEXATION_INITIAL_SATISFACTION_STEP = 0.018
+ANNEXATION_INITIAL_INTEGRATION_STEP = 0.014
 
 # Targeted affinity examples. These are limited model assumptions for regions
 # where another state's identity context is plausibly relevant.
@@ -376,8 +378,18 @@ def apply_annexation_pressure(
         if source_country is not None
         else region.satisfaction_index
     )
-    region.satisfaction_index = clamp(region.satisfaction_index - satisfaction_effect, 0.0, 1.0)
-    region.integration_index = clamp(region.integration_index - integration_effect, 0.0, 1.0)
+    initial_satisfaction_shift = clamp(
+        -satisfaction_effect * 0.25,
+        -ANNEXATION_INITIAL_SATISFACTION_STEP,
+        ANNEXATION_INITIAL_SATISFACTION_STEP,
+    )
+    initial_integration_shift = clamp(
+        -integration_effect * 0.25,
+        -ANNEXATION_INITIAL_INTEGRATION_STEP,
+        ANNEXATION_INITIAL_INTEGRATION_STEP,
+    )
+    region.satisfaction_index = clamp(region.satisfaction_index + initial_satisfaction_shift, 0.0, 1.0)
+    region.integration_index = clamp(region.integration_index + initial_integration_shift, 0.0, 1.0)
 
 
 def apply_editor_annexation_effects(

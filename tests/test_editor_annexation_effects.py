@@ -108,6 +108,12 @@ class EditorAnnexationEffectsTests(unittest.TestCase):
         target_inflation_rate = target_country.baseline_inflation_rate
         source_unemployment_rate = source_country.baseline_unemployment_rate
         target_unemployment_rate = target_country.baseline_unemployment_rate
+        baseline_source_region = next(
+            region for region in source_country.regions
+            if region.name == "Republika Srpska"
+        )
+        initial_satisfaction_index = baseline_source_region.satisfaction_index
+        initial_integration_index = baseline_source_region.integration_index
         assignment_payload = {
             "overrides": {
                 "region:BIH:ADM2:republika-srpska": {
@@ -131,6 +137,14 @@ class EditorAnnexationEffectsTests(unittest.TestCase):
             if region.name == "Republika Srpska"
         )
         initial_annexed_unemployment = initial_annexed_rs.unemployment_rate
+        self.assertLessEqual(
+            abs(initial_annexed_rs.satisfaction_index - initial_satisfaction_index),
+            0.0181,
+        )
+        self.assertLessEqual(
+            abs(initial_annexed_rs.integration_index - initial_integration_index),
+            0.0141,
+        )
 
         annexed_results, _ = simulate_period(
             annexed_countries,

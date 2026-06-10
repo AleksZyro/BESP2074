@@ -1,4 +1,5 @@
 import random
+import re
 
 from besp.models import (
     Country,
@@ -145,13 +146,26 @@ ORGANIZATION_ACCESSION_EVENTS = {
 }
 
 SHOCK_EVENT_MESSAGES = {
-    "recession": "meldet eine regionale Rezession",
-    "energy_price_shock": "meldet einen Energiepreisschock",
-    "tourism_slump": "verzeichnet eine schwache Tourismussaison",
-    "heatwave_drought": "meldet Hitze und Dürre",
-    "flood_event": "meldet schwere Überschwemmungen",
-    "imf_credit_line": "erhält einen grossen IMF-Kredit",
+    "recession": "{country} reports a regional recession",
+    "energy_price_shock": "{country} reports an energy price shock",
+    "tourism_slump": "{country} records a weak tourism season",
+    "heatwave_drought": "{country} reports heat and drought",
+    "flood_event": "{country} reports severe flooding",
+    "imf_credit_line": "{country} receives a large IMF credit line",
 }
+
+COASTAL_REGION_HINTS = (
+    "coast", "dalmatia", "istria", "kvarner", "black sea", "aegean",
+    "crete", "attica", "pelopon", "ionian", "thrace", "macedonia-thrace",
+)
+LOWLAND_REGION_HINTS = (
+    "vojvodina", "great plains", "slavonia", "dobruja", "danube",
+    "wallachia", "moldavia", "thessalia", "central greece", "black sea",
+)
+FLOOD_REGION_HINTS = (
+    "danube", "sava", "drina", "morava", "vojvodina", "belgrade",
+    "wallachia", "dobruja", "bosnia", "brcko", "posavina",
+)
 
 
 def _empty_shock_effect() -> dict[str, float]:
@@ -166,8 +180,75 @@ def organization_integration_bonus(country_code: str, start_year: int) -> float:
 def build_shock_event_message(shock: ShockDefinition, country: Country) -> str:
     base_message = SHOCK_EVENT_MESSAGES.get(shock.code)
     if base_message:
-        return f"{country.name} {base_message}"
+        return base_message.format(country=country.name)
     return f"{country.name}: {shock.name}"
+
+
+def normalize_event_region_fragment(value: str | None) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", " ", str(value or "").strip().lower())
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def build_event_region_key(country_code: str, region_name: str) -> str:
+    return f"{country_code}::{normalize_event_region_fragment(region_name)}"
+
+
+def score_region_for_shock(region: Region, shock: ShockDefinition) -> float:
+    name = normalize_event_region_fragment(region.name)
+    density = region.population_density
+    low_density_score = 1.0 / (1.0 + density / 160.0)
+    metro_score = max(region.metro_pull, region.urbanization)
+
+    if shock.code == "heatwave_drought":
+        return (
+            low_density_score * 0.55
+            + max(1.0 - region.urbanization, 0.0) * 0.25
+            + (0.35 if any(hint in name for hint in LOWLAND_REGION_HINTS) else 0.0)
+        )
+    if shock.code == "tourism_slump":
+        return (
+            region.economic_attractiveness * 0.35
+            + metro_score * 0.20
+            + (0.55 if any(hint in name for hint in COASTAL_REGION_HINTS) else 0.0)
+        )
+    if shock.code == "flood_event":
+        return (
+            low_density_score * 0.25
+            + max(region.infrastructure, 0.0) * 0.15
+            + (0.50 if any(hint in name for hint in FLOOD_REGION_HINTS) else 0.0)
+        )
+    if shock.category == "finance":
+        return 1.0
+    if shock.category == "economic":
+        return (
+            region.gdp_billion_eur * 0.01
+            + region.economic_attractiveness * 0.25
+            + metro_score * 0.25
+        )
+    return region.population + region.gdp_billion_eur * 10_000
+
+
+def select_affected_regions(country: Country, shock: ShockDefinition, start_year: int, variation_seed: str) -> list[Region]:
+    if not country.regions:
+        return []
+    if shock.category == "finance":
+        return list(country.regions)
+
+    ranked = sorted(
+        country.regions,
+        key=lambda region: (
+            score_region_for_shock(region, shock),
+            random.Random(f"{variation_seed}|affected-region|{start_year}|{country.code}|{shock.code}|{region.name}").random(),
+        ),
+        reverse=True,
+    )
+    if shock.code == "heatwave_drought":
+        count = min(max(2, len(country.regions) // 2), len(country.regions), 4)
+    elif shock.code in {"tourism_slump", "flood_event"}:
+        count = min(max(1, len(country.regions) // 3), len(country.regions), 3)
+    else:
+        count = min(max(1, len(country.regions) // 3), len(country.regions), 3)
+    return ranked[:count]
 
 
 def build_country_shock_effects(
@@ -230,6 +311,7 @@ def build_country_shock_effects(
             updated_last_triggered[(country.code, shock.code)] = start_year
             selected_count += 1
             selected_categories[shock.category] = selected_categories.get(shock.category, 0) + 1
+            affected_regions = select_affected_regions(country, shock, start_year, variation_seed)
 
             events.append(
                 ShockEvent(
@@ -246,6 +328,11 @@ def build_country_shock_effects(
                     unemployment_bias=shock.unemployment_bias * severity_scale,
                     net_migration_rate_shift=shock.net_migration_rate_shift * severity_scale,
                     message=build_shock_event_message(shock, country),
+                    affected_region_names=[region.name for region in affected_regions],
+                    affected_region_keys=[
+                        build_event_region_key(country.code, region.name)
+                        for region in affected_regions
+                    ],
                 )
             )
 

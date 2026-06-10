@@ -140,6 +140,8 @@ class ShockEvent:
     unemployment_bias: float
     net_migration_rate_shift: float
     message: str = ""
+    affected_region_names: list[str] = field(default_factory=list)
+    affected_region_keys: list[str] = field(default_factory=list)
 
 
 @dataclass
