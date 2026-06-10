@@ -285,12 +285,19 @@ code { font-family: Consolas, "Courier New", monospace; }
 .map-event-letter {
     cursor: pointer;
     filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.38));
+    pointer-events: all;
+}
+.map-event-letter-hitbox {
+    fill: rgba(255, 255, 255, 0.001);
+    stroke: none;
+    pointer-events: all;
 }
 .map-event-letter-bg {
     fill: rgba(17, 31, 49, 0.92);
     stroke: rgba(220, 184, 107, 0.76);
     stroke-width: 1.2;
     vector-effect: non-scaling-stroke;
+    pointer-events: all;
 }
 .map-event-letter-icon {
     fill: none;
@@ -299,6 +306,7 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke-linejoin: round;
     stroke-linecap: round;
     vector-effect: non-scaling-stroke;
+    pointer-events: all;
 }
 .map-event-letter-selected .map-event-letter-bg {
     fill: rgba(79, 57, 28, 0.95);

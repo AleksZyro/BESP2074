@@ -4,7 +4,7 @@ window.BALKAN_CONFIG = {
   countries: {
     ALB: { name: "Albania", displayCode: "ALB", flag: "\uD83C\uDDE6\uD83C\uDDF1", fill: "rgba(146, 124, 104, 0.90)" },
     BGR: { name: "Bulgaria", displayCode: "BG", flag: "\uD83C\uDDE7\uD83C\uDDEC", fill: "rgba(137, 161, 104, 0.90)" },
-    BIH: { name: "Bosnia and Herzegovina", displayCode: "BIH", flag: "\uD83C\uDDE7\uD83C\uDDE6", fill: "rgba(88, 124, 158, 0.90)" },
+    BIH: { name: "Bosnia and Herzegovina", displayCode: "BIH", flag: "\uD83C\uDDE7\uD83C\uDDE6", fill: "rgba(54, 104, 73, 0.90)" },
     GRC: { name: "Greece", displayCode: "GRC", flag: "\uD83C\uDDEC\uD83C\uDDF7", fill: "rgba(86, 133, 184, 0.90)" },
     HRV: { name: "Croatia", displayCode: "HRV", flag: "\uD83C\uDDED\uD83C\uDDF7", fill: "rgba(184, 109, 77, 0.90)" },
     HUN: { name: "Hungary", displayCode: "HUN", flag: "\uD83C\uDDED\uD83C\uDDFA", fill: "rgba(158, 127, 105, 0.90)" },

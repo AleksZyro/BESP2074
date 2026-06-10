@@ -5,16 +5,24 @@ const RUN_TRIGGER_PATH = "/api/run";
 const MAP_ASSIGNMENTS_API_PATH = "/api/map-assignments";
 const MAP_ASSIGNMENTS_PATH = "./data/map_assignments.json";
 const RUN_SERVICE_OFFLINE_MESSAGE =
-    "Statische Vorschau. Für neue Zahlen zuerst `tools/local_run_service.py` starten und danach den Export neu laden.";
+    "Static preview. Start `tools/local_run_service.py` before generating new numbers, then reload the export.";
 const PLAYBACK_HELP_MESSAGE =
-    "Play spielt nur geladene Jahre ab. Neue Zahlen entstehen erst über lokale Runs.";
+    "Play replays loaded years. New numbers come from local runs.";
 const RUN_SERVICE_OFFLINE_TEXT =
-    "Statische Vorschau. Für neue Zahlen zuerst `tools/local_run_service.py` starten und danach den Export neu laden.";
+    "Static preview. Start `tools/local_run_service.py` before generating new numbers, then reload the export.";
 const PLAYBACK_HELP_TEXT =
-    "Play spielt nur geladene Jahre ab. Neue Zahlen entstehen erst über lokale Runs.";
+    "Play replays loaded years. New numbers come from local runs.";
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 10;
+const EVENT_LETTER_OFFSETS = [
+    [0, -16],
+    [14, -10],
+    [-14, -10],
+    [10, 8],
+    [-10, 8],
+    [0, 16],
+];
 const BALKAN_CONFIG = window.BALKAN_CONFIG ?? { activeMapCountryCodes: [], plannedMapCountryCodes: [], countries: {} };
 const COUNTRY_CONFIG = BALKAN_CONFIG.countries ?? {};
 const MAP_COUNTRY_CODES = Array.isArray(BALKAN_CONFIG.activeMapCountryCodes)
@@ -268,6 +276,51 @@ const REGION_LABEL_SHORT = {
     "SRB::kosovo-metohija": "Kosovo",
     "SRB::sz-srb": "SZ SRB",
 };
+const REGION_LABEL_TRANSLATIONS = {
+    "ALB::central": { en: { short: "C ALB", long: "Central Albania" }, de: { short: "M ALB", long: "Mittelalbanien" } },
+    "ALB::north": { en: { short: "N ALB", long: "Northern Albania" }, de: { short: "N ALB", long: "Nordalbanien" } },
+    "ALB::south": { en: { short: "S ALB", long: "Southern Albania" }, de: { short: "S ALB", long: "Südalbanien" } },
+    "BGR::black-sea": { en: { short: "Black Sea", long: "Black Sea Bulgaria" }, de: { short: "Schwarzes Meer", long: "Schwarzmeer-Bulgarien" } },
+    "BGR::north": { en: { short: "N BUL", long: "Northern Bulgaria" }, de: { short: "N BUL", long: "Nordbulgarien" } },
+    "BGR::sofia": { en: { short: "Sofia", long: "Sofia" }, de: { short: "Sofia", long: "Sofia" } },
+    "BGR::south": { en: { short: "S BUL", long: "Southern Bulgaria" }, de: { short: "S BUL", long: "Südbulgarien" } },
+    "BIH::fbih": { en: { short: "FBiH", long: "Federation of Bosnia and Herzegovina" }, de: { short: "FBiH", long: "Föderation Bosnien und Herzegowina" } },
+    "BIH::rs": { en: { short: "RS", long: "Republika Srpska" }, de: { short: "RS", long: "Republika Srpska" } },
+    "HUN::central-hungary": { en: { short: "Budapest", long: "Budapest" }, de: { short: "Budapest", long: "Budapest" } },
+    "HUN::great-plains": { en: { short: "Great Plains", long: "Great Plains" }, de: { short: "Grosse Tiefebene", long: "Grosse Tiefebene" } },
+    "HUN::north-hungary": { en: { short: "N HUN", long: "Northern Hungary" }, de: { short: "N HUN", long: "Nordungarn" } },
+    "HUN::transdanubia": { en: { short: "Transdanubia", long: "Transdanubia" }, de: { short: "Transdanubien", long: "Transdanubien" } },
+    "HRV::zagreb-central": { en: { short: "C HRV", long: "Central Croatia" }, de: { short: "M HRV", long: "Mittelkroatien" } },
+    "HRV::istria-kvarner": { en: { short: "Istria", long: "Istria and Kvarner" }, de: { short: "Istrien", long: "Istrien und Kvarner" } },
+    "HRV::slavonia": { en: { short: "Slavonia", long: "Slavonia" }, de: { short: "Slawonien", long: "Slawonien" } },
+    "HRV::dalmatia": { en: { short: "Dalmatia", long: "Dalmatia" }, de: { short: "Dalmatien", long: "Dalmatien" } },
+    "MKD::se": { en: { short: "SE MAC", long: "Southeastern Macedonia" }, de: { short: "SO MAC", long: "Südostmazedonien" } },
+    "MKD::skopje": { en: { short: "Skopje", long: "Skopje" }, de: { short: "Skopje", long: "Skopje" } },
+    "MKD::west": { en: { short: "W MAC", long: "Western Macedonia" }, de: { short: "W MAC", long: "Westmazedonien" } },
+    "MNE::coastal-region": { en: { short: "CS MON", long: "Coastal Montenegro" }, de: { short: "K MON", long: "Küstenmontenegro" } },
+    "MNE::southern-montenegro": { en: { short: "S MON", long: "Southern Montenegro" }, de: { short: "S MON", long: "Südmontenegro" } },
+    "MNE::northern-montenegro": { en: { short: "N MON", long: "Northern Montenegro" }, de: { short: "N MON", long: "Nordmontenegro" } },
+    "ROU::bucharest-ilfov": { en: { short: "Bucharest", long: "Bucharest-Ilfov" }, de: { short: "Bukarest", long: "Bukarest-Ilfov" } },
+    "ROU::moldavia": { en: { short: "Moldavia", long: "Moldavia" }, de: { short: "Moldau", long: "Moldau" } },
+    "ROU::transylvania-banat": { en: { short: "Transylvania", long: "Transylvania and Banat" }, de: { short: "Siebenbürgen", long: "Siebenbürgen und Banat" } },
+    "ROU::wallachia-oltenia": { en: { short: "Wallachia", long: "Wallachia and Oltenia" }, de: { short: "Walachei", long: "Walachei und Oltenien" } },
+    "ROU::dobruja-lower-danube": { en: { short: "Dobruja", long: "Dobruja and Lower Danube" }, de: { short: "Dobrudscha", long: "Dobrudscha und untere Donau" } },
+    "SRB::belgrade": { en: { short: "Belgrade", long: "Belgrade" }, de: { short: "Belgrad", long: "Belgrad" } },
+    "SRB::ji-srb": { en: { short: "SE SRB", long: "Southeastern Serbia" }, de: { short: "SO SRB", long: "Südostserbien" } },
+    "SRB::kosovo-metohija": { en: { short: "Kosovo", long: "Kosovo" }, de: { short: "Kosovo", long: "Kosovo" } },
+    "SRB::sz-srb": { en: { short: "SW SRB", long: "Southwestern Serbia" }, de: { short: "SW SRB", long: "Südwestserbien" } },
+    "SRB::vojvodina": { en: { short: "Vojvodina", long: "Vojvodina" }, de: { short: "Wojwodina", long: "Wojwodina" } },
+    "SVN::western": { en: { short: "W SVN", long: "Western Slovenia" }, de: { short: "W SVN", long: "Westslowenien" } },
+    "SVN::eastern": { en: { short: "E SVN", long: "Eastern Slovenia" }, de: { short: "O SVN", long: "Ostslowenien" } },
+    "GRC::attica": { en: { short: "Attica", long: "Attica" }, de: { short: "Attika", long: "Attika" } },
+    "GRC::macedonia-thrace": { en: { short: "Macedonia-Thrace", long: "Macedonia-Thrace" }, de: { short: "Makedonien-Thrakien", long: "Makedonien-Thrakien" } },
+    "GRC::epirus-western-macedonia": { en: { short: "Epirus-W. Mac.", long: "Epirus-Western Macedonia" }, de: { short: "Epirus-W. Mak.", long: "Epirus-Westmakedonien" } },
+    "GRC::thessalia-central-greece": { en: { short: "Thessaly-C. Greece", long: "Thessaly-Central Greece" }, de: { short: "Thessalien-M. GR", long: "Thessalien-Mittelgriechenland" } },
+    "GRC::peloponnese-west-greece-ionian": { en: { short: "Peloponnese", long: "Peloponnese-West Greece-Ionian" }, de: { short: "Peloponnes", long: "Peloponnes-Westgriechenland-Ionische Inseln" } },
+    "GRC::crete": { en: { short: "Crete", long: "Crete" }, de: { short: "Kreta", long: "Kreta" } },
+    "GRC::aegean": { en: { short: "Aegean", long: "Aegean" }, de: { short: "Ägäis", long: "Ägäis" } },
+    "GRC::agion-oros": { en: { short: "Athos", long: "Mount Athos" }, de: { short: "Athos", long: "Athos" } },
+};
 const COUNTRY_FLAGS = Object.fromEntries(
     Object.entries(COUNTRY_CONFIG).map(([code, entry]) => [code, entry.flag ?? "\uD83C\uDFF3\uFE0F"])
 );
@@ -440,11 +493,84 @@ const I18N = {
         "metric.direction": "Direction",
         "metric.rate": "Rate",
         "metric.noPrevious": "no previous year",
+        "metric.points": "pts",
+        "metric.noData": "No data",
+        "metric.noExportCountry": "No matching country row in export.",
+        "metric.year": "Year",
+        "election.tendency": "Tendency",
+        "election.leftRight": "Left/Right",
+        "election.last": "Last election",
+        "election.next": "Next election",
+        "election.sinceLast": "Since last election",
+        "election.beforeSimulation": "Election before simulation start",
+        "election.noComparison": "no comparison election",
+        "election.thisYear": "An election was held this year.",
+        "election.strongLeft": "Strong left",
+        "election.centerLeft": "Centre-left",
+        "election.center": "Centred",
+        "election.centerRight": "Centre-right",
+        "election.strongRight": "Strong right",
+        "election.shortCenter": "↔ Centre",
+        "election.noShift": "little movement",
+        "election.shiftRight": "↗ shifted right",
+        "election.shiftLeft": "↙ shifted left",
+        "election.sameBand": "same base tendency",
+        "election.stepRight": "step(s) right",
+        "election.stepLeft": "step(s) left",
+        "trend.noPrevious": "No previous-year comparison available.",
+        "trend.politicalStable": "The political base tendency remains similar.",
+        "trend.politicalRight": "The political tendency shifts right.",
+        "trend.politicalLeft": "The political tendency shifts left.",
+        "trend.small": "The year-on-year change remains small.",
+        "trend.positive": "The development versus the previous year is positive.",
+        "trend.negative": "The development versus the previous year is negative.",
         "editor.noSelection": "No area selected",
         "editor.chooseCountry": "Choose a country, then annex a region.",
         "editor.off": "Border mode off.",
         "editor.countryHint": "Click a visible country.",
         "editor.regionHint": "Click or right-click a visible region.",
+        "editor.noTargetCountry": "No target country selected",
+        "editor.rightClickCountry": "Right-click a country, then choose it as target.",
+        "editor.targetAnnexes": "{country} annexes",
+        "editor.rightClickForeignRegion": "Right-click a foreign region and annex it.",
+        "editor.areaAlreadyOwned": "{country} already owns this area.",
+        "editor.subareasGoTo": "{count} subareas go to {country}.",
+        "editor.startServiceToSave": "Start the local run service before saving.",
+        "editor.targetMissing": "Target country missing. Right-click a country and choose it.",
+        "editor.areaAlreadyTarget": "Area already belongs to this country.",
+        "editor.countryAnnexesRegion": "{country} annexes {region}.",
+        "editor.regionAnnexPrompt": "{country} annexes. Right-click a foreign region.",
+        "editor.countryCannotAnnex": "This country cannot annex in border mode.",
+        "editor.switchRegionHint": "Switch to regions and click a foreign region.",
+        "editor.takeRegionHint": "Annex saves the region locally for the selected country.",
+        "editor.showRegions": "Show regions",
+        "editor.chooseTargetCountry": "Choose target country",
+        "editor.targetCountryChosen": "Target country selected",
+        "editor.chooseTargetTitle": "Choose target country",
+        "editor.chooseTargetHint": "Right-click a country and choose it as target.",
+        "editor.countryAsTarget": "{country} is target. Right-click a region and annex it.",
+        "editor.regionCannotAnnex": "This region cannot be annexed.",
+        "editor.chooseTargetFirst": "Choose a target country first.",
+        "editor.alreadyTargetCountry": "This country is already the target.",
+        "editor.noAnnexableRegions": "No annexable regions found for this country.",
+        "editor.countryAttached": "{source} was locally attached to {target}.",
+        "editor.countryAnnexedTitle": "{source} annexed",
+        "editor.countryAnnexedBody": "{target} takes the country; regions remain visible.",
+        "editor.noExportCountry": "No matching country row found for this map area.",
+        "editor.noExportArea": "No matching export row found for region or country.",
+        "editor.noRegionData": "No assigned BESP data",
+        "editor.noRegionRows": "No region data",
+        "editor.loadRegions": "Load an export to render the region map.",
+        "editor.localAssignmentSaved": "Assignment applied locally. Save to persist it.",
+        "editor.noAreaSelected": "No area selected.",
+        "editor.resetDone": "Overrides reset for the selected area.",
+        "editor.saveAssignmentsFirst": "Start `py tools/local_run_service.py` before saving.",
+        "editor.savingAssignments": "Saving border assignments...",
+        "editor.assignmentsSaved": "Border assignments saved.",
+        "editor.assignmentFailed": "Assignment failed: {message}",
+        "editor.resetFailed": "Reset failed: {message}",
+        "editor.saveFailed": "Save failed: {message}",
+        "error.unknown": "Unknown error",
     },
     de: {
         "hero.lead": "Kalibrierte Balkan-Simulation bis 2050 mit mehreren Runs, politischer Dynamik, regionalen Ereignissen und integriertem Grenzmodus. Datenmodell und Kartenlogik sind für Slowenien und Griechenland vorbereitet.",
@@ -489,11 +615,84 @@ const I18N = {
         "metric.direction": "Richtung",
         "metric.rate": "Rate",
         "metric.noPrevious": "kein Vorjahr",
+        "metric.points": "Punkte",
+        "metric.noData": "Keine Daten",
+        "metric.noExportCountry": "Kein passender Ländereintrag im Export.",
+        "metric.year": "Jahr",
+        "election.tendency": "Tendenz",
+        "election.leftRight": "Links/Rechts",
+        "election.last": "Letzte Wahl",
+        "election.next": "Nächste Wahl",
+        "election.sinceLast": "Seit letzter Wahl",
+        "election.beforeSimulation": "Wahl vor Simulationsbeginn",
+        "election.noComparison": "keine Vergleichswahl",
+        "election.thisYear": "In diesem Jahr fand eine Wahl statt.",
+        "election.strongLeft": "Stark links",
+        "election.centerLeft": "Mitte-links",
+        "election.center": "Zentriert",
+        "election.centerRight": "Mitte-rechts",
+        "election.strongRight": "Stark rechts",
+        "election.shortCenter": "↔ Mitte",
+        "election.noShift": "kaum Verschiebung",
+        "election.shiftRight": "↗ nach rechts verschoben",
+        "election.shiftLeft": "↙ nach links verschoben",
+        "election.sameBand": "gleiche Grundtendenz",
+        "election.stepRight": "Stufe(n) nach rechts",
+        "election.stepLeft": "Stufe(n) nach links",
+        "trend.noPrevious": "Kein Vorjahresvergleich verfügbar.",
+        "trend.politicalStable": "Die politische Grundtendenz bleibt ähnlich.",
+        "trend.politicalRight": "Die politische Tendenz verschiebt sich nach rechts.",
+        "trend.politicalLeft": "Die politische Tendenz verschiebt sich nach links.",
+        "trend.small": "Die Veränderung gegenüber dem Vorjahr bleibt klein.",
+        "trend.positive": "Die Entwicklung gegenüber dem Vorjahr ist positiv.",
+        "trend.negative": "Die Entwicklung gegenüber dem Vorjahr ist negativ.",
         "editor.noSelection": "Kein Gebiet gewählt",
         "editor.chooseCountry": "Land wählen, dann eine Region übernehmen.",
         "editor.off": "Grenzmodus aus.",
         "editor.countryHint": "Ein sichtbares Land anklicken.",
         "editor.regionHint": "Eine sichtbare Region anklicken oder rechtsklicken.",
+        "editor.noTargetCountry": "Kein Zielland gewählt",
+        "editor.rightClickCountry": "Rechtsklick auf ein Land, dann Land auswählen.",
+        "editor.targetAnnexes": "{country} übernimmt",
+        "editor.rightClickForeignRegion": "Fremde Region rechtsklicken und annektieren.",
+        "editor.areaAlreadyOwned": "{country} besitzt dieses Gebiet bereits.",
+        "editor.subareasGoTo": "{count} Teilflächen gehen an {country}.",
+        "editor.startServiceToSave": "Zum Speichern zuerst den lokalen Run-Service starten.",
+        "editor.targetMissing": "Zielland fehlt. Land rechtsklicken und auswählen.",
+        "editor.areaAlreadyTarget": "Gebiet gehört bereits zu diesem Land.",
+        "editor.countryAnnexesRegion": "{country} übernimmt {region}.",
+        "editor.regionAnnexPrompt": "{country} übernimmt. Fremde Region rechtsklicken.",
+        "editor.countryCannotAnnex": "Dieses Land kann im Grenzmodus nicht übernehmen.",
+        "editor.switchRegionHint": "In die Regionenansicht wechseln und eine fremde Region anklicken.",
+        "editor.takeRegionHint": "Übernehmen speichert die Region beim gewählten Land lokal vor.",
+        "editor.showRegions": "Regionen anzeigen",
+        "editor.chooseTargetCountry": "Land auswählen",
+        "editor.targetCountryChosen": "Zielland ist gewählt",
+        "editor.chooseTargetTitle": "Zielland wählen",
+        "editor.chooseTargetHint": "Land rechtsklicken und Land auswählen.",
+        "editor.countryAsTarget": "{country} ist Zielland. Region rechtsklicken und annektieren.",
+        "editor.regionCannotAnnex": "Diese Region kann nicht übernommen werden.",
+        "editor.chooseTargetFirst": "Zuerst ein Zielland wählen.",
+        "editor.alreadyTargetCountry": "Dieses Land ist bereits das Zielland.",
+        "editor.noAnnexableRegions": "Für dieses Land wurden keine übernehmbaren Regionen gefunden.",
+        "editor.countryAttached": "{source} wurde lokal an {target} angegliedert.",
+        "editor.countryAnnexedTitle": "{source} annektiert",
+        "editor.countryAnnexedBody": "{target} übernimmt das Land; die Regionen bleiben als eigene Regionen sichtbar.",
+        "editor.noExportCountry": "Kein passender Landeseintrag für diese Kartenfläche gefunden.",
+        "editor.noExportArea": "Kein passender Exporteintrag für Region oder Land gefunden.",
+        "editor.noRegionData": "Keine zugeordneten BESP-Daten",
+        "editor.noRegionRows": "Keine Regionsdaten",
+        "editor.loadRegions": "Lade einen Export, um die Regionenkarte zu rendern.",
+        "editor.localAssignmentSaved": "Zuordnung lokal übernommen. Mit Speichern dauerhaft sichern.",
+        "editor.noAreaSelected": "Kein Gebiet ausgewählt.",
+        "editor.resetDone": "Overrides für das gewählte Gebiet zurückgesetzt.",
+        "editor.saveAssignmentsFirst": "Zum Speichern zuerst `py tools/local_run_service.py` starten.",
+        "editor.savingAssignments": "Speichere Grenzzuweisungen...",
+        "editor.assignmentsSaved": "Grenzzuweisungen gespeichert.",
+        "editor.assignmentFailed": "Zuordnung fehlgeschlagen: {message}",
+        "editor.resetFailed": "Zurücksetzen fehlgeschlagen: {message}",
+        "editor.saveFailed": "Speichern fehlgeschlagen: {message}",
+        "error.unknown": "Unbekannter Fehler",
     },
 };
 const GEOJSON_PATHS = {
@@ -1009,17 +1208,17 @@ const elements = {
     regionTableBody: document.getElementById("region-table-body"),
 };
 const EMPTY_CARDS = {
-    map: buildEmptyCard("Keine Kartendaten", "Lade einen Export, um die Karte zu rendern."),
-    meta: buildEmptyCard("Keine Daten geladen", "Das Dashboard wartet auf <code>output/latest.json</code>."),
-    state: buildEmptyCard("Keine Staatsdaten geladen", "Export mit Staatswerten laden oder neu erzeugen."),
-    stateYear: buildEmptyCard("Keine Staatsdaten geladen", "Für das gewählte Jahr wurden keine Landeswerte gefunden."),
+    map: buildEmptyCard("No map data", "Load an export to render the map."),
+    meta: buildEmptyCard("No data loaded", "The dashboard is waiting for <code>output/latest.json</code>."),
+    state: buildEmptyCard("No state data", "Load or regenerate an export with state values."),
+    stateYear: buildEmptyCard("No state data", "No country values were found for the selected year."),
 };
 const EMPTY_TABLE_ROWS = {
-    country: buildEmptyTableRow(11, "Noch keine Landeswerte geladen."),
-    countryExport: buildEmptyTableRow(11, "Im Export wurden keine Landeswerte gefunden."),
-    state: buildEmptyTableRow(7, "Noch keine Staatswerte geladen."),
-    region: buildEmptyTableRow(12, "Noch keine Regionswerte geladen."),
-    regionExport: buildEmptyTableRow(12, "Im Export wurden keine Regionswerte gefunden."),
+    country: buildEmptyTableRow(11, "No country values loaded yet."),
+    countryExport: buildEmptyTableRow(11, "No country values were found in the export."),
+    state: buildEmptyTableRow(7, "No state values loaded yet."),
+    region: buildEmptyTableRow(12, "No region values loaded yet."),
+    regionExport: buildEmptyTableRow(12, "No region values were found in the export."),
 };
 document.addEventListener("DOMContentLoaded", () => {
     applyLanguage();
@@ -1035,6 +1234,24 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 function t(key) {
     return I18N[dashboardState.language]?.[key] ?? I18N.en[key] ?? key;
+}
+function tf(key, values = {}) {
+    return t(key).replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ""));
+}
+function displayRegionLabel(groupOrKey, { short = false } = {}) {
+    const visualRegionKey = typeof groupOrKey === "string" ? groupOrKey : groupOrKey?.visualRegionKey;
+    const fallbackLabel = typeof groupOrKey === "string" ? groupOrKey : groupOrKey?.label;
+    return translatedRegionLabel(visualRegionKey, { short }) ?? fallbackLabel ?? "";
+}
+function translatedRegionLabel(visualRegionKey, { short = false } = {}) {
+    const language = dashboardState.language === "de" ? "de" : "en";
+    const translation = REGION_LABEL_TRANSLATIONS[visualRegionKey]?.[language]
+        ?? REGION_LABEL_TRANSLATIONS[visualRegionKey]?.en
+        ?? null;
+    if (translation) {
+        return short ? (translation.short ?? translation.long) : (translation.long ?? translation.short);
+    }
+    return null;
 }
 function applyLanguage() {
     document.documentElement.lang = dashboardState.language === "de" ? "de-CH" : "en";
@@ -1264,39 +1481,39 @@ function renderInlineEditorPanelLegacyUnused() {
     const sourceOwnerCode = hasSelection ? getInlineEditorSourceOwnerCode(selectedGroup) : "";
     const sourceAlreadyOwned = hasSelection && sourceOwnerCode === targetCountryCode;
     const selectionPrompt = activeMapMode === "country"
-        ? "Land anklicken, das annektieren soll."
-        : "Region anklicken, die übernommen wird.";
+        ? t("editor.countryHint")
+        : t("editor.regionHint");
     if (!editorActive) {
-        elements.editorInlineSelectionTitle.textContent = "Kein Gebiet gewählt";
-        elements.editorInlineSelectionNote.textContent = "Grenzmodus aus.";
+        elements.editorInlineSelectionTitle.textContent = t("editor.noSelection");
+        elements.editorInlineSelectionNote.textContent = t("editor.off");
         elements.editorInlineApply.disabled = true;
         elements.editorInlineReset.disabled = true;
         elements.editorInlineSave.disabled = !dashboardState.runServiceAvailable;
-        setInlineEditorStatus("Grenzmodus aus.", "muted");
+        setInlineEditorStatus(t("editor.off"), "muted");
         return;
     }
     const targetOption = getInlineEditorTargetOption();
     if (!hasSelection) {
-        elements.editorInlineSelectionTitle.textContent = "Kein Gebiet gewählt";
+        elements.editorInlineSelectionTitle.textContent = t("editor.noSelection");
         elements.editorInlineSelectionNote.textContent = selectionPrompt;
     }
     if (hasSelection) {
-        elements.editorInlineSelectionTitle.textContent = `${selectedGroup.label} übernehmen`;
+        elements.editorInlineSelectionTitle.textContent = tf("editor.targetAnnexes", { country: selectedGroup.label });
         elements.editorInlineSelectionNote.textContent = sourceAlreadyOwned
-            ? `${targetCountryName} besitzt dieses Gebiet bereits.`
-            : `${selectedGroup.features.length} Teilflächen gehen an ${targetCountryName}.`;
+            ? tf("editor.areaAlreadyOwned", { country: targetCountryName })
+            : tf("editor.subareasGoTo", { count: selectedGroup.features.length, country: targetCountryName });
     }
     elements.editorInlineApply.disabled = !hasSelection || !targetOption || sourceAlreadyOwned;
     elements.editorInlineReset.disabled = !hasSelection;
     elements.editorInlineSave.disabled = !dashboardState.runServiceAvailable;
     if (!dashboardState.runServiceAvailable) {
-        setInlineEditorStatus("Zum Speichern zuerst den lokalen Run-Service starten.", "muted");
+        setInlineEditorStatus(t("editor.startServiceToSave"), "muted");
     } else if (hasSelection && targetOption) {
         setInlineEditorStatus(sourceAlreadyOwned
-            ? "Gebiet gehört bereits zu diesem Land."
-            : `${targetCountryName} übernimmt in ${targetOption.label}.`, "muted");
+            ? t("editor.areaAlreadyTarget")
+            : tf("editor.countryAnnexesRegion", { country: targetCountryName, region: targetOption.label }), "muted");
     } else {
-        setInlineEditorStatus(`${targetCountryName} übernimmt. Region anklicken.`, "muted");
+        setInlineEditorStatus(tf("editor.regionAnnexPrompt", { country: targetCountryName }), "muted");
     }
 }
 function renderInlineEditorPanel() {
@@ -1316,39 +1533,39 @@ function renderInlineEditorPanel() {
     const sourceAlreadyOwned = hasSelection && targetSelected && sourceOwnerCode === targetCountryCode;
     const targetOption = getInlineEditorTargetOption();
     if (!editorActive) {
-        elements.editorInlineSelectionTitle.textContent = "Kein Gebiet gewählt";
-        elements.editorInlineSelectionNote.textContent = "Grenzmodus aus.";
+        elements.editorInlineSelectionTitle.textContent = t("editor.noSelection");
+        elements.editorInlineSelectionNote.textContent = t("editor.off");
         elements.editorInlineApply.disabled = true;
         elements.editorInlineReset.disabled = true;
         elements.editorInlineSave.disabled = !dashboardState.runServiceAvailable;
-        setInlineEditorStatus("Grenzmodus aus.", "muted");
+        setInlineEditorStatus(t("editor.off"), "muted");
         return;
     }
     if (!targetSelected) {
-        elements.editorInlineSelectionTitle.textContent = "Kein Zielland gewählt";
-        elements.editorInlineSelectionNote.textContent = "Rechtsklick auf ein Land, dann Land auswählen.";
+        elements.editorInlineSelectionTitle.textContent = t("editor.noTargetCountry");
+        elements.editorInlineSelectionNote.textContent = t("editor.rightClickCountry");
     } else if (!hasSelection) {
-        elements.editorInlineSelectionTitle.textContent = `${targetCountryName} übernimmt`;
-        elements.editorInlineSelectionNote.textContent = "Fremde Region rechtsklicken und annektieren.";
+        elements.editorInlineSelectionTitle.textContent = tf("editor.targetAnnexes", { country: targetCountryName });
+        elements.editorInlineSelectionNote.textContent = t("editor.rightClickForeignRegion");
     } else {
-        elements.editorInlineSelectionTitle.textContent = `${selectedGroup.label} übernehmen`;
+        elements.editorInlineSelectionTitle.textContent = tf("editor.targetAnnexes", { country: selectedGroup.label });
         elements.editorInlineSelectionNote.textContent = sourceAlreadyOwned
-            ? `${targetCountryName} besitzt dieses Gebiet bereits.`
-            : `${selectedGroup.features.length} Teilflächen gehen an ${targetCountryName}.`;
+            ? tf("editor.areaAlreadyOwned", { country: targetCountryName })
+            : tf("editor.subareasGoTo", { count: selectedGroup.features.length, country: targetCountryName });
     }
     elements.editorInlineApply.disabled = !targetSelected || !hasSelection || !targetOption || sourceAlreadyOwned;
     elements.editorInlineReset.disabled = !hasSelection;
     elements.editorInlineSave.disabled = !dashboardState.runServiceAvailable;
     if (!dashboardState.runServiceAvailable) {
-        setInlineEditorStatus("Zum Speichern zuerst den lokalen Run-Service starten.", "muted");
+        setInlineEditorStatus(t("editor.startServiceToSave"), "muted");
     } else if (!targetSelected) {
-        setInlineEditorStatus("Zielland fehlt. Land rechtsklicken und auswählen.", "muted");
+        setInlineEditorStatus(t("editor.targetMissing"), "muted");
     } else if (hasSelection && targetOption) {
         setInlineEditorStatus(sourceAlreadyOwned
-            ? "Gebiet gehört bereits zu diesem Land."
-            : `${targetCountryName} übernimmt ${selectedGroup.label}.`, "muted");
+            ? t("editor.areaAlreadyTarget")
+            : tf("editor.countryAnnexesRegion", { country: targetCountryName, region: selectedGroup.label }), "muted");
     } else {
-        setInlineEditorStatus(`${targetCountryName} übernimmt. Fremde Region rechtsklicken.`, "muted");
+        setInlineEditorStatus(tf("editor.regionAnnexPrompt", { country: targetCountryName }), "muted");
     }
 }
 function buildInlineEditorOverridePatch(targetCountryCode, sourceGroup) {
@@ -1441,12 +1658,12 @@ async function applyInlineEditorAssignment() {
         const targetSelected = Boolean(dashboardState.editorTargetCountrySelected && targetCountryCode);
         const targetOption = getInlineEditorTargetOption();
         if (!selectedGroup || !targetSelected || !targetOption) {
-            setInlineEditorStatus("Zuerst Land und Region wählen.", "error");
+            setInlineEditorStatus(t("editor.chooseTargetFirst"), "error");
             return;
         }
         const sourceOwnerCode = getInlineEditorSourceOwnerCode(selectedGroup);
         if (sourceOwnerCode === targetCountryCode) {
-            setInlineEditorStatus("Dieses Gebiet gehört bereits zum übernehmenden Land.", "error");
+            setInlineEditorStatus(t("editor.areaAlreadyTarget"), "error");
             return;
         }
         replaceInlineEditorOverridesForGroup(
@@ -1454,32 +1671,32 @@ async function applyInlineEditorAssignment() {
             buildInlineEditorOverridePatch(targetCountryCode, selectedGroup)
         );
         await refreshGeoFromEditorAssignments();
-        setInlineEditorStatus("Zuordnung lokal übernommen. Mit Speichern dauerhaft sichern.", "success");
+        setInlineEditorStatus(t("editor.localAssignmentSaved"), "success");
     } catch (error) {
-        setInlineEditorStatus(`Zuordnung fehlgeschlagen: ${error instanceof Error ? error.message : "Unbekannter Fehler"}`, "error");
+        setInlineEditorStatus(tf("editor.assignmentFailed", { message: error instanceof Error ? error.message : t("error.unknown") }), "error");
     }
 }
 async function resetInlineEditorAssignment() {
     try {
         const selectedGroup = getInlineEditorSelectedGroup();
         if (!selectedGroup) {
-            setInlineEditorStatus("Kein Gebiet ausgewählt.", "error");
+            setInlineEditorStatus(t("editor.noAreaSelected"), "error");
             return;
         }
         replaceInlineEditorOverridesForGroup(selectedGroup, null);
         await refreshGeoFromEditorAssignments();
-        setInlineEditorStatus("Overrides für das gewählte Gebiet zurückgesetzt.", "success");
+        setInlineEditorStatus(t("editor.resetDone"), "success");
     } catch (error) {
-        setInlineEditorStatus(`Zurücksetzen fehlgeschlagen: ${error instanceof Error ? error.message : "Unbekannter Fehler"}`, "error");
+        setInlineEditorStatus(tf("editor.resetFailed", { message: error instanceof Error ? error.message : t("error.unknown") }), "error");
     }
 }
 async function saveInlineEditorAssignments() {
     try {
         if (!dashboardState.runServiceAvailable) {
-            setInlineEditorStatus("Zum Speichern zuerst `py tools/local_run_service.py` starten.", "error");
+            setInlineEditorStatus(t("editor.saveAssignmentsFirst"), "error");
             return;
         }
-        setInlineEditorStatus("Speichere Grenzzuweisungen …", "loading");
+        setInlineEditorStatus(t("editor.savingAssignments"), "loading");
         const response = await fetch(MAP_ASSIGNMENTS_API_PATH, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1489,9 +1706,9 @@ async function saveInlineEditorAssignments() {
             throw new Error(`HTTP ${response.status}`);
         }
         dashboardState.editorAssignments = sanitizeMapAssignments(await response.json());
-        setInlineEditorStatus("Grenzzuweisungen gespeichert.", "success");
+        setInlineEditorStatus(t("editor.assignmentsSaved"), "success");
     } catch (error) {
-        setInlineEditorStatus(`Speichern fehlgeschlagen: ${error instanceof Error ? error.message : "Unbekannter Fehler"}`, "error");
+        setInlineEditorStatus(tf("editor.saveFailed", { message: error instanceof Error ? error.message : t("error.unknown") }), "error");
     }
 }
 async function initializeDashboard() {
@@ -1782,19 +1999,19 @@ async function refreshRunServiceState({ includeScenarios = false } = {}) {
 function summarizeRunStatus(runStatus) {
     return {
         scenarioLabel: runStatus?.scenario_name || runStatus?.scenario_code || "Simulation",
-        shocksLabel: runStatus?.shocks_enabled ? "Schocks an" : "Schocks aus",
+        shocksLabel: runStatus?.shocks_enabled ? "shocks on" : "shocks off",
         runCount: Math.max(1, Number.parseInt(String(runStatus?.run_count ?? "1"), 10) || 1),
     };
 }
 function summarizeLoadedExport(exportData) {
     const scenarioMeta = exportData?.meta?.scenario ?? {};
     const shockMeta = exportData?.meta?.shocks ?? {};
-    const baselineYear = exportData?.meta?.baseline_year ?? exportData?.meta?.start_year ?? "unbekannt";
-    const scenarioLabel = scenarioMeta.name || scenarioMeta.code || "unbekanntes Szenario";
-    const shocksLabel = shockMeta.enabled ? "Schocks an" : "Schocks aus";
+    const baselineYear = exportData?.meta?.baseline_year ?? exportData?.meta?.start_year ?? "unknown";
+    const scenarioLabel = scenarioMeta.name || scenarioMeta.code || "unknown scenario";
+    const shocksLabel = shockMeta.enabled ? "shocks on" : "shocks off";
     const eventCount = formatInteger(shockMeta.event_count ?? 0);
-    const seedLabel = scenarioMeta.variation_seed || "kein Seed";
-    return `${scenarioLabel}, ${shocksLabel}, ${eventCount} Schockereignisse, Seed ${seedLabel}, Basis ${baselineYear}`;
+    const seedLabel = scenarioMeta.variation_seed || "no seed";
+    return `${scenarioLabel}, ${shocksLabel}, ${eventCount} shock events, seed ${seedLabel}, baseline ${baselineYear}`;
 }
 function renderRunBatchSummary(runStatus) {
     if (!elements.runBatchSummary) {
@@ -1804,8 +2021,8 @@ function renderRunBatchSummary(runStatus) {
     const runCount = Math.max(1, Number.parseInt(String(runStatus?.run_count ?? "1"), 10) || 1);
     if (!batch || !Number.isFinite(Number(batch.count))) {
         elements.runBatchSummary.textContent = runCount > 1
-            ? `Batch-Modus vorbereitet für ${runCount} Durchläufe.`
-            : "Einzeldurchlauf aktiv.";
+            ? `Batch mode prepared for ${runCount} runs.`
+            : "Single run active.";
         return;
     }
     const uniqueSeedCount = new Set(
@@ -1816,12 +2033,12 @@ function renderRunBatchSummary(runStatus) {
     const hasGdpSpread = Number(batch.gdp_max_billion_eur) !== Number(batch.gdp_min_billion_eur);
     const hasUnemploymentSpread = Number(batch.unemployment_max_rate) !== Number(batch.unemployment_min_rate);
     const spreadLabel = (hasPopulationSpread || hasGdpSpread || hasUnemploymentSpread)
-        ? "Spannweite sichtbar"
-        : "noch keine sichtbare Spannweite";
+        ? "spread visible"
+        : "no visible spread yet";
     elements.runBatchSummary.textContent =
-        `Letzte Batch: ${batch.count} Durchläufe, Population ${formatInteger(batch.population_min)}-${formatInteger(batch.population_max)}, `
+        `Latest batch: ${batch.count} runs, population ${formatInteger(batch.population_min)}-${formatInteger(batch.population_max)}, `
         + `GDP ${formatDecimal(batch.gdp_min_billion_eur)}-${formatDecimal(batch.gdp_max_billion_eur)} bn EUR, `
-        + `Arbeitslosigkeit ${formatPercent(batch.unemployment_min_rate)}-${formatPercent(batch.unemployment_max_rate)}, `
+        + `unemployment ${formatPercent(batch.unemployment_min_rate)}-${formatPercent(batch.unemployment_max_rate)}, `
         + `${uniqueSeedCount} Seed(s), ${spreadLabel}.`;
 }
 function renderScenarioOptions(scenarios) {
@@ -1832,7 +2049,7 @@ function renderScenarioOptions(scenarios) {
         `)
         .join("");
     if (!safeScenarios.length) {
-        elements.runScenarioSelect.innerHTML = '<option value="">Statische Vorschau</option>';
+        elements.runScenarioSelect.innerHTML = '<option value="">Static preview</option>';
     }
 }
 function applyRunStatus(runStatus) {
@@ -1951,7 +2168,7 @@ async function loadDashboardData({ reason = "initial" } = {}) {
             try {
                 geoData = await loadGeoBoundaryData();
             } catch (error) {
-                geoWarning = error instanceof Error ? error.message : "GeoJSON-Laden fehlgeschlagen";
+                geoWarning = error instanceof Error ? error.message : "GeoJSON loading failed";
             }
         }
         renderDashboard(exportData, geoData, geoWarning);
@@ -1959,25 +2176,25 @@ async function loadDashboardData({ reason = "initial" } = {}) {
         if (dashboardState.runServiceAvailable) {
             setExportStatus(
                 isReload
-                    ? `Export neu geladen. ${exportSummary}. Jahre und Kartenansichten sind jetzt verfügbar.`
-                    : `Export geladen. ${exportSummary}. Jahre und Kartenansichten sind jetzt verfügbar.`,
+                    ? `Export reloaded. ${exportSummary}. Years and map views are now available.`
+                    : `Export loaded. ${exportSummary}. Years and map views are now available.`,
                 "success"
             );
         } else {
             setExportStatus(
-                `${isReload ? "Export neu geladen." : "Export geladen."} ${exportSummary}. Ohne lokalen Service bleiben Szenario und Schocks unveraendert.`,
+                `${isReload ? "Export reloaded." : "Export loaded."} ${exportSummary}. Without the local service, scenario and shocks stay unchanged.`,
                 "muted"
             );
         }
     } catch (error) {
         const detail = error instanceof Error ? ` (${error.message})` : "";
         setExportStatus(
-            "Neuster Export konnte nicht geladen werden. Unter Erweitert neu laden oder neue Runs starten."
+            "Latest export could not be loaded. Reload under Advanced or start new runs."
             + detail,
             "error"
         );
         renderLoadError(
-            "Neuster Export konnte nicht geladen werden. Lokalen Service im Projektroot starten und danach neu laden."
+            "Latest export could not be loaded. Start the local service in the project root, then reload."
             + detail
         );
     } finally {
@@ -2469,20 +2686,20 @@ function renderMetaCards(exportData, countryRowCount, regionRowCount, activeYear
     const scenarioMeta = exportData.meta?.scenario ?? {};
     const shockMeta = exportData.meta?.shocks ?? {};
     elements.metaCards.innerHTML = [
-        ["Gewähltes Jahr", activeYearKey || "-"],
-        ["Startjahr", exportData.meta.start_year],
-        ["Endjahr", exportData.meta.end_year],
-        ["Szenario", scenarioMeta.name],
+        ["Selected year", activeYearKey || "-"],
+        ["Start year", exportData.meta.start_year],
+        ["End year", exportData.meta.end_year],
+        ["Scenario", scenarioMeta.name],
         ["Seed", scenarioMeta.variation_seed],
-        ["Schocks", shockMeta.enabled ? "aktiv" : "aus"],
+        ["Shocks", shockMeta.enabled ? "on" : "off"],
         ["Shock-Events", formatInteger(shockMeta.event_count ?? 0)],
-        ["Landeswerte", formatInteger(countryRowCount)],
-        ["Regionswerte", formatInteger(regionRowCount)],
-        ["Jahresblöcke", formatInteger(Object.keys(exportData.years).length)],
-        ["Warnungen", formatInteger(exportData.meta.warning_count ?? 0)],
-        ["Kartenbasis", "ADM0/ADM1/ADM2/ADM3 + Gruppen"],
-        ["Erweiterung", "SVN und GRC aktiv"],
-        ["Hinweis", geoWarning],
+        ["Country rows", formatInteger(countryRowCount)],
+        ["Region rows", formatInteger(regionRowCount)],
+        ["Year blocks", formatInteger(Object.keys(exportData.years).length)],
+        ["Warnings", formatInteger(exportData.meta.warning_count ?? 0)],
+        ["Map base", "ADM0/ADM1/ADM2/ADM3 + groups"],
+        ["Expansion", "SVN and GRC active"],
+        ["Note", geoWarning],
     ].map(([label, value]) => hasDisplayValue(value) ? buildMetaCard(label, value) : "").join("");
 }
 function renderActiveYearState() {
@@ -2929,7 +3146,7 @@ function renderRegionLayer(geoData) {
             <path
                 class="map-region-shape${selectedClass}${eventAffectedClass}"
                 data-country-code="${escapeHtml(group.countryCode)}"
-                data-region-name="${escapeHtml(group.label)}"
+                data-region-name="${escapeHtml(displayRegionLabel(group))}"
                 data-visual-region-key="${escapeHtml(group.visualRegionKey)}"
                 data-data-region-key="${escapeHtml(group.dataRegionKey ?? "")}"
                 d="${escapeHtml(group.pathD)}"
@@ -2957,8 +3174,9 @@ function renderRegionLayer(geoData) {
             "region"
         );
         const view = chooseRegionLabelView(group);
-        const preferShortLabel = view.abbreviate || REGION_LABEL_ALWAYS_SHORT.has(group.visualRegionKey);
-        const labelText = preferShortLabel ? abbreviateRegionLabel(group) : group.label;
+        const translatedMapLabel = translatedRegionLabel(group.visualRegionKey, { short: true });
+        const preferShortLabel = Boolean(translatedMapLabel) || view.abbreviate || REGION_LABEL_ALWAYS_SHORT.has(group.visualRegionKey);
+        const labelText = translatedMapLabel || (preferShortLabel ? abbreviateRegionLabel(group) : displayRegionLabel(group));
         if (REGION_LABEL_HIDE.has(group.visualRegionKey)) {
             return null;
         }
@@ -3009,25 +3227,59 @@ function renderMapEventLayer() {
         return;
     }
     const activeEvents = getVisibleShockEventsForYear(activeYearKey)
-        .filter((event) => mapDataCache.countryFeaturesByCode.has(normalizeCountryCode(event.country_code)))
+        .filter(({ event }) => resolveEventLetterPosition(event));
     elements.mapEventLayer.innerHTML = activeEvents.map(({ event, sourceIndex }, index) => {
-        const countryCode = normalizeCountryCode(event.country_code);
-        const country = mapDataCache.countryFeaturesByCode.get(countryCode);
-        if (!country) {
+        const position = resolveEventLetterPosition(event);
+        if (!position) {
             return "";
         }
-        const [baseX, baseY] = resolveCountryLabelPosition(country);
-        const x = clamp(baseX + 18 + index * 4, 16, MAP_VIEWBOX_WIDTH - 16);
-        const y = clamp(baseY - 34 - index * 3, 16, MAP_VIEWBOX_HEIGHT - 16);
+        const [baseX, baseY] = position;
+        const [offsetX, offsetY] = EVENT_LETTER_OFFSETS[index % EVENT_LETTER_OFFSETS.length];
+        const x = clamp(baseX + offsetX, 16, MAP_VIEWBOX_WIDTH - 16);
+        const y = clamp(baseY + offsetY, 16, MAP_VIEWBOX_HEIGHT - 16);
         const selectedClass = dashboardState.selectedEventIndex === sourceIndex ? " map-event-letter-selected" : "";
         return `
             <g class="map-event-letter${selectedClass}" data-event-index="${sourceIndex}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" role="button" aria-label="${escapeHtml(event.shock_name ?? t("event.title"))}">
+                <rect class="map-event-letter-hitbox" x="-15" y="-13" width="30" height="26" rx="7"></rect>
                 <rect class="map-event-letter-bg" x="-10" y="-8" width="20" height="16" rx="4"></rect>
                 <path class="map-event-letter-icon" d="M -8 -5 H 8 V 6 H -8 Z M -8 -5 L 0 1 L 8 -5 M -8 6 L -2 0 M 8 6 L 2 0"></path>
             </g>
         `;
     }).join("");
     bindMapEventEvents();
+}
+function resolveEventLetterPosition(event) {
+    const affectedKeys = new Set((event?.affected_region_keys ?? []).map(normalizeEventRegionKey));
+    if (affectedKeys.size) {
+        const affectedGroups = [...mapDataCache.visualRegionsByKey.values()]
+            .filter((group) => isVisualRegionAffectedByEvent(group, affectedKeys));
+        const countryCode = normalizeCountryCode(event?.country_code);
+        const originGroups = affectedGroups.filter((group) => normalizeCountryCode(group.countryCode) === countryCode);
+        const centroid = weightedVisualRegionCentroid(originGroups.length ? originGroups : affectedGroups);
+        if (centroid) {
+            return centroid;
+        }
+    }
+    const countryCode = normalizeCountryCode(event?.country_code);
+    const country = mapDataCache.countryFeaturesByCode.get(countryCode);
+    return country ? resolveCountryLabelPosition(country) : null;
+}
+function weightedVisualRegionCentroid(groups) {
+    const weighted = groups
+        .map((group) => {
+            const [x, y] = resolveVisualRegionAnchor(group);
+            const weight = Math.max(Number(group.projectedArea ?? 0), 1);
+            return { x, y, weight };
+        })
+        .filter((entry) => Number.isFinite(entry.x) && Number.isFinite(entry.y) && Number.isFinite(entry.weight));
+    const totalWeight = weighted.reduce((total, entry) => total + entry.weight, 0);
+    if (!totalWeight) {
+        return null;
+    }
+    return [
+        weighted.reduce((total, entry) => total + entry.x * entry.weight, 0) / totalWeight,
+        weighted.reduce((total, entry) => total + entry.y * entry.weight, 0) / totalWeight,
+    ];
 }
 function getVisibleShockEventsForYear(yearKey) {
     return getShockEventsForYear(yearKey)
@@ -3056,8 +3308,9 @@ function bindMapEventEvents() {
         return;
     }
     for (const node of elements.mapEventLayer.querySelectorAll(".map-event-letter")) {
-        node.addEventListener("click", (event) => {
+        const openEventLetter = (event) => {
             event.stopPropagation();
+            event.preventDefault();
             dashboardState.selectedEventIndex = Number(node.getAttribute("data-event-index"));
             const shockEvent = getShockEventByIndex(dashboardState.selectedEventIndex);
             if (shockEvent) {
@@ -3067,7 +3320,9 @@ function bindMapEventEvents() {
             renderRegionLayer(dashboardState.geoData);
             bindMapSelectionEvents();
             bindMapHoverEvents();
-        });
+        };
+        node.addEventListener("click", openEventLetter);
+        node.addEventListener("pointerup", openEventLetter);
     }
 }
 function getActiveEventRegionKeys() {
@@ -3104,9 +3359,7 @@ function isVisualRegionAffectedByEvent(group, affectedRegionKeys) {
 }
 function renderEventDetails(event) {
     const title = event.shock_name || event.message || t("event.title");
-    const regionNames = Array.isArray(event.affected_region_names) && event.affected_region_names.length
-        ? event.affected_region_names.join(", ")
-        : t("event.countryWide");
+    const regionNames = formatEventAffectedRegions(event);
     const effects = [
         `GDP ${formatSignedPercent(Number(event.gdp_growth_bias ?? 0))}`,
         `Jobs ${formatSignedPercent(Number(event.unemployment_bias ?? 0))}`,
@@ -3122,6 +3375,60 @@ function renderEventDetails(event) {
         ]),
         true
     );
+}
+function formatEventAffectedRegions(event) {
+    const affectedKeys = Array.isArray(event?.affected_region_keys) ? event.affected_region_keys : [];
+    const affectedCountries = new Set(
+        affectedKeys
+            .map((key) => normalizeCountryCode(String(key ?? "").split("::")[0]))
+            .filter(Boolean)
+    );
+    const includeCountry = affectedCountries.size > 1;
+    const labelsFromKeys = affectedKeys
+        .map((key) => formatEventRegionKeyLabel(key, { includeCountry }))
+        .filter(Boolean);
+    if (labelsFromKeys.length) {
+        return [...new Set(labelsFromKeys)].join(", ");
+    }
+    if (Array.isArray(event?.affected_region_names) && event.affected_region_names.length) {
+        return event.affected_region_names.join(", ");
+    }
+    return t("event.countryWide");
+}
+function formatEventRegionKeyLabel(regionKey, { includeCountry = false } = {}) {
+    const resolvedKey = resolveVisualRegionKeyFromDataRegionKey(regionKey);
+    const translated = translatedRegionLabel(resolvedKey, { short: false });
+    const countryCode = normalizeCountryCode(String(regionKey ?? "").split("::")[0]);
+    if (translated) {
+        return includeCountry ? `${displayCountryCode(countryCode)}: ${translated}` : translated;
+    }
+    return humanizeEventRegionKey(regionKey);
+}
+function humanizeEventRegionKey(regionKey) {
+    const [countryCode, rawRegionName = ""] = String(regionKey ?? "").split("::");
+    const displayCode = displayCountryCode(countryCode);
+    const regionName = rawRegionName
+        .split(/[\s_-]+/)
+        .filter(Boolean)
+        .map((part) => part.length <= 3 ? part.toUpperCase() : `${part[0].toUpperCase()}${part.slice(1)}`)
+        .join(" ");
+    return regionName ? `${displayCode}: ${regionName}` : displayCode;
+}
+function resolveVisualRegionKeyFromDataRegionKey(regionKey) {
+    const normalizedKey = normalizeEventRegionKey(regionKey);
+    if (REGION_LABEL_TRANSLATIONS[normalizedKey]) {
+        return normalizedKey;
+    }
+    for (const [visualRegionKey, definition] of Object.entries(VISUAL_REGION_DEFINITIONS)) {
+        const candidates = [
+            definition.dataRegionKey,
+            ...(Array.isArray(definition.dataRegionKeys) ? definition.dataRegionKeys : []),
+        ].map(normalizeEventRegionKey);
+        if (candidates.includes(normalizedKey)) {
+            return visualRegionKey;
+        }
+    }
+    return normalizedKey;
 }
 function truncateText(text, maxLength) {
     const value = String(text ?? "");
@@ -3151,6 +3458,10 @@ function chooseRegionLabelView(group) {
     };
 }
 function abbreviateRegionLabel(group) {
+    const translatedShort = translatedRegionLabel(group.visualRegionKey, { short: true });
+    if (translatedShort) {
+        return translatedShort;
+    }
     if (Object.prototype.hasOwnProperty.call(REGION_LABEL_SHORT, group.visualRegionKey)) {
         return REGION_LABEL_SHORT[group.visualRegionKey];
     }
@@ -3562,13 +3873,13 @@ function bindEditorMapEvents() {
             }
             const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
             if (!setInlineEditorTargetCountry(countryCode)) {
-                setInlineEditorStatus("Dieses Land kann im Grenzmodus nicht übernehmen.", "error");
+                setInlineEditorStatus(t("editor.countryCannotAnnex"), "error");
                 return;
             }
             renderActiveYearState();
             setMapHoverDetails(
-                `${COUNTRY_CONFIG[countryCode]?.name ?? displayCountryCode(countryCode)} übernimmt`,
-                "In die Regionenansicht wechseln und eine fremde Region anklicken."
+                tf("editor.targetAnnexes", { country: COUNTRY_CONFIG[countryCode]?.name ?? displayCountryCode(countryCode) }),
+                t("editor.switchRegionHint")
             );
             return;
         });
@@ -3582,8 +3893,8 @@ function bindEditorMapEvents() {
             syncInlineEditorTargetRegionForSource(getInlineEditorSelectedGroup());
             renderActiveYearState();
             setMapHoverDetails(
-                `${String(node.getAttribute("data-region-name") ?? "Region")} übernehmen`,
-                "Übernehmen speichert die Region beim gewählten Land lokal vor."
+                tf("editor.targetAnnexes", { country: String(node.getAttribute("data-region-name") ?? "Region") }),
+                t("editor.takeRegionHint")
             );
             return;
         });
@@ -3608,20 +3919,22 @@ function bindMapSelectionEvents() {
             const isCurrentTarget = hasExplicitTarget && countryCode === targetCountryCode;
             const canAnnexCountry = Boolean(hasExplicitTarget && !isCurrentTarget && getAnnexableRegionGroupsForCountry(countryCode).length);
             const annexCountryAction = {
-                label: hasExplicitTarget ? `Land annektieren an ${targetCountryName}` : "Zuerst Zielland wählen",
+                label: hasExplicitTarget
+                    ? (dashboardState.language === "de" ? `Land an ${targetCountryName} annektieren` : `Annex country to ${targetCountryName}`)
+                    : t("editor.chooseTargetFirst"),
                 disabled: !canAnnexCountry,
                 handler: () => annexCountryToSelectedCountry(countryCode),
             };
             const showRegionsAction = {
-                label: "Regionen anzeigen",
+                label: t("editor.showRegions"),
                 handler: () => {
                     setMapMode("region");
-                    setMapHoverDetails(countryName, "Region rechtsklicken, um sie an das ausgewählte Land anzuschliessen.");
+                    setMapHoverDetails(countryName, t("editor.rightClickForeignRegion"));
                     hideMapContextMenu();
                 },
             };
             const chooseTargetAction = {
-                label: isCurrentTarget ? "Zielland ist gewählt" : "Land auswählen",
+                label: isCurrentTarget ? t("editor.targetCountryChosen") : t("editor.chooseTargetCountry"),
                 disabled: !canUseAsTarget || isCurrentTarget,
                 handler: () => selectInlineEditorTargetCountryFromMap(countryCode, { switchToRegion: true }),
             };
@@ -3640,8 +3953,8 @@ function bindMapSelectionEvents() {
             syncInlineEditorTargetRegionForSource(getInlineEditorSelectedGroup());
             renderInlineEditorPanel();
             setMapHoverDetails(
-                `${String(node.getAttribute("data-region-name") ?? "Region")} übernehmen`,
-                "Rechtsklick öffnet die direkte Annektionsaktion."
+                tf("editor.targetAnnexes", { country: String(node.getAttribute("data-region-name") ?? "Region") }),
+                t("editor.rightClickForeignRegion")
             );
         });
         node.addEventListener("contextmenu", (event) => {
@@ -3655,15 +3968,17 @@ function bindMapSelectionEvents() {
             const canAnnex = Boolean(group && targetReady && sourceOwnerCode !== targetCountryCode);
             showMapContextMenu(event, regionName, [
                 {
-                    label: targetReady ? `Annektieren an ${targetCountryName}` : "Zuerst Land auswählen",
+                    label: targetReady
+                        ? (dashboardState.language === "de" ? `An ${targetCountryName} annektieren` : `Annex to ${targetCountryName}`)
+                        : t("editor.chooseTargetFirst"),
                     disabled: !canAnnex,
                     handler: () => annexVisualRegionToSelectedCountry(visualRegionKey),
                 },
                 {
-                    label: "Zielland ändern",
+                    label: t("editor.chooseTargetCountry"),
                     handler: () => {
                         setMapMode("country");
-                        setMapHoverDetails("Zielland wählen", "Land rechtsklicken und Land auswählen.");
+                        setMapHoverDetails(t("editor.chooseTargetTitle"), t("editor.chooseTargetHint"));
                         hideMapContextMenu();
                     },
                 },
@@ -3682,7 +3997,7 @@ function selectInlineEditorTargetCountryFromMap(countryCode, { switchToRegion = 
         setEditorMode(true);
     }
     if (!setInlineEditorTargetCountry(normalizedCountryCode)) {
-        setInlineEditorStatus("Dieses Land kann im Grenzmodus nicht übernehmen.", "error");
+        setInlineEditorStatus(t("editor.countryCannotAnnex"), "error");
         return false;
     }
     const countryName = COUNTRY_CONFIG[normalizedCountryCode]?.name ?? displayCountryCode(normalizedCountryCode);
@@ -3691,8 +4006,8 @@ function selectInlineEditorTargetCountryFromMap(countryCode, { switchToRegion = 
     } else {
         renderInlineEditorPanel();
     }
-    setInlineEditorStatus(`${countryName} ist Zielland. Region rechtsklicken und annektieren.`, "success");
-    setMapHoverDetails(`${countryName} übernimmt`, "Region rechtsklicken und annektieren.");
+    setInlineEditorStatus(tf("editor.countryAsTarget", { country: countryName }), "success");
+    setMapHoverDetails(tf("editor.targetAnnexes", { country: countryName }), t("editor.rightClickForeignRegion"));
     hideMapContextMenu();
     return true;
 }
@@ -3702,7 +4017,7 @@ async function annexVisualRegionToSelectedCountry(visualRegionKey) {
     }
     const group = mapDataCache.visualRegionsByKey.get(String(visualRegionKey ?? "")) ?? null;
     if (!group) {
-        setInlineEditorStatus("Diese Region kann nicht übernommen werden.", "error");
+        setInlineEditorStatus(t("editor.regionCannotAnnex"), "error");
         hideMapContextMenu();
         return;
     }
@@ -3710,12 +4025,12 @@ async function annexVisualRegionToSelectedCountry(visualRegionKey) {
     const targetSelected = Boolean(dashboardState.editorTargetCountrySelected && targetCountryCode);
     const sourceOwnerCode = getInlineEditorSourceOwnerCode(group);
     if (!targetSelected) {
-        setInlineEditorStatus("Zuerst ein Zielland wählen.", "error");
+        setInlineEditorStatus(t("editor.chooseTargetFirst"), "error");
         hideMapContextMenu();
         return;
     }
     if (sourceOwnerCode === targetCountryCode) {
-        setInlineEditorStatus("Dieses Gebiet gehört bereits zum Zielland.", "error");
+        setInlineEditorStatus(t("editor.areaAlreadyTarget"), "error");
         hideMapContextMenu();
         return;
     }
@@ -3730,20 +4045,20 @@ async function annexVisualRegionToSelectedCountry(visualRegionKey) {
 }
 async function annexCountryToSelectedCountry(sourceCountryCode) {
     if (!dashboardState.editorMode || !dashboardState.editorTargetCountrySelected) {
-        setInlineEditorStatus("Zuerst ein Zielland wählen.", "error");
+        setInlineEditorStatus(t("editor.chooseTargetFirst"), "error");
         hideMapContextMenu();
         return;
     }
     const normalizedSourceCode = normalizeCountryCode(sourceCountryCode);
     const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode || elements.editorInlineTargetCountry?.value);
     if (!targetCountryCode || normalizedSourceCode === targetCountryCode) {
-        setInlineEditorStatus("Dieses Land ist bereits das Zielland.", "error");
+        setInlineEditorStatus(t("editor.alreadyTargetCountry"), "error");
         hideMapContextMenu();
         return;
     }
     const sourceGroups = getAnnexableRegionGroupsForCountry(normalizedSourceCode);
     if (!sourceGroups.length) {
-        setInlineEditorStatus("Für dieses Land wurden keine übernehmbaren Regionen gefunden.", "error");
+        setInlineEditorStatus(t("editor.noAnnexableRegions"), "error");
         hideMapContextMenu();
         return;
     }
@@ -3753,8 +4068,11 @@ async function annexCountryToSelectedCountry(sourceCountryCode) {
     clearEditorSelection();
     hideMapContextMenu();
     await refreshGeoFromEditorAssignments();
-    setInlineEditorStatus(`${sourceCountryName} wurde lokal an ${targetCountryName} angegliedert.`, "success");
-    setMapHoverDetails(`${sourceCountryName} annektiert`, `${targetCountryName} übernimmt das Land; die Regionen bleiben als eigene Regionen sichtbar.`);
+    setInlineEditorStatus(tf("editor.countryAttached", { source: sourceCountryName, target: targetCountryName }), "success");
+    setMapHoverDetails(
+        tf("editor.countryAnnexedTitle", { source: sourceCountryName }),
+        tf("editor.countryAnnexedBody", { target: targetCountryName })
+    );
 }
 function setActiveHoverNode(node) {
     if (activeHoverNode && activeHoverNode !== node) {
@@ -3819,8 +4137,8 @@ function syncHoverOutline(node) {
 function renderCountryHover(countryCode, countryData) {
     if (!countryData) {
         setMapHoverDetails(
-            `${displayCountryCode(countryCode)} (kein Exporteintrag)`,
-            "Kein passender Landeseintrag für diese Kartenfläche gefunden."
+            `${displayCountryCode(countryCode)} (${dashboardState.language === "de" ? "kein Exporteintrag" : "no export row"})`,
+            t("editor.noExportCountry")
         );
         return;
     }
@@ -3876,7 +4194,7 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
         );
         return;
     }
-    setMapHoverDetails(`${regionName} (${displayCountryCode(countryCode)})`, "Kein passender Exporteintrag für Region oder Land gefunden.");
+    setMapHoverDetails(`${regionName} (${displayCountryCode(countryCode)})`, t("editor.noExportArea"));
 }
 function resetMapHoverDetails() {
     if (dashboardState.editorMode) {
@@ -3885,8 +4203,8 @@ function resetMapHoverDetails() {
             const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
             const targetCountryName = COUNTRY_CONFIG[targetCountryCode]?.name ?? displayCountryCode(targetCountryCode);
             setMapHoverDetails(
-                `${selectedGroup.label} übernehmen`,
-                `${targetCountryName} übernimmt diese Region.`
+                tf("editor.targetAnnexes", { country: selectedGroup.label }),
+                tf("editor.countryAnnexesRegion", { country: targetCountryName, region: selectedGroup.label })
             );
             return;
         }
@@ -3973,7 +4291,9 @@ function renderRegionTable(regionRows) {
         regionRows,
         EMPTY_TABLE_ROWS.regionExport,
         (region) => buildTableRow([
-            escapeHtml(region.yearKey), escapeHtml(displayCountryCode(region.country_code)), escapeHtml(region.region_name),
+            escapeHtml(region.yearKey),
+            escapeHtml(displayCountryCode(region.country_code)),
+            escapeHtml(displayRegionLabel(region.visual_region_key || buildVisualRegionKey(region.country_code, region.region_name)) || region.region_name),
             formatInteger(region.end_population), `${formatDecimal(region.end_gdp_billion_eur)} bn EUR`,
             formatPercent(region.gdp_growth_rate), formatPercent(region.unemployment_rate),
             formatDecimal(region.regional_attractiveness),
@@ -4096,18 +4416,19 @@ function renderMapSummaryCards() {
         .map((group) => {
             const currentRegion = group.displayData;
             const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
+            const regionLabel = displayRegionLabel(group);
             return isClassic
                 ? buildClassicSummaryCard(
-                    `${group.label} (${displayCountryCode(group.countryCode)})`,
+                    `${regionLabel} (${displayCountryCode(group.countryCode)})`,
                     currentRegion ? [
                         `Population ${formatInteger(currentRegion.end_population)}`,
                         `GDP ${formatDecimal(currentRegion.end_gdp_billion_eur)} bn EUR`,
                         `Unemployment ${formatPercent(currentRegion.unemployment_rate)}`,
-                    ] : ["Keine zugeordneten BESP-Daten"],
+                    ] : [t("editor.noRegionData")],
                     currentRegion?.yearKey ?? getActiveYearKey()
                 )
                 : buildMetricSummaryCard(
-                    `${group.label} (${displayCountryCode(group.countryCode)})`,
+                    `${regionLabel} (${displayCountryCode(group.countryCode)})`,
                     dashboardState.activeMetric,
                     metricValueFromRegion(currentRegion, dashboardState.activeMetric),
                     previousRegion ? metricValueFromRegion(previousRegion, dashboardState.activeMetric) : Number.NaN,
@@ -4116,7 +4437,7 @@ function renderMapSummaryCards() {
         });
     elements.mapSummaryCards.innerHTML = cards.length
         ? cards.join("")
-        : buildEmptyCard("Keine Regionsdaten", "Lade einen Export, um die Regionenkarte zu rendern.");
+        : buildEmptyCard(t("editor.noRegionRows"), t("editor.loadRegions"));
 }
 function renderEmptyState() {
     stopPlayback();
@@ -4279,20 +4600,20 @@ function buildClassicHoverHtml(row, previousRow) {
             : row.election_tension_index
     );
     return buildHoverDetailGrid([
-        buildHoverDetailRow("Einwohner", formatInteger(Math.round(Number(row.end_population ?? 0)))),
-        buildHoverDetailRow("BIP", `${formatDecimal(Number(row.end_gdp_billion_eur ?? 0))} bn EUR`),
+        buildHoverDetailRow(t("metric.population"), formatInteger(Math.round(Number(row.end_population ?? 0)))),
+        buildHoverDetailRow(t("metric.gdp"), `${formatDecimal(Number(row.end_gdp_billion_eur ?? 0))} bn EUR`),
         buildHoverDetailRow(
-            "Arbeitslosigkeit",
+            METRIC_VIEWS.unemployment.label,
             formatPercent(Number(Object.hasOwn(row, "average_unemployment_rate") ? row.average_unemployment_rate : row.unemployment_rate)),
             "negative"
         ),
         buildHoverDetailRow(
-            "Preise",
+            METRIC_VIEWS.inflation.buttonLabel.replace(/^\S+\s*/, ""),
             formatInflationDirection(Number(Object.hasOwn(row, "average_inflation_rate") ? row.average_inflation_rate : row.inflation_rate), true),
             Number(Object.hasOwn(row, "average_inflation_rate") ? row.average_inflation_rate : row.inflation_rate) < 0 ? "positive" : "negative"
         ),
-        buildHoverDetailRow("Wahlen", electionTendency.label, electionTendency.tone),
-    ], previousRow ? `Vorjahr: Einwohner ${formatInteger(Math.round(Number(row.end_population ?? 0) - Number(previousRow.end_population ?? 0)))} | BIP ${(Number(row.end_gdp_billion_eur ?? 0) - Number(previousRow.end_gdp_billion_eur ?? 0)) >= 0 ? "+" : ""}${formatDecimal(Number(row.end_gdp_billion_eur ?? 0) - Number(previousRow.end_gdp_billion_eur ?? 0))} bn EUR` : "");
+        buildHoverDetailRow(METRIC_VIEWS.elections.label, electionTendency.label, electionTendency.tone),
+    ], previousRow ? `${t("metric.previous")}: ${t("metric.population")} ${formatInteger(Math.round(Number(row.end_population ?? 0) - Number(previousRow.end_population ?? 0)))} | ${t("metric.gdp")} ${(Number(row.end_gdp_billion_eur ?? 0) - Number(previousRow.end_gdp_billion_eur ?? 0)) >= 0 ? "+" : ""}${formatDecimal(Number(row.end_gdp_billion_eur ?? 0) - Number(previousRow.end_gdp_billion_eur ?? 0))} bn EUR` : "");
 }
 function buildInflationHoverHtml(row, previousRow) {
     const current = Number(Object.hasOwn(row, "average_inflation_rate") ? row.average_inflation_rate : row.inflation_rate);
@@ -4327,21 +4648,21 @@ function buildElectionHoverHtml(row, scopeType = "region") {
             Number(referenceRow.election_alignment_index ?? referenceRow.election_tension_index ?? current)
         )
         : (comparisonYear > 0 && Number.isFinite(firstSimulatedYear) && comparisonYear < firstSimulatedYear
-            ? "Wahl vor Simulationsbeginn"
-            : "keine Vergleichswahl");
+            ? t("election.beforeSimulation")
+            : t("election.noComparison"));
     const rows = [
-        buildHoverDetailRow("Tendenz", tendency.label, tendency.tone),
-        buildHoverDetailRow("Links/Rechts", `${current >= 0 ? "+" : ""}${current.toFixed(2)}`, tendency.tone),
-        buildHoverDetailRow("Letzte Wahl", lastElectionYear > 0 ? String(lastElectionYear) : "-", "neutral"),
-        buildHoverDetailRow("Nächste Wahl", nextElectionYear > 0 ? String(nextElectionYear) : "-", "neutral"),
-        buildHoverDetailRow("Seit letzter Wahl", changeText, "neutral"),
+        buildHoverDetailRow(t("election.tendency"), tendency.label, tendency.tone),
+        buildHoverDetailRow(t("election.leftRight"), `${current >= 0 ? "+" : ""}${current.toFixed(2)}`, tendency.tone),
+        buildHoverDetailRow(t("election.last"), lastElectionYear > 0 ? String(lastElectionYear) : "-", "neutral"),
+        buildHoverDetailRow(t("election.next"), nextElectionYear > 0 ? String(nextElectionYear) : "-", "neutral"),
+        buildHoverDetailRow(t("election.sinceLast"), changeText, "neutral"),
     ];
     return `
         ${buildElectionScale(current)}
         ${buildHoverDetailGrid(
             rows,
             row.election_happened_this_year
-                ? "In diesem Jahr fand eine Wahl statt."
+                ? t("election.thisYear")
                 : formatElectionShift(Number(row.election_alignment_shift ?? 0))
         )}
     `;
@@ -4400,7 +4721,7 @@ function buildEmptyTableRow(colspan, message) {
 }
 function buildStateCard(label, value, activeYearKey, metricKey = "") {
     const safeValue = value === null ? "-" : formatStateRatio(value, metricKey);
-    const note = activeYearKey ? `Jahr ${escapeHtml(activeYearKey)}` : "Kein Jahr gewählt";
+    const note = activeYearKey ? `${t("metric.year")} ${escapeHtml(activeYearKey)}` : t("status.noYear");
     return `
         <article class="meta-card">
             <span class="meta-label">${escapeHtml(label)}</span>
@@ -4509,7 +4830,7 @@ function buildClassicSummaryCard(title, lines, yearKey) {
     return `
         <article class="meta-card metric-summary-card">
             <span class="meta-label">${title}</span>
-            <strong class="meta-value">${escapeHtml(yearKey || "Kein Jahr")}</strong>
+            <strong class="meta-value">${escapeHtml(yearKey || t("status.noYear"))}</strong>
             <p class="metric-summary-subtitle">${escapeHtml(lines.join(" | "))}</p>
         </article>
     `;
@@ -4524,7 +4845,7 @@ function buildMetricSummaryCard(title, metricKey, currentValue, previousValue, y
                 <span>${escapeHtml(trend.label)}</span>
             </p>
             <strong class="metric-summary-value">${escapeHtml(formatMetricDisplay(currentValue, metricKey))}</strong>
-            <p class="metric-summary-subtitle">${escapeHtml(yearKey || "Kein Jahr")} | ${escapeHtml(METRIC_VIEWS[metricKey]?.label ?? "Metrik")}</p>
+            <p class="metric-summary-subtitle">${escapeHtml(yearKey || t("status.noYear"))} | ${escapeHtml(METRIC_VIEWS[metricKey]?.label ?? "Metric")}</p>
         </article>
     `;
 }
@@ -4607,35 +4928,35 @@ function formatElectionTendency(value) {
     }
     const numeric = clamp(raw, -1, 1);
     if (numeric <= -0.55) {
-        return { band: -2, label: "Stark links", shortLabel: "⇦ L", icon: "⇦", tone: "negative" };
+        return { band: -2, label: t("election.strongLeft"), shortLabel: "⇦ L", icon: "⇦", tone: "negative" };
     }
     if (numeric <= -0.18) {
-        return { band: -1, label: "Mitte-links", shortLabel: "↖ ML", icon: "↖", tone: "negative" };
+        return { band: -1, label: t("election.centerLeft"), shortLabel: "↖ ML", icon: "↖", tone: "negative" };
     }
     if (numeric < 0.18) {
-        return { band: 0, label: "Zentriert", shortLabel: "↔ Mitte", icon: "↔", tone: "neutral" };
+        return { band: 0, label: t("election.center"), shortLabel: t("election.shortCenter"), icon: "↔", tone: "neutral" };
     }
     if (numeric < 0.55) {
-        return { band: 1, label: "Mitte-rechts", shortLabel: "↗ MR", icon: "↗", tone: "positive" };
+        return { band: 1, label: t("election.centerRight"), shortLabel: "↗ MR", icon: "↗", tone: "positive" };
     }
-    return { band: 2, label: "Stark rechts", shortLabel: "⇨ R", icon: "⇨", tone: "positive" };
+    return { band: 2, label: t("election.strongRight"), shortLabel: "⇨ R", icon: "⇨", tone: "positive" };
 }
 function formatElectionShift(delta) {
     const numeric = Number(delta);
     if (!Number.isFinite(numeric) || Math.abs(numeric) < 0.015) {
-        return "kaum Verschiebung";
+        return t("election.noShift");
     }
-    return numeric > 0 ? "↗ nach rechts verschoben" : "↙ nach links verschoben";
+    return numeric > 0 ? t("election.shiftRight") : t("election.shiftLeft");
 }
 function describeElectionBandShift(currentValue, previousValue) {
     const current = formatElectionTendency(currentValue);
     const previous = formatElectionTendency(previousValue);
     const bandDelta = current.band - previous.band;
     if (bandDelta === 0) {
-        return "gleiche Grundtendenz";
+        return t("election.sameBand");
     }
-    const direction = bandDelta > 0 ? "rechts" : "links";
-    return `${Math.abs(bandDelta)} Stufe(n) nach ${direction}`;
+    const direction = bandDelta > 0 ? t("election.stepRight") : t("election.stepLeft");
+    return `${Math.abs(bandDelta)} ${direction}`;
 }
 function metricTrend(metricKey, currentValue, previousValue) {
     const current = Number(currentValue);
@@ -4644,8 +4965,8 @@ function metricTrend(metricKey, currentValue, previousValue) {
         return {
             tone: "neutral",
             arrow: "→",
-            label: "kein Vorjahr",
-            summary: "Kein Vorjahresvergleich verfügbar.",
+            label: t("metric.noPrevious"),
+            summary: t("trend.noPrevious"),
         };
     }
     if (metricKey === "elections") {
@@ -4654,22 +4975,22 @@ function metricTrend(metricKey, currentValue, previousValue) {
             return {
                 tone: "neutral",
                 arrow: "↔",
-                label: "stabil",
-                summary: "Die politische Grundtendenz bleibt ähnlich.",
+                label: dashboardState.language === "de" ? "stabil" : "stable",
+                summary: t("trend.politicalStable"),
             };
         }
         return delta > 0
             ? {
                 tone: "positive",
                 arrow: "↗",
-                label: "rechter",
-                summary: "Die politische Tendenz verschiebt sich nach rechts.",
+                label: dashboardState.language === "de" ? "rechter" : "rightward",
+                summary: t("trend.politicalRight"),
             }
             : {
                 tone: "negative",
                 arrow: "↙",
-                label: "linker",
-                summary: "Die politische Tendenz verschiebt sich nach links.",
+                label: dashboardState.language === "de" ? "linker" : "leftward",
+                summary: t("trend.politicalLeft"),
             };
     }
     const delta = current - previous;
@@ -4680,22 +5001,22 @@ function metricTrend(metricKey, currentValue, previousValue) {
         return {
             tone: "neutral",
             arrow: "→",
-            label: "stabil",
-            summary: "Die Veränderung gegenüber dem Vorjahr bleibt klein.",
+            label: dashboardState.language === "de" ? "stabil" : "stable",
+            summary: t("trend.small"),
         };
     }
     return isPositiveDirection
         ? {
             tone: "positive",
             arrow: "↗",
-            label: "positiv",
-            summary: "Die Entwicklung gegenüber dem Vorjahr ist positiv.",
+            label: dashboardState.language === "de" ? "positiv" : "positive",
+            summary: t("trend.positive"),
         }
         : {
             tone: "negative",
             arrow: "↘",
-            label: "negativ",
-            summary: "Die Entwicklung gegenüber dem Vorjahr ist negativ.",
+            label: dashboardState.language === "de" ? "negativ" : "negative",
+            summary: t("trend.negative"),
         };
 }
 function buildMapMetricDetail(currentValue, previousValue, metricKey, labelScale) {
@@ -4726,7 +5047,7 @@ function formatMetricDelta(currentValue, previousValue, metricKey, labelScale) {
     const current = Number(currentValue);
     const previous = Number(previousValue);
     if (!Number.isFinite(current) || !Number.isFinite(previous)) {
-        return "kein Vorjahr";
+        return t("metric.noPrevious");
     }
     const delta = current - previous;
     if (metricKey === "population") {
@@ -4740,7 +5061,7 @@ function formatMetricDelta(currentValue, previousValue, metricKey, labelScale) {
     }
     if (metricKey === "integration" || metricKey === "corruption") {
         const scoreDelta = delta * 100;
-        return `${scoreDelta >= 0 ? "+" : ""}${scoreDelta.toFixed(1)} Punkte`;
+        return `${scoreDelta >= 0 ? "+" : ""}${scoreDelta.toFixed(1)} ${t("metric.points")}`;
     }
     if (metricKey === "inflation" || metricKey === "satisfaction" || metricKey === "debt") {
         return `${delta >= 0 ? "+" : ""}${formatPercent(delta)}`;
@@ -4782,9 +5103,9 @@ function isClassicMetricView() {
 }
 function buildCountrySummaryCard(country, row) {
     const label = `<span class="flag-chip">${escapeHtml(countryFlag(country.countryCode))}</span>${escapeHtml(country.displayName)} (${escapeHtml(displayCountryCode(country.countryCode))})`;
-    const metricLabel = METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metrik";
-    const metricValue = row ? formatMetricDisplay(metricValueFromCountry(row, dashboardState.activeMetric), dashboardState.activeMetric) : "Keine Daten";
-    const note = row ? `${escapeHtml(row.yearKey)} | ${escapeHtml(metricLabel)}` : "Kein passender Ländereintrag im Export.";
+    const metricLabel = METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric";
+    const metricValue = row ? formatMetricDisplay(metricValueFromCountry(row, dashboardState.activeMetric), dashboardState.activeMetric) : t("metric.noData");
+    const note = row ? `${escapeHtml(row.yearKey)} | ${escapeHtml(metricLabel)}` : t("metric.noExportCountry");
     return `
         <article class="meta-card">
             <span class="meta-label">${label}</span>
@@ -5036,7 +5357,7 @@ function baseCountryFill(countryCode) {
     const palette = {
         ALB: "rgba(146, 124, 104, 0.90)",
         BGR: "rgba(137, 161, 104, 0.90)",
-        BIH: "rgba(88, 124, 158, 0.90)",
+        BIH: "rgba(54, 104, 73, 0.90)",
         GRC: "rgba(86, 133, 184, 0.90)",
         HRV: "rgba(184, 109, 77, 0.90)",
         HUN: "rgba(158, 127, 105, 0.90)",

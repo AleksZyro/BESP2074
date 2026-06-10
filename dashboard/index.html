@@ -126,47 +126,47 @@
                     </div>
                 </div>
                 <details class="advanced-block">
-                    <summary>Erweitert: Simulation</summary>
+                    <summary>Advanced: Simulation</summary>
                     <div class="advanced-content">
                         <div class="run-controls" role="group" aria-label="Simulation run controls">
                             <label class="timeline-select-wrap" for="run-scenario-select">
-                                <span>Szenario</span>
+                                <span>Scenario</span>
                                 <select id="run-scenario-select" class="timeline-select"></select>
                             </label>
                             <label class="timeline-select-wrap" for="run-count-input">
-                                <span>Durchl&auml;ufe</span>
+                                <span>Runs</span>
                                 <input id="run-count-input" class="run-count-input" type="number" min="1" max="100" step="1" value="1">
                             </label>
                             <label class="toggle-wrap" for="run-shocks-enabled">
                                 <input id="run-shocks-enabled" type="checkbox" checked>
-                                <span>Schocks aktiv</span>
+                                <span>Shocks on</span>
                             </label>
-                            <button id="generate-run" class="timeline-button timeline-button-primary" type="button">Runs starten</button>
-                            <button id="reload-export" class="timeline-button" type="button">Export neu laden</button>
-                            <a id="open-boundary-editor" class="timeline-button timeline-link-button" href="./editor.html">Expertenmodus</a>
+                            <button id="generate-run" class="timeline-button timeline-button-primary" type="button">Generate runs</button>
+                            <button id="reload-export" class="timeline-button" type="button">Reload export</button>
+                            <a id="open-boundary-editor" class="timeline-button timeline-link-button" href="./editor.html">Expert mode</a>
                         </div>
-                        <p class="timeline-note">Play spielt geladene Jahre ab. Neue Zahlen entstehen nur durch neue Runs.</p>
-                        <p id="export-status" class="export-status" aria-live="polite">Export wird geladen.</p>
-                        <p id="run-batch-summary" class="timeline-note">Ein Durchlauf aktiv.</p>
+                        <p class="timeline-note">Play replays loaded years. New numbers come from new runs.</p>
+                        <p id="export-status" class="export-status" aria-live="polite">Loading export.</p>
+                        <p id="run-batch-summary" class="timeline-note">Single run active.</p>
                     </div>
                 </details>
             </section>
 
             <details class="panel details-panel">
-                <summary>Details &amp; Datentabellen</summary>
+                <summary>Details &amp; Data tables</summary>
                 <div class="details-content">
                     <section>
                         <div class="section-heading">
                             <div>
-                                <p class="section-kicker">&Uuml;berblick</p>
-                                <h2>Export-Metadaten</h2>
+                                <p class="section-kicker">Overview</p>
+                                <h2>Export metadata</h2>
                             </div>
                         </div>
                         <div id="meta-cards" class="card-grid">
                             <article class="meta-card empty-card">
-                                <span class="meta-label">Keine Daten geladen</span>
+                                <span class="meta-label">No data loaded</span>
                                 <strong class="meta-value">-</strong>
-                                <p class="meta-note">Simulation ausf&uuml;hren, damit <code>output/latest.json</code> erzeugt wird.</p>
+                                <p class="meta-note">Run the simulation to generate <code>output/latest.json</code>.</p>
                             </article>
                         </div>
                     </section>
@@ -174,32 +174,32 @@
                     <section>
                         <div class="section-heading">
                             <div>
-                                <p class="section-kicker">Staat</p>
-                                <h2>Jahreswerte</h2>
+                                <p class="section-kicker">State</p>
+                                <h2>Year values</h2>
                             </div>
                         </div>
                         <div id="state-cards" class="card-grid">
                             <article class="meta-card empty-card">
-                                <span class="meta-label">Keine Staatsdaten geladen</span>
+                                <span class="meta-label">No state data loaded</span>
                                 <strong class="meta-value">-</strong>
-                                <p class="meta-note">Export mit Staatswerten laden oder neu erzeugen.</p>
+                                <p class="meta-note">Load or regenerate an export with state values.</p>
                             </article>
                         </div>
                         <div class="table-wrap">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Jahr</th>
-                                        <th>Land</th>
-                                        <th>Budget (% BIP)</th>
-                                        <th>Schulden (% BIP)</th>
-                                        <th>Stabilit&auml;t</th>
-                                        <th>Korruption</th>
-                                        <th>Investitionsklima</th>
+                                        <th>Year</th>
+                                        <th>Country</th>
+                                        <th>Budget (% GDP)</th>
+                                        <th>Debt (% GDP)</th>
+                                        <th>Stability</th>
+                                        <th>Corruption</th>
+                                        <th>Investment climate</th>
                                     </tr>
                                 </thead>
                                 <tbody id="state-table-body">
-                                    <tr><td colspan="7" class="table-empty">Noch keine Staatswerte geladen.</td></tr>
+                                    <tr><td colspan="7" class="table-empty">No state values loaded yet.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -208,29 +208,29 @@
                     <section>
                         <div class="section-heading">
                             <div>
-                                <p class="section-kicker">L&auml;nder</p>
-                                <h2>Jahreswerte</h2>
+                                <p class="section-kicker">Countries</p>
+                                <h2>Year values</h2>
                             </div>
                         </div>
                         <div class="table-wrap">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Jahr</th>
-                                        <th>Land</th>
+                                        <th>Year</th>
+                                        <th>Country</th>
                                         <th>Population</th>
                                         <th>GDP</th>
-                                        <th>GDP-Wachstum</th>
-                                        <th>GDP pro Kopf</th>
-                                        <th>Arbeitslosigkeit</th>
+                                        <th>GDP growth</th>
+                                        <th>GDP per cap.</th>
+                                        <th>Unemployment</th>
                                         <th>Integration</th>
-                                        <th>Preise</th>
-                                        <th>Zufriedenheit</th>
-                                        <th>Wahlen</th>
+                                        <th>Prices</th>
+                                        <th>Satisfaction</th>
+                                        <th>Elections</th>
                                     </tr>
                                 </thead>
                                 <tbody id="country-table-body">
-                                    <tr><td colspan="11" class="table-empty">Noch keine Landeswerte geladen.</td></tr>
+                                    <tr><td colspan="11" class="table-empty">No country values loaded yet.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -239,30 +239,30 @@
                     <section>
                         <div class="section-heading">
                             <div>
-                                <p class="section-kicker">Regionen</p>
-                                <h2>Jahreswerte</h2>
+                                <p class="section-kicker">Regions</p>
+                                <h2>Year values</h2>
                             </div>
                         </div>
                         <div class="table-wrap">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Jahr</th>
-                                        <th>Land</th>
+                                        <th>Year</th>
+                                        <th>Country</th>
                                         <th>Region</th>
                                         <th>Population</th>
                                         <th>GDP</th>
-                                        <th>GDP-Wachstum</th>
-                                        <th>Arbeitslosigkeit</th>
-                                        <th>Attraktivit&auml;t</th>
+                                        <th>GDP growth</th>
+                                        <th>Unemployment</th>
+                                        <th>Attractiveness</th>
                                         <th>Integration</th>
-                                        <th>Preise</th>
-                                        <th>Zufriedenheit</th>
-                                        <th>Wahlen</th>
+                                        <th>Prices</th>
+                                        <th>Satisfaction</th>
+                                        <th>Elections</th>
                                     </tr>
                                 </thead>
                                 <tbody id="region-table-body">
-                                    <tr><td colspan="12" class="table-empty">Noch keine Regionswerte geladen.</td></tr>
+                                    <tr><td colspan="12" class="table-empty">No region values loaded yet.</td></tr>
                                 </tbody>
                             </table>
                         </div>

@@ -166,6 +166,42 @@ FLOOD_REGION_HINTS = (
     "danube", "sava", "drina", "morava", "vojvodina", "belgrade",
     "wallachia", "dobruja", "bosnia", "brcko", "posavina",
 )
+CROSS_BORDER_SHOCK_CLUSTERS: tuple[dict[str, object], ...] = (
+    {
+        "codes": {"heatwave_drought", "flood_event"},
+        "regions": (
+            ("SRB", "Vojvodina"),
+            ("HRV", "Slavonia"),
+            ("HUN", "Great Plains"),
+            ("BIH", "Republika Srpska"),
+        ),
+    },
+    {
+        "codes": {"heatwave_drought", "energy_price_shock", "recession"},
+        "regions": (
+            ("GRC", "Macedonia-Thrace"),
+            ("MKD", "Southeastern North Macedonia"),
+            ("BGR", "Southern Bulgaria"),
+        ),
+    },
+    {
+        "codes": {"flood_event", "heatwave_drought"},
+        "regions": (
+            ("ROU", "Dobruja and Lower Danube"),
+            ("BGR", "Black Sea Bulgaria"),
+        ),
+    },
+    {
+        "codes": {"tourism_slump", "energy_price_shock", "recession"},
+        "regions": (
+            ("HRV", "Dalmatia"),
+            ("MNE", "Coast"),
+            ("ALB", "Central Coast Albania"),
+            ("GRC", "Epirus-Western Macedonia"),
+        ),
+    },
+)
+CROSS_BORDER_SHOCK_EFFECT_SCALE = 0.72
 
 
 def _empty_shock_effect() -> dict[str, float]:
@@ -191,6 +227,20 @@ def normalize_event_region_fragment(value: str | None) -> str:
 
 def build_event_region_key(country_code: str, region_name: str) -> str:
     return f"{country_code}::{normalize_event_region_fragment(region_name)}"
+
+
+def find_region_by_key(countries_by_code: dict[str, Country], country_code: str, region_name: str) -> Region | None:
+    country = countries_by_code.get(country_code)
+    if not country:
+        return None
+    target_key = normalize_event_region_fragment(region_name)
+    return next(
+        (
+            region for region in country.regions
+            if normalize_event_region_fragment(region.name) == target_key
+        ),
+        None,
+    )
 
 
 def score_region_for_shock(region: Region, shock: ShockDefinition) -> float:
@@ -251,6 +301,55 @@ def select_affected_regions(country: Country, shock: ShockDefinition, start_year
     return ranked[:count]
 
 
+def select_cross_border_affected_regions(
+    countries_by_code: dict[str, Country],
+    origin_country: Country,
+    shock: ShockDefinition,
+    origin_regions: list[Region],
+    start_year: int,
+    variation_seed: str,
+) -> list[tuple[str, Region]]:
+    origin_keys = {
+        build_event_region_key(origin_country.code, region.name)
+        for region in origin_regions
+    }
+    extra_regions: list[tuple[str, Region]] = []
+    for cluster_index, cluster in enumerate(CROSS_BORDER_SHOCK_CLUSTERS):
+        shock_codes = cluster.get("codes", set())
+        region_refs = tuple(cluster.get("regions", ()))
+        if shock.code not in shock_codes:
+            continue
+        cluster_keys = {
+            build_event_region_key(str(country_code), str(region_name))
+            for country_code, region_name in region_refs
+        }
+        if not origin_keys.intersection(cluster_keys):
+            continue
+        rng = random.Random(
+            f"{variation_seed}|cross-border|{start_year}|{origin_country.code}|{shock.code}|{cluster_index}"
+        )
+        if rng.random() > 0.62:
+            continue
+        for country_code, region_name in region_refs:
+            country_code = str(country_code)
+            if country_code == origin_country.code:
+                continue
+            region = find_region_by_key(countries_by_code, country_code, str(region_name))
+            if not region:
+                continue
+            extra_regions.append((country_code, region))
+    return extra_regions
+
+
+def apply_shock_effect(effect: dict[str, float], shock: ShockDefinition, severity_scale: float) -> None:
+    effect["birth_multiplier"] *= 1.0 + (shock.birth_rate_multiplier - 1.0) * severity_scale
+    effect["death_multiplier"] *= 1.0 + (shock.death_rate_multiplier - 1.0) * severity_scale
+    effect["net_migration_shift"] += shock.net_migration_rate_shift * severity_scale
+    effect["gdp_growth_bias"] += shock.gdp_growth_bias * severity_scale
+    effect["unemployment_bias"] += shock.unemployment_bias * severity_scale
+    effect["attractiveness_bias"] += shock.attractiveness_bias * severity_scale
+
+
 def build_country_shock_effects(
     countries: list[Country],
     shock_definitions: list[ShockDefinition] | None,
@@ -264,6 +363,8 @@ def build_country_shock_effects(
 
     if not shock_definitions:
         return effects, events, updated_last_triggered
+
+    countries_by_code = {country.code: country for country in countries}
 
     for country in countries:
         selected_count = 0
@@ -301,17 +402,35 @@ def build_country_shock_effects(
             )
             severity_scale = severity_rng.uniform(severity_min, severity_max)
 
-            effect = effects[country.code]
-            effect["birth_multiplier"] *= 1.0 + (shock.birth_rate_multiplier - 1.0) * severity_scale
-            effect["death_multiplier"] *= 1.0 + (shock.death_rate_multiplier - 1.0) * severity_scale
-            effect["net_migration_shift"] += shock.net_migration_rate_shift * severity_scale
-            effect["gdp_growth_bias"] += shock.gdp_growth_bias * severity_scale
-            effect["unemployment_bias"] += shock.unemployment_bias * severity_scale
-            effect["attractiveness_bias"] += shock.attractiveness_bias * severity_scale
+            apply_shock_effect(effects[country.code], shock, severity_scale)
             updated_last_triggered[(country.code, shock.code)] = start_year
             selected_count += 1
             selected_categories[shock.category] = selected_categories.get(shock.category, 0) + 1
             affected_regions = select_affected_regions(country, shock, start_year, variation_seed)
+            cross_border_regions = select_cross_border_affected_regions(
+                countries_by_code,
+                country,
+                shock,
+                affected_regions,
+                start_year,
+                variation_seed,
+            )
+            affected_region_names = [region.name for region in affected_regions]
+            affected_region_keys = [
+                build_event_region_key(country.code, region.name)
+                for region in affected_regions
+            ]
+            for affected_country_code, affected_region in cross_border_regions:
+                region_key = build_event_region_key(affected_country_code, affected_region.name)
+                if region_key in affected_region_keys:
+                    continue
+                affected_region_keys.append(region_key)
+                affected_region_names.append(f"{affected_country_code}: {affected_region.name}")
+                apply_shock_effect(
+                    effects[affected_country_code],
+                    shock,
+                    severity_scale * CROSS_BORDER_SHOCK_EFFECT_SCALE,
+                )
 
             events.append(
                 ShockEvent(
@@ -328,11 +447,8 @@ def build_country_shock_effects(
                     unemployment_bias=shock.unemployment_bias * severity_scale,
                     net_migration_rate_shift=shock.net_migration_rate_shift * severity_scale,
                     message=build_shock_event_message(shock, country),
-                    affected_region_names=[region.name for region in affected_regions],
-                    affected_region_keys=[
-                        build_event_region_key(country.code, region.name)
-                        for region in affected_regions
-                    ],
+                    affected_region_names=affected_region_names,
+                    affected_region_keys=affected_region_keys,
                 )
             )
 
