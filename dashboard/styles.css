@@ -249,7 +249,9 @@ code { font-family: Consolas, "Courier New", monospace; }
 .editor-hidden-field {
     display: none;
 }
-.map-country-shape { stroke: none; stroke-width: 0; vector-effect: non-scaling-stroke; }
+.map-country-shape, .map-country-backfill { stroke: none; stroke-width: 0; vector-effect: non-scaling-stroke; }
+.map-country-backfill { pointer-events: none; }
+.map-region-backfill { stroke: none; pointer-events: none; }
 .map-region-shape { stroke: rgba(8, 14, 24, 0.7); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .map-region-guide {
     fill: none;

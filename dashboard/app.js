@@ -2986,7 +2986,8 @@ function renderCountryLayer(geoData) {
     mapDataCache.countryFeaturesByCode = new Map(
         groupedCountries.map((country) => [country.countryCode, country])
     );
-    elements.countryLayer.innerHTML = groupedCountries
+    const countryBackfillMarkup = buildCountryBackfillMarkup(geoData, countryMetricRange);
+    const countryShapeMarkup = groupedCountries
         .map((country) => {
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
             const fill = dashboardState.activeMetric === "classic"
@@ -3013,6 +3014,7 @@ function renderCountryLayer(geoData) {
             `;
         })
         .join("");
+    elements.countryLayer.innerHTML = countryBackfillMarkup + countryShapeMarkup;
     const labelCandidates = groupedCountries.map((country) => {
             const [offsetX, offsetY] = COUNTRY_LABEL_OFFSETS[country.countryCode] ?? [0, 0];
             const row = mapDataCache.countriesByCode.get(country.countryCode) ?? null;
@@ -3054,6 +3056,39 @@ function renderCountryLayer(geoData) {
         });
     elements.countryLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 4)
         .map((entry) => entry.html)
+        .join("");
+}
+function buildCountryBackfillMarkup(geoData, countryMetricRange) {
+    const backfillCountryCodes = new Set(["BIH"]);
+    return [...backfillCountryCodes]
+        .map((countryCode) => {
+            const countryFeature = (geoData?.countryFeatures ?? []).find((feature) => (
+                feature.countryCode === countryCode
+                && feature.rawCountryCode === countryCode
+                && feature.pathD
+            ));
+            if (!countryFeature) {
+                return "";
+            }
+            const row = mapDataCache.countriesByCode.get(countryCode) ?? null;
+            const fill = dashboardState.activeMetric === "classic"
+                ? baseCountryFill(countryCode)
+                : mapMetricFill(
+                    metricValueFromCountry(row, dashboardState.activeMetric),
+                    countryMetricRange,
+                    dashboardState.activeMetric,
+                    baseCountryFill(countryCode)
+                );
+            return `
+                <path
+                    class="map-country-backfill"
+                    data-country-code="${escapeHtml(countryCode)}"
+                    d="${escapeHtml(countryFeature.pathD)}"
+                    fill="${escapeHtml(fill)}"
+                    fill-rule="nonzero"
+                ></path>
+            `;
+        })
         .join("");
 }
 function getCountryDisplayFeatures(geoData) {
@@ -3153,7 +3188,8 @@ function renderRegionLayer(geoData) {
             .filter((group) => group.displayData)
             .map((group) => [group.visualRegionKey, group.displayData])
     );
-    elements.regionLayer.innerHTML = groupedRegions
+    const regionBackfillMarkup = buildRegionBackfillMarkup(geoData, regionMetricRange);
+    const regionShapeMarkup = groupedRegions
         .map((group) => {
             const selectedClass = dashboardState.editorMode
                 && dashboardState.selectedEditorSelectionType === "region"
@@ -3185,6 +3221,7 @@ function renderRegionLayer(geoData) {
         `;
         })
         .join("");
+    elements.regionLayer.innerHTML = regionBackfillMarkup + regionShapeMarkup;
     const labelCandidates = groupedRegions.map((group) => {
         const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
         const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
@@ -3236,6 +3273,39 @@ function renderRegionLayer(geoData) {
     }).filter(Boolean);
     elements.regionLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 2)
         .map((entry) => entry.html)
+        .join("");
+}
+function buildRegionBackfillMarkup(geoData, regionMetricRange) {
+    const backfillCountryCodes = new Set(["BIH"]);
+    return [...backfillCountryCodes]
+        .map((countryCode) => {
+            const countryFeature = (geoData?.countryFeatures ?? []).find((feature) => (
+                feature.countryCode === countryCode
+                && feature.rawCountryCode === countryCode
+                && feature.pathD
+            ));
+            if (!countryFeature) {
+                return "";
+            }
+            const countryRow = mapDataCache.countriesByCode.get(countryCode) ?? null;
+            const fill = dashboardState.activeMetric === "classic"
+                ? baseCountryFill(countryCode)
+                : mapMetricFill(
+                    metricValueFromCountry(countryRow, dashboardState.activeMetric),
+                    regionMetricRange,
+                    dashboardState.activeMetric,
+                    baseCountryFill(countryCode)
+                );
+            return `
+            <path
+                class="map-region-backfill"
+                data-country-code="${escapeHtml(countryCode)}"
+                d="${escapeHtml(countryFeature.pathD)}"
+                fill="${escapeHtml(fill)}"
+                fill-rule="nonzero"
+            ></path>
+        `;
+        })
         .join("");
 }
 function renderMapEventLayer() {
