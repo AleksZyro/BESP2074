@@ -2015,6 +2015,7 @@ function setMapMode(mode) {
     activeMapMode = mode === "region" ? "region" : "country";
     updateMapModeButtonState();
     applyMapModeVisibility();
+    renderMapEventLayer();
     renderPublicSidebar();
     renderInlineEditorPanel();
     resetMapHoverDetails();
@@ -2028,6 +2029,7 @@ function setEditorMode(enabled) {
     }
     updateMapModeButtonState();
     applyMapModeVisibility();
+    renderMapEventLayer();
     renderPublicSidebar();
     renderInlineEditorPanel();
     resetMapHoverDetails();
@@ -3525,27 +3527,77 @@ function renderMapEventLayer() {
         elements.mapEventLayer.innerHTML = "";
         return;
     }
-    const activeEvents = getVisibleShockEventsForYear(activeYearKey)
-        .filter(({ event }) => resolveEventLetterPosition(event));
-    elements.mapEventLayer.innerHTML = activeEvents.map(({ event, sourceIndex }, index) => {
-        const position = resolveEventLetterPosition(event);
-        if (!position) {
-            return "";
-        }
-        const [baseX, baseY] = position;
+    const eventOutlineMarkup = buildActiveEventOutlineMarkup();
+    const eventPlacements = getVisibleShockEventsForYear(activeYearKey)
+        .flatMap(({ event, sourceIndex }) => resolveEventLetterPlacements(event)
+            .map((placement) => ({ event, sourceIndex, placement })));
+    const eventLetterMarkup = eventPlacements.map(({ event, sourceIndex, placement }, index) => {
+        const [baseX, baseY] = placement.position;
         const [offsetX, offsetY] = EVENT_LETTER_OFFSETS[index % EVENT_LETTER_OFFSETS.length];
         const x = clamp(baseX + offsetX, 16, MAP_VIEWBOX_WIDTH - 16);
         const y = clamp(baseY + offsetY, 16, MAP_VIEWBOX_HEIGHT - 16);
         const selectedClass = dashboardState.selectedEventIndex === sourceIndex ? " map-event-letter-selected" : "";
         return `
-            <g class="map-event-letter${selectedClass}" data-event-index="${sourceIndex}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" role="button" aria-label="${escapeHtml(event.shock_name ?? t("event.title"))}">
+            <g class="map-event-letter${selectedClass}" data-event-index="${sourceIndex}" data-event-country="${escapeHtml(placement.countryCode ?? "")}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" role="button" aria-label="${escapeHtml(event.shock_name ?? t("event.title"))}">
                 <rect class="map-event-letter-hitbox" x="-15" y="-13" width="30" height="26" rx="7"></rect>
                 <rect class="map-event-letter-bg" x="-10" y="-8" width="20" height="16" rx="4"></rect>
                 <path class="map-event-letter-icon" d="M -8 -5 H 8 V 6 H -8 Z M -8 -5 L 0 1 L 8 -5 M -8 6 L -2 0 M 8 6 L 2 0"></path>
             </g>
         `;
     }).join("");
+    elements.mapEventLayer.innerHTML = eventOutlineMarkup + eventLetterMarkup;
     bindMapEventEvents();
+}
+function buildActiveEventOutlineMarkup() {
+    if (activeMapMode !== "region" && !dashboardState.editorMode) {
+        return "";
+    }
+    const affectedRegionKeys = getActiveEventRegionKeys();
+    if (!affectedRegionKeys.size || !mapDataCache.visualRegionsByKey?.size) {
+        return "";
+    }
+    const outlineMarkup = [...mapDataCache.visualRegionsByKey.values()]
+        .map((group) => buildEventAffectedFeatureMarkup(group, affectedRegionKeys))
+        .join("");
+    if (!outlineMarkup.trim()) {
+        return "";
+    }
+    return `
+        <g class="map-event-outline-layer" pointer-events="none">
+            ${outlineMarkup}
+        </g>
+    `;
+}
+function resolveEventLetterPlacements(event) {
+    const affectedKeys = new Set((event?.affected_region_keys ?? []).map(normalizeEventRegionKey));
+    if (affectedKeys.size && mapDataCache.visualRegionsByKey?.size) {
+        const groupsByCountry = new Map();
+        for (const group of mapDataCache.visualRegionsByKey.values()) {
+            if (!isVisualRegionAffectedByEvent(group, affectedKeys)) {
+                continue;
+            }
+            const countryCode = normalizeCountryCode(group.countryCode);
+            if (!countryCode) {
+                continue;
+            }
+            if (!groupsByCountry.has(countryCode)) {
+                groupsByCountry.set(countryCode, []);
+            }
+            groupsByCountry.get(countryCode).push(group);
+        }
+        const placements = [...groupsByCountry.entries()]
+            .sort(([leftCode], [rightCode]) => leftCode.localeCompare(rightCode))
+            .map(([countryCode, groups]) => {
+                const position = weightedVisualRegionCentroid(groups);
+                return position ? { countryCode, position } : null;
+            })
+            .filter(Boolean);
+        if (placements.length) {
+            return placements;
+        }
+    }
+    const position = resolveEventLetterPosition(event);
+    return position ? [{ countryCode: normalizeCountryCode(event?.country_code), position }] : [];
 }
 function resolveEventLetterPosition(event) {
     const affectedKeys = new Set((event?.affected_region_keys ?? []).map(normalizeEventRegionKey));
@@ -3655,6 +3707,17 @@ function isVisualRegionAffectedByEvent(group, affectedRegionKeys) {
             : []),
     ]);
     return [...candidates].some((key) => key && affectedRegionKeys.has(key));
+}
+function isFeatureAffectedByEvent(feature, affectedRegionKeys) {
+    if (!feature || !affectedRegionKeys?.size) {
+        return false;
+    }
+    const candidates = [
+        normalizeEventRegionKey(feature.bespRegionKey),
+        normalizeEventRegionKey(feature.visualRegionDataKey),
+        ...(Array.isArray(feature.visualRegionDataKeys) ? feature.visualRegionDataKeys.map(normalizeEventRegionKey) : []),
+    ];
+    return candidates.some((key) => key && affectedRegionKeys.has(key));
 }
 function renderEventDetails(event) {
     const title = event.shock_name || event.message || t("event.title");
@@ -4025,6 +4088,34 @@ function buildInternalGuideMarkup(group, eventAffected = false) {
         <g class="map-region-guide-wrap${affectedClass}" pointer-events="none">
             ${linePaths}
             ${labelMarkup}
+        </g>
+    `;
+}
+function buildEventAffectedFeatureMarkup(group, affectedRegionKeys) {
+    if (!group || !affectedRegionKeys?.size) {
+        return "";
+    }
+    const groupAffected = isVisualRegionAffectedByEvent(group, affectedRegionKeys);
+    const affectedFeatures = Array.isArray(group.features)
+        ? group.features.filter((feature) => isFeatureAffectedByEvent(feature, affectedRegionKeys))
+        : [];
+    const paths = affectedFeatures.length
+        ? affectedFeatures.map((feature) => feature.pathD).filter(Boolean)
+        : (groupAffected && Array.isArray(group.features) && group.features.length > 1
+            ? group.features.map((feature) => feature.pathD).filter(Boolean)
+            : (groupAffected && group.pathD ? [group.pathD] : []));
+    if (!paths.length) {
+        return "";
+    }
+    return `
+        <g class="map-event-feature-outline-wrap" pointer-events="none">
+            ${paths.map((pathD) => `
+                <path
+                    class="map-event-feature-outline"
+                    d="${escapeHtml(pathD)}"
+                    fill="none"
+                ></path>
+            `).join("")}
         </g>
     `;
 }
