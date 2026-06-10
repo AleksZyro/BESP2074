@@ -824,8 +824,8 @@ const REGION_GROUPS = {
     "ALB::central coast albania": ["durrã«s", "elbasan", "fier", "berat"],
     "ALB::southern albania": ["vlorã«", "gjirokastã«r", "korã§ã«"],
     "MKD::skopje": ["skopje"],
-    "MKD::western north macedonia": ["polog", "southwest"],
-    "MKD::southeastern north macedonia": ["east", "northeast", "southeast", "pelagonia", "vardar"],
+    "MKD::western north macedonia": ["polog", "southwest", "pelagonia"],
+    "MKD::southeastern north macedonia": ["east", "northeast", "southeast", "vardar"],
     "BGR::sofia": ["sofia city", "sofia"],
     "BGR::northern bulgaria": [
         "vidin", "vratsa", "montana", "pleven", "lovech", "veliko tarnovo",
@@ -1095,7 +1095,7 @@ const SVN_NUTS3_VISUAL_REGIONS = {
     [buildRegionKey("SVN", "Podravska")]: "SVN::eastern",
     [buildRegionKey("SVN", "Pomurska")]: "SVN::eastern",
     [buildRegionKey("SVN", "Posavska")]: "SVN::eastern",
-    [buildRegionKey("SVN", "Primorsko-notranjska")]: "SVN::eastern",
+    [buildRegionKey("SVN", "Primorsko-notranjska")]: "SVN::western",
     [buildRegionKey("SVN", "Savinjska")]: "SVN::eastern",
     [buildRegionKey("SVN", "Zasavska")]: "SVN::eastern",
 };
@@ -3311,7 +3311,7 @@ function renderRegionLayer(geoData) {
                     ))}"
                 fill-rule="evenodd"
             ></path>
-            ${buildInternalGuideMarkup(group)}
+            ${buildInternalGuideMarkup(group, Boolean(eventAffectedClass))}
         `;
         })
         .join("");
@@ -3826,10 +3826,11 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
         };
     });
 }
-function buildInternalGuideMarkup(group) {
+function buildInternalGuideMarkup(group, eventAffected = false) {
+    const affectedClass = eventAffected ? " map-event-affected-guides" : "";
     if (REAL_SUBDIVISION_VISUAL_REGION_KEYS.has(group.visualRegionKey) && Array.isArray(group.features) && group.features.length > 1) {
         return `
-        <g class="map-region-guide-wrap" pointer-events="none">
+        <g class="map-region-guide-wrap${affectedClass}" pointer-events="none">
             ${group.features.map((feature) => `
                 <path
                     class="map-region-guide map-region-guide-real"
@@ -3887,7 +3888,7 @@ function buildInternalGuideMarkup(group) {
                 <path d="${escapeHtml(group.pathD)}"></path>
             </clipPath>
         </defs>
-        <g class="map-region-guide-wrap" pointer-events="none">
+        <g class="map-region-guide-wrap${affectedClass}" pointer-events="none">
             ${linePaths}
             ${labelMarkup}
         </g>

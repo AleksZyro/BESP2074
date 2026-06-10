@@ -396,6 +396,10 @@ code { font-family: Consolas, "Courier New", monospace; }
     stroke-width: 2.2;
     filter: drop-shadow(0 0 5px rgba(226, 86, 67, 0.28));
 }
+.map-event-affected-guides .map-region-guide {
+    stroke: rgba(226, 86, 67, 0.86);
+    stroke-width: 1.7;
+}
 .map-country-label-detail {
     font-size: 11px;
     fill: #eef4fa;
