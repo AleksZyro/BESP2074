@@ -287,69 +287,213 @@ const ADM1_PROVINCE_PALETTES = {
 const METRIC_VIEWS = {
     classic: {
         label: "Standard",
+        labelEn: "Standard",
+        labelDe: "Standard",
         buttonLabel: "\uD83D\uDDFA\uFE0F Std.",
+        buttonLabelEn: "\uD83D\uDDFA\uFE0F Std.",
+        buttonLabelDe: "\uD83D\uDDFA\uFE0F Std.",
         colorLow: [0, 0, 0],
         colorHigh: [0, 0, 0],
     },
     population: {
-        label: "Einwohner",
-        buttonLabel: "\uD83D\uDC65 Einw.",
+        label: "Population",
+        labelEn: "Population",
+        labelDe: "Einwohner",
+        buttonLabel: "\uD83D\uDC65 Pop.",
+        buttonLabelEn: "\uD83D\uDC65 Pop.",
+        buttonLabelDe: "\uD83D\uDC65 Einw.",
         colorLow: [188, 210, 236],
         colorHigh: [34, 73, 122],
     },
     gdp_per_capita: {
-        label: "BIP pro Kopf",
-        buttonLabel: "\uD83D\uDCB6 BIP/K.",
+        label: "GDP per cap.",
+        labelEn: "GDP per cap.",
+        labelDe: "BIP pro Kopf",
+        buttonLabel: "\uD83D\uDCB6 GDP/c.",
+        buttonLabelEn: "\uD83D\uDCB6 GDP/c.",
+        buttonLabelDe: "\uD83D\uDCB6 BIP/K.",
         colorLow: [233, 219, 176],
         colorHigh: [130, 93, 36],
     },
     unemployment: {
-        label: "Arbeitslosigkeit",
+        label: "Unemployment",
+        labelEn: "Unemployment",
+        labelDe: "Arbeitslosigkeit",
         buttonLabel: "\uD83E\uDDF0 Jobs",
+        buttonLabelEn: "\uD83E\uDDF0 Jobs",
+        buttonLabelDe: "\uD83E\uDDF0 Jobs",
         colorLow: [234, 198, 190],
         colorHigh: [138, 57, 47],
     },
     attractiveness: {
-        label: "Attraktivität",
+        label: "Attractiveness",
+        labelEn: "Attractiveness",
+        labelDe: "Attraktivität",
         buttonLabel: "\u2728 Attr.",
+        buttonLabelEn: "\u2728 Attr.",
+        buttonLabelDe: "\u2728 Attr.",
         colorLow: [175, 224, 207],
         colorHigh: [31, 112, 92],
     },
     integration: {
         label: "Integration",
+        labelEn: "Integration",
+        labelDe: "Integration",
         buttonLabel: "\uD83E\uDD1D Int.",
+        buttonLabelEn: "\uD83E\uDD1D Int.",
+        buttonLabelDe: "\uD83E\uDD1D Int.",
         colorLow: [210, 214, 186],
         colorHigh: [58, 132, 124],
     },
     corruption: {
-        label: "Korruptionsrisiko",
-        buttonLabel: "\u2696\uFE0F Korr.",
+        label: "Corruption risk",
+        labelEn: "Corruption risk",
+        labelDe: "Korruptionsrisiko",
+        buttonLabel: "\u2696\uFE0F Corr.",
+        buttonLabelEn: "\u2696\uFE0F Corr.",
+        buttonLabelDe: "\u2696\uFE0F Korr.",
         colorLow: [190, 226, 186],
         colorHigh: [151, 80, 64],
     },
     inflation: {
         label: "Inflation / Deflation",
-        buttonLabel: "\u2195\uFE0F Preise",
+        labelEn: "Inflation / Deflation",
+        labelDe: "Inflation / Deflation",
+        buttonLabel: "\u2195\uFE0F Prices",
+        buttonLabelEn: "\u2195\uFE0F Prices",
+        buttonLabelDe: "\u2195\uFE0F Preise",
         colorLow: [118, 167, 212],
         colorHigh: [182, 78, 64],
     },
     debt: {
-        label: "Schuldenquote",
-        buttonLabel: "\uD83C\uDFE6 Schuld.",
+        label: "Debt ratio",
+        labelEn: "Debt ratio",
+        labelDe: "Schuldenquote",
+        buttonLabel: "\uD83C\uDFE6 Debt",
+        buttonLabelEn: "\uD83C\uDFE6 Debt",
+        buttonLabelDe: "\uD83C\uDFE6 Schuld.",
         colorLow: [184, 214, 198],
         colorHigh: [153, 77, 64],
     },
     satisfaction: {
-        label: "Zufriedenheit",
-        buttonLabel: "\uD83D\uDE42 Zufr.",
+        label: "Satisfaction",
+        labelEn: "Satisfaction",
+        labelDe: "Zufriedenheit",
+        buttonLabel: "\uD83D\uDE42 Sat.",
+        buttonLabelEn: "\uD83D\uDE42 Sat.",
+        buttonLabelDe: "\uD83D\uDE42 Zufr.",
         colorLow: [143, 112, 79],
         colorHigh: [212, 190, 102],
     },
     elections: {
-        label: "Wahlen",
-        buttonLabel: "\uD83C\uDFDB\uFE0F Wahl",
+        label: "Elections",
+        labelEn: "Elections",
+        labelDe: "Wahlen",
+        buttonLabel: "\uD83C\uDFDB\uFE0F Vote",
+        buttonLabelEn: "\uD83C\uDFDB\uFE0F Vote",
+        buttonLabelDe: "\uD83C\uDFDB\uFE0F Wahl",
         colorLow: [148, 167, 192],
         colorHigh: [144, 84, 140],
+    },
+};
+const I18N = {
+    en: {
+        "hero.lead": "Calibrated Balkan simulation to 2050 with multiple runs, political dynamics, regional events, and an integrated border mode. The data model and map logic are prepared for Slovenia and Greece.",
+        "map.kicker": "Map",
+        "timeline.year": "Year",
+        "mode.countries": "Countries",
+        "mode.regions": "Regions",
+        "mode.borders": "Borders",
+        "panel.summary": "Summary",
+        "panel.details": "Details",
+        "border.mode": "Border mode",
+        "border.annexer": "Annexing country",
+        "border.assignment": "Assignment",
+        "action.annex": "Annex",
+        "action.reset": "Reset",
+        "action.save": "Save",
+        "scope.countries": "Countries",
+        "scope.regions": "Regions",
+        "hint.country": "Hover over a country.",
+        "hint.region": "Hover over a region.",
+        "hint.area": "Hover over an area.",
+        "hint.event": "Click a letter to read an event.",
+        "event.title": "Event letter",
+        "event.year": "Year",
+        "event.regions": "Affected regions",
+        "event.effects": "Model effect",
+        "event.description": "Description",
+        "event.countryWide": "Country-wide",
+        "status.noYear": "No year loaded",
+        "status.waiting": "Waiting for data",
+        "status.reload": "Reload Export",
+        "status.reloading": "Reloading...",
+        "status.run": "Generate Runs",
+        "status.running": "Running...",
+        "metric.population": "Population",
+        "metric.gdp": "GDP",
+        "metric.jobs": "Jobs",
+        "metric.growth": "Growth",
+        "metric.current": "Current",
+        "metric.previous": "Previous year",
+        "metric.change": "Change",
+        "metric.direction": "Direction",
+        "metric.rate": "Rate",
+        "metric.noPrevious": "no previous year",
+        "editor.noSelection": "No area selected",
+        "editor.chooseCountry": "Choose a country, then annex a region.",
+        "editor.off": "Border mode off.",
+        "editor.countryHint": "Click a visible country.",
+        "editor.regionHint": "Click or right-click a visible region.",
+    },
+    de: {
+        "hero.lead": "Kalibrierte Balkan-Simulation bis 2050 mit mehreren Runs, politischer Dynamik, regionalen Ereignissen und integriertem Grenzmodus. Datenmodell und Kartenlogik sind für Slowenien und Griechenland vorbereitet.",
+        "map.kicker": "Karte",
+        "timeline.year": "Jahr",
+        "mode.countries": "Länder",
+        "mode.regions": "Regionen",
+        "mode.borders": "Grenzen",
+        "panel.summary": "Übersicht",
+        "panel.details": "Details",
+        "border.mode": "Grenzmodus",
+        "border.annexer": "Übernehmendes Land",
+        "border.assignment": "Zuordnung",
+        "action.annex": "Übernehmen",
+        "action.reset": "Zurücksetzen",
+        "action.save": "Speichern",
+        "scope.countries": "Länder",
+        "scope.regions": "Regionen",
+        "hint.country": "Über ein Land fahren.",
+        "hint.region": "Über eine Region fahren.",
+        "hint.area": "Über eine Fläche fahren.",
+        "hint.event": "Brief anklicken, um ein Ereignis zu lesen.",
+        "event.title": "Ereignisbrief",
+        "event.year": "Jahr",
+        "event.regions": "Betroffene Regionen",
+        "event.effects": "Modellwirkung",
+        "event.description": "Beschreibung",
+        "event.countryWide": "Landesweit",
+        "status.noYear": "Kein Jahr geladen",
+        "status.waiting": "Warte auf Daten",
+        "status.reload": "Export neu laden",
+        "status.reloading": "Lade neu...",
+        "status.run": "Runs starten",
+        "status.running": "Läuft...",
+        "metric.population": "Einwohner",
+        "metric.gdp": "BIP",
+        "metric.jobs": "Jobs",
+        "metric.growth": "Wachstum",
+        "metric.current": "Aktuell",
+        "metric.previous": "Vorjahr",
+        "metric.change": "Änderung",
+        "metric.direction": "Richtung",
+        "metric.rate": "Rate",
+        "metric.noPrevious": "kein Vorjahr",
+        "editor.noSelection": "Kein Gebiet gewählt",
+        "editor.chooseCountry": "Land wählen, dann eine Region übernehmen.",
+        "editor.off": "Grenzmodus aus.",
+        "editor.countryHint": "Ein sichtbares Land anklicken.",
+        "editor.regionHint": "Eine sichtbare Region anklicken oder rechtsklicken.",
     },
 };
 const GEOJSON_PATHS = {
@@ -789,6 +933,8 @@ const dashboardState = {
     countryRowCount: 0,
     regionRowCount: 0,
     activeMetric: "classic",
+    language: window.localStorage?.getItem("bespLanguage") === "de" ? "de" : "en",
+    selectedEventIndex: -1,
     currentCountryRows: [],
     currentRegionRows: [],
     editorMode: false,
@@ -823,6 +969,7 @@ const elements = {
     exportStatus: document.getElementById("export-status"),
     speedButtons: Array.from(document.querySelectorAll(".speed-button")),
     metricButtons: Array.from(document.querySelectorAll(".metric-button")),
+    languageButtons: Array.from(document.querySelectorAll(".language-button")),
     mapHoverTitle: document.getElementById("map-hover-title"),
     mapHoverBody: document.getElementById("map-hover-body"),
     mapRoot: document.getElementById("country-map"),
@@ -875,7 +1022,9 @@ const EMPTY_TABLE_ROWS = {
     regionExport: buildEmptyTableRow(12, "Im Export wurden keine Regionswerte gefunden."),
 };
 document.addEventListener("DOMContentLoaded", () => {
+    applyLanguage();
     decorateMetricButtons();
+    bindLanguageControls();
     bindMapModeEvents();
     bindPlaybackControls();
     bindEditorControls();
@@ -884,6 +1033,45 @@ document.addEventListener("DOMContentLoaded", () => {
     renderEmptyState();
     void initializeDashboard();
 });
+function t(key) {
+    return I18N[dashboardState.language]?.[key] ?? I18N.en[key] ?? key;
+}
+function applyLanguage() {
+    document.documentElement.lang = dashboardState.language === "de" ? "de-CH" : "en";
+    for (const node of document.querySelectorAll("[data-i18n]")) {
+        node.textContent = t(node.dataset.i18n);
+    }
+    for (const button of elements.languageButtons) {
+        const active = button.dataset.language === dashboardState.language;
+        button.classList.toggle("language-button-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+    }
+    for (const view of Object.values(METRIC_VIEWS)) {
+        view.label = dashboardState.language === "de" ? (view.labelDe ?? view.labelEn ?? view.label) : (view.labelEn ?? view.label);
+        view.buttonLabel = dashboardState.language === "de"
+            ? (view.buttonLabelDe ?? view.buttonLabelEn ?? view.buttonLabel)
+            : (view.buttonLabelEn ?? view.buttonLabel);
+    }
+    decorateMetricButtons();
+}
+function bindLanguageControls() {
+    for (const button of elements.languageButtons) {
+        button.addEventListener("click", () => {
+            const nextLanguage = button.dataset.language === "de" ? "de" : "en";
+            if (dashboardState.language === nextLanguage) {
+                return;
+            }
+            dashboardState.language = nextLanguage;
+            window.localStorage?.setItem("bespLanguage", nextLanguage);
+            applyLanguage();
+            if (dashboardState.exportData) {
+                renderActiveYearState();
+            } else {
+                renderEmptyState();
+            }
+        });
+    }
+}
 function bindMapModeEvents() {
     elements.mapModeCountryButton.addEventListener("click", () => {
         if (dashboardState.editorMode) {
@@ -1548,10 +1736,10 @@ function updatePlaybackControls() {
         || dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1;
     elements.playbackToggleButton.disabled = dashboardState.isReloading || dashboardState.yearKeys.length < 2;
     elements.reloadExportButton.disabled = dashboardState.isReloading;
-    elements.currentYearPill.textContent = activeYearKey || "Kein Jahr geladen";
-    elements.reloadExportButton.textContent = dashboardState.isReloading ? "Lade neu..." : "Export neu laden";
+    elements.currentYearPill.textContent = activeYearKey || t("status.noYear");
+    elements.reloadExportButton.textContent = dashboardState.isReloading ? t("status.reloading") : t("status.reload");
     elements.generateRunButton.disabled = runControlsDisabled;
-    elements.generateRunButton.textContent = dashboardState.isGeneratingRun ? "Laeuft..." : "Runs starten";
+    elements.generateRunButton.textContent = dashboardState.isGeneratingRun ? t("status.running") : t("status.run");
     elements.runScenarioSelect.disabled = runControlsDisabled;
     elements.runCountInput.disabled = runControlsDisabled;
     elements.runShocksEnabled.disabled = runControlsDisabled;
@@ -2308,6 +2496,9 @@ function renderActiveYearState() {
         ? buildDisplayRowsForYear(previousYearKey)
         : { countryRows: [], regionRows: [], regionSourceMap: new Map(), visualRegionGroups: [] };
     const { countryRows, regionRows } = activeRows;
+    if (dashboardState.selectedEventIndex >= getShockEventsForYear(activeYearKey).length) {
+        dashboardState.selectedEventIndex = -1;
+    }
     dashboardState.currentCountryRows = countryRows;
     dashboardState.currentRegionRows = regionRows;
     mapDataCache.countriesByCode = new Map(countryRows.map((row) => [normalizeCountryCode(row.country_code), row]));
@@ -2410,8 +2601,25 @@ function aggregateCountryRowsFromVisualRegions(visualRegionGroups, sourceCountry
     const sourceCountryRowsByCode = new Map(
         sourceCountryRows.map((row) => [normalizeCountryCode(row.country_code), row])
     );
+    const decorateWithSourceState = (row) => {
+        const sourceOwnerCode = normalizeCountryCode(row.source_country_code ?? row.country_code);
+        const sourceCountryRow = sourceCountryRowsByCode.get(sourceOwnerCode) ?? null;
+        if (!sourceCountryRow) {
+            return row;
+        }
+        return {
+            ...row,
+            source_country_code: sourceOwnerCode,
+            source_country_name: sourceCountryRow.country_name ?? row.source_country_name ?? row.country_name,
+            corruption_index: Number(sourceCountryRow.corruption_index ?? row.corruption_index),
+            stability_index: Number(sourceCountryRow.stability_index ?? row.stability_index),
+            investment_climate_index: Number(sourceCountryRow.investment_climate_index ?? row.investment_climate_index),
+            budget_balance_pct_gdp: Number(sourceCountryRow.budget_balance_pct_gdp ?? row.budget_balance_pct_gdp),
+            debt_to_gdp: Number(sourceCountryRow.debt_to_gdp ?? row.debt_to_gdp),
+        };
+    };
     return [...groupsByOwner.entries()].map(([countryCode, rows]) => (
-        aggregateCountryDisplayRow(countryCode, rows, sourceCountryRowsByCode.get(countryCode) ?? null)
+        aggregateCountryDisplayRow(countryCode, rows.map(decorateWithSourceState), sourceCountryRowsByCode.get(countryCode) ?? null)
     ));
 }
 function aggregateCountryDisplayRow(countryCode, rows, baseCountryRow) {
@@ -2426,6 +2634,11 @@ function aggregateCountryDisplayRow(countryCode, rows, baseCountryRow) {
     const averageIntegration = weightedAverageMetric(rows, "integration_index", "end_population");
     const averageInflation = weightedAverageMetric(rows, "inflation_rate", "end_gdp_billion_eur");
     const averageSatisfaction = weightedAverageMetric(rows, "satisfaction_index", "end_population");
+    const averageCorruption = weightedAverageMetric(rows, "corruption_index", "end_gdp_billion_eur");
+    const averageStability = weightedAverageMetric(rows, "stability_index", "end_population");
+    const averageInvestmentClimate = weightedAverageMetric(rows, "investment_climate_index", "end_gdp_billion_eur");
+    const averageBudgetBalance = weightedAverageMetric(rows, "budget_balance_pct_gdp", "end_gdp_billion_eur");
+    const averageDebt = weightedAverageMetric(rows, "debt_to_gdp", "end_gdp_billion_eur");
     const electionTension = weightedAverageMetric(rows, "election_tension_index", "end_population");
     const electionAlignment = weightedAverageMetric(rows, "election_alignment_index", "end_population");
     const electionShift = weightedAverageMetric(rows, "election_alignment_shift", "end_population");
@@ -2461,6 +2674,11 @@ function aggregateCountryDisplayRow(countryCode, rows, baseCountryRow) {
         election_next_year: Number(base.election_next_year ?? rows[0]?.election_next_year ?? 0),
         election_cycle_progress: Number(base.election_cycle_progress ?? rows[0]?.election_cycle_progress ?? 0),
         election_happened_this_year: Boolean(base.election_happened_this_year ?? rows.some((row) => row.election_happened_this_year)),
+        corruption_index: Number.isFinite(averageCorruption) ? averageCorruption : Number(base.corruption_index ?? rows[0]?.corruption_index ?? Number.NaN),
+        stability_index: Number.isFinite(averageStability) ? averageStability : Number(base.stability_index ?? rows[0]?.stability_index ?? Number.NaN),
+        investment_climate_index: Number.isFinite(averageInvestmentClimate) ? averageInvestmentClimate : Number(base.investment_climate_index ?? rows[0]?.investment_climate_index ?? Number.NaN),
+        budget_balance_pct_gdp: Number.isFinite(averageBudgetBalance) ? averageBudgetBalance : Number(base.budget_balance_pct_gdp ?? rows[0]?.budget_balance_pct_gdp ?? Number.NaN),
+        debt_to_gdp: Number.isFinite(averageDebt) ? averageDebt : Number(base.debt_to_gdp ?? rows[0]?.debt_to_gdp ?? Number.NaN),
         is_border_editor_aggregate: true,
     };
 }
@@ -2477,13 +2695,16 @@ function enrichRegionRowWithCountryState(regionRow, countryRow) {
     if (!regionRow || !countryRow) {
         return regionRow;
     }
+    const keepFinite = (regionValue, countryValue) => (
+        Number.isFinite(Number(regionValue)) ? regionValue : countryValue
+    );
     return {
         ...regionRow,
-        corruption_index: countryRow.corruption_index,
-        stability_index: countryRow.stability_index,
-        investment_climate_index: countryRow.investment_climate_index,
-        budget_balance_pct_gdp: countryRow.budget_balance_pct_gdp,
-        debt_to_gdp: countryRow.debt_to_gdp,
+        corruption_index: keepFinite(regionRow.corruption_index, countryRow.corruption_index),
+        stability_index: keepFinite(regionRow.stability_index, countryRow.stability_index),
+        investment_climate_index: keepFinite(regionRow.investment_climate_index, countryRow.investment_climate_index),
+        budget_balance_pct_gdp: keepFinite(regionRow.budget_balance_pct_gdp, countryRow.budget_balance_pct_gdp),
+        debt_to_gdp: keepFinite(regionRow.debt_to_gdp, countryRow.debt_to_gdp),
     };
 }
 function renderCountryLayer(geoData) {
@@ -2687,6 +2908,7 @@ function renderRegionLayer(geoData) {
         groupedRegions.map((group) => group.displayData).filter(Boolean),
         (row) => metricValueFromRegion(row, dashboardState.activeMetric)
     );
+    const affectedRegionKeys = getActiveEventRegionKeys();
     mapDataCache.visualRegionsByKey = new Map(groupedRegions.map((group) => [group.visualRegionKey, group]));
     mapDataCache.previousVisualRegionsByKey = new Map(
         previousGroupedRegions
@@ -2700,9 +2922,12 @@ function renderRegionLayer(geoData) {
                 && dashboardState.selectedEditorSelectionKey === group.visualRegionKey
                 ? " map-editor-selected"
                 : "";
+            const eventAffectedClass = isVisualRegionAffectedByEvent(group, affectedRegionKeys)
+                ? " map-event-affected"
+                : "";
             return `
             <path
-                class="map-region-shape${selectedClass}"
+                class="map-region-shape${selectedClass}${eventAffectedClass}"
                 data-country-code="${escapeHtml(group.countryCode)}"
                 data-region-name="${escapeHtml(group.label)}"
                 data-visual-region-key="${escapeHtml(group.visualRegionKey)}"
@@ -2783,29 +3008,32 @@ function renderMapEventLayer() {
         elements.mapEventLayer.innerHTML = "";
         return;
     }
-    const activeEvents = getShockEventsForYear(activeYearKey)
+    const activeEvents = getVisibleShockEventsForYear(activeYearKey)
         .filter((event) => mapDataCache.countryFeaturesByCode.has(normalizeCountryCode(event.country_code)))
-        .sort((left, right) => Number(right.severity_scale ?? 0) - Number(left.severity_scale ?? 0))
-        .slice(0, 5);
-    elements.mapEventLayer.innerHTML = activeEvents.map((event, index) => {
+    elements.mapEventLayer.innerHTML = activeEvents.map(({ event, sourceIndex }, index) => {
         const countryCode = normalizeCountryCode(event.country_code);
         const country = mapDataCache.countryFeaturesByCode.get(countryCode);
         if (!country) {
             return "";
         }
         const [baseX, baseY] = resolveCountryLabelPosition(country);
-        const message = event.message || `${COUNTRY_CONFIG[countryCode]?.name ?? countryCode}: ${event.shock_name ?? "Ereignis"}`;
-        const shortMessage = truncateText(message, 42);
-        const width = clamp(shortMessage.length * 5.8 + 18, 92, 250);
-        const x = clamp(baseX - width / 2, 6, MAP_VIEWBOX_WIDTH - width - 6);
-        const y = clamp(baseY - 44 - index * 2, 12, MAP_VIEWBOX_HEIGHT - 28);
+        const x = clamp(baseX + 18 + index * 4, 16, MAP_VIEWBOX_WIDTH - 16);
+        const y = clamp(baseY - 34 - index * 3, 16, MAP_VIEWBOX_HEIGHT - 16);
+        const selectedClass = dashboardState.selectedEventIndex === sourceIndex ? " map-event-letter-selected" : "";
         return `
-            <g class="map-event-badge" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
-                <rect class="map-event-badge-bg" width="${width.toFixed(1)}" height="24" rx="12"></rect>
-                <text class="map-event-badge-text" x="${(width / 2).toFixed(1)}" y="16">${escapeHtml(shortMessage)}</text>
+            <g class="map-event-letter${selectedClass}" data-event-index="${sourceIndex}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" role="button" aria-label="${escapeHtml(event.shock_name ?? t("event.title"))}">
+                <rect class="map-event-letter-bg" x="-10" y="-8" width="20" height="16" rx="4"></rect>
+                <path class="map-event-letter-icon" d="M -8 -5 H 8 V 6 H -8 Z M -8 -5 L 0 1 L 8 -5 M -8 6 L -2 0 M 8 6 L 2 0"></path>
             </g>
         `;
     }).join("");
+    bindMapEventEvents();
+}
+function getVisibleShockEventsForYear(yearKey) {
+    return getShockEventsForYear(yearKey)
+        .map((event, sourceIndex) => ({ event, sourceIndex }))
+        .sort((left, right) => Number(right.event.severity_scale ?? 0) - Number(left.event.severity_scale ?? 0))
+        .slice(0, 6);
 }
 function getShockEventsForYear(yearKey) {
     const [startYearText] = String(yearKey).split("-");
@@ -2817,6 +3045,83 @@ function getShockEventsForYear(yearKey) {
         ? dashboardState.exportData.shock_events
         : [];
     return events.filter((event) => Number(event.start_year) === startYear);
+}
+function getShockEventByIndex(index) {
+    const activeYearKey = getActiveYearKey();
+    const events = getShockEventsForYear(activeYearKey);
+    return events[Number(index)] ?? null;
+}
+function bindMapEventEvents() {
+    if (!elements.mapEventLayer) {
+        return;
+    }
+    for (const node of elements.mapEventLayer.querySelectorAll(".map-event-letter")) {
+        node.addEventListener("click", (event) => {
+            event.stopPropagation();
+            dashboardState.selectedEventIndex = Number(node.getAttribute("data-event-index"));
+            const shockEvent = getShockEventByIndex(dashboardState.selectedEventIndex);
+            if (shockEvent) {
+                renderEventDetails(shockEvent);
+            }
+            renderMapEventLayer();
+            renderRegionLayer(dashboardState.geoData);
+            bindMapSelectionEvents();
+            bindMapHoverEvents();
+        });
+    }
+}
+function getActiveEventRegionKeys() {
+    const activeYearKey = getActiveYearKey();
+    const keys = new Set();
+    for (const { event } of getVisibleShockEventsForYear(activeYearKey)) {
+        for (const key of event.affected_region_keys ?? []) {
+            keys.add(normalizeEventRegionKey(key));
+        }
+    }
+    return keys;
+}
+function normalizeEventRegionKey(regionKey) {
+    const [countryCode, regionName = ""] = String(regionKey ?? "").split("::");
+    return buildRegionKey(countryCode, regionName);
+}
+function isVisualRegionAffectedByEvent(group, affectedRegionKeys) {
+    if (!affectedRegionKeys?.size || !group) {
+        return false;
+    }
+    const candidates = new Set([
+        buildRegionKey(group.countryCode, group.label),
+        normalizeEventRegionKey(group.dataRegionKey),
+        ...(Array.isArray(group.dataRegionKeys) ? group.dataRegionKeys.map(normalizeEventRegionKey) : []),
+        ...(Array.isArray(group.features)
+            ? group.features.flatMap((feature) => [
+                normalizeEventRegionKey(feature.bespRegionKey),
+                normalizeEventRegionKey(feature.visualRegionDataKey),
+                ...(Array.isArray(feature.visualRegionDataKeys) ? feature.visualRegionDataKeys.map(normalizeEventRegionKey) : []),
+            ])
+            : []),
+    ]);
+    return [...candidates].some((key) => key && affectedRegionKeys.has(key));
+}
+function renderEventDetails(event) {
+    const title = event.shock_name || event.message || t("event.title");
+    const regionNames = Array.isArray(event.affected_region_names) && event.affected_region_names.length
+        ? event.affected_region_names.join(", ")
+        : t("event.countryWide");
+    const effects = [
+        `GDP ${formatSignedPercent(Number(event.gdp_growth_bias ?? 0))}`,
+        `Jobs ${formatSignedPercent(Number(event.unemployment_bias ?? 0))}`,
+        `Migration ${formatSignedPercent(Number(event.net_migration_rate_shift ?? 0))}`,
+    ].join(" | ");
+    setMapHoverDetails(
+        `${title} (${displayCountryCode(event.country_code)})`,
+        buildHoverDetailGrid([
+            buildHoverDetailRow(t("event.year"), String(event.start_year ?? "-")),
+            buildHoverDetailRow(t("event.regions"), regionNames),
+            buildHoverDetailRow(t("event.effects"), effects),
+            buildHoverDetailRow(t("event.description"), event.message || event.description || title),
+        ]),
+        true
+    );
 }
 function truncateText(text, maxLength) {
     const value = String(text ?? "");
@@ -2973,6 +3278,7 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
                     : []
             ))),
         ].filter(Boolean);
+        const overrideFill = features.find((feature) => feature.visualRegionFill)?.visualRegionFill ?? null;
         return {
             visualRegionKey,
             label: template?.label ?? features[0]?.visualRegionLabel ?? visualRegionKey,
@@ -2981,8 +3287,9 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
                 ? featureDataRegionKeys
                 : Array.isArray(template?.dataRegionKeys) ? template.dataRegionKeys : null,
             countryCode: features[0]?.countryCode ?? "",
+            sourceCountryCode: features[0]?.rawCountryCode ?? features[0]?.sourceCountryCode ?? features[0]?.countryCode ?? "",
             features,
-            fill: template?.fill ?? features[0]?.visualRegionFill ?? "rgba(126, 143, 161, 0.5)",
+            fill: overrideFill ?? template?.fill ?? "rgba(126, 143, 161, 0.5)",
             centroid: averageCentroid(features),
             projectedBounds: mergeProjectedBounds(features),
             projectedArea: features.reduce((sum, feature) => sum + (feature.projectedArea ?? 0), 0),
@@ -3001,6 +3308,8 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
         const withOwner = (displayData) => displayData
             ? {
                 ...displayData,
+                source_country_code: displayData.source_country_code ?? group.sourceCountryCode ?? displayData.country_code,
+                source_country_name: displayData.source_country_name ?? displayData.country_name,
                 country_code: group.countryCode,
                 country_name: COUNTRY_CONFIG[group.countryCode]?.name ?? displayData.country_name ?? group.countryCode,
             }
@@ -3582,36 +3891,40 @@ function resetMapHoverDetails() {
             return;
         }
         setMapHoverDetails(
-            "Grenzmodus",
+            t("border.mode"),
             activeMapMode === "country"
-                ? "Ein sichtbares Land anklicken."
-                : "Eine sichtbare Region anklicken."
+                ? t("editor.countryHint")
+                : t("editor.regionHint")
         );
         return;
     }
     if (!isClassicMetricView()) {
-        let metricHint = "Über eine Fläche fahren.";
+        let metricHint = t("hint.area");
         if (dashboardState.activeMetric === "integration") {
-            metricHint = "Modellscore 0-100 aus EU-Nähe, Stabilität, Korruptionsrisiko, Mobilität und innerem Zusammenhalt.";
+            metricHint = dashboardState.language === "de"
+                ? "Modellscore 0-100 aus EU-Nähe, Stabilität, Korruptionsrisiko, Mobilität und innerem Zusammenhalt."
+                : "Model score from 0-100 using EU proximity, stability, corruption risk, mobility, and internal cohesion.";
         } else if (dashboardState.activeMetric === "corruption") {
-            metricHint = "Negativer Modellscore 0-100: tiefer bedeutet weniger Korruptionsrisiko.";
+            metricHint = dashboardState.language === "de"
+                ? "Negativer Modellscore 0-100: tiefer bedeutet weniger Korruptionsrisiko."
+                : "Negative model score from 0-100: lower means lower corruption risk.";
         }
         setMapHoverDetails(
-            `${METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metrik"}`,
+            `${METRIC_VIEWS[dashboardState.activeMetric]?.label ?? "Metric"}`,
             metricHint
         );
         return;
     }
     if (activeMapMode === "country") {
         setMapHoverDetails(
-            "Länder",
-            "Über ein Land fahren."
+            t("scope.countries"),
+            t("hint.country")
         );
         return;
     }
     setMapHoverDetails(
-        "Regionen",
-        "Über eine Region fahren."
+        t("scope.regions"),
+        t("hint.region")
     );
 }
 function renderCountryTable(countryRows) {
@@ -3676,7 +3989,7 @@ function renderPublicSidebar() {
     const regionRows = dashboardState.currentRegionRows ?? [];
     const useRegionScope = activeMapMode === "region";
     const sourceRows = useRegionScope ? regionRows : countryRows;
-    const scopeLabel = useRegionScope ? "Regionen" : "Länder";
+    const scopeLabel = useRegionScope ? t("scope.regions") : t("scope.countries");
     const isClassic = isClassicMetricView();
     const dedicatedMetricSlots = new Set(["population", "gdp_per_capita", "unemployment", "attractiveness"]);
     const activeMetricUsesFallbackSlot = !dedicatedMetricSlots.has(dashboardState.activeMetric);
@@ -3694,16 +4007,20 @@ function renderPublicSidebar() {
     elements.kpiScope.textContent = scopeLabel;
     elements.kpiScopeNote.textContent = "";
     if (dashboardState.activeMetric === "integration") {
-        elements.kpiScopeNote.textContent = "Modellscore 0-100 aus EU-Nähe, Stabilität, Korruptionsrisiko, Mobilität und innerem Zusammenhalt.";
+        elements.kpiScopeNote.textContent = dashboardState.language === "de"
+            ? "Modellscore 0-100 aus EU-Nähe, Stabilität, Korruptionsrisiko, Mobilität und innerem Zusammenhalt."
+            : "Model score from 0-100 using EU proximity, stability, corruption risk, mobility, and internal cohesion.";
     }
     if (dashboardState.activeMetric === "corruption") {
-        elements.kpiScopeNote.textContent = "Negativer Modellscore 0-100: tiefer ist besser.";
+        elements.kpiScopeNote.textContent = dashboardState.language === "de"
+            ? "Negativer Modellscore 0-100: tiefer ist besser."
+            : "Negative model score from 0-100: lower is better.";
     }
     if (!sourceRows.length) {
-        elements.kpiLabelPopulation.textContent = "Einwohner";
-        elements.kpiLabelGdp.textContent = "BIP";
-        elements.kpiLabelUnemployment.textContent = "Jobs";
-        elements.kpiLabelGrowth.textContent = "Wachstum";
+        elements.kpiLabelPopulation.textContent = t("metric.population");
+        elements.kpiLabelGdp.textContent = t("metric.gdp");
+        elements.kpiLabelUnemployment.textContent = t("metric.jobs");
+        elements.kpiLabelGrowth.textContent = t("metric.growth");
         elements.kpiPopulation.textContent = "-";
         elements.kpiGdp.textContent = "-";
         elements.kpiUnemployment.textContent = "-";
@@ -3713,9 +4030,9 @@ function renderPublicSidebar() {
     if (!isClassic) {
         const metricKey = dashboardState.activeMetric;
         const currentAggregate = aggregateMetricForScope(sourceRows, metricKey);
-        elements.kpiLabelPopulation.textContent = "Einwohner";
-        elements.kpiLabelGdp.textContent = "BIP/Kopf";
-        elements.kpiLabelUnemployment.textContent = "Jobs";
+        elements.kpiLabelPopulation.textContent = t("metric.population");
+        elements.kpiLabelGdp.textContent = dashboardState.language === "de" ? "BIP/Kopf" : "GDP/cap.";
+        elements.kpiLabelUnemployment.textContent = t("metric.jobs");
         elements.kpiLabelGrowth.textContent = "Attr.";
         elements.kpiPopulation.textContent = metricKey === "population" || activeMetricUsesFallbackSlot
             ? formatMetricDisplay(currentAggregate, metricKey)
@@ -3726,14 +4043,14 @@ function renderPublicSidebar() {
             ? formatMetricDisplay(currentAggregate, metricKey)
             : "-";
         if (activeMetricUsesFallbackSlot) {
-            elements.kpiLabelPopulation.textContent = METRIC_VIEWS[metricKey]?.label ?? "Metrik";
+            elements.kpiLabelPopulation.textContent = METRIC_VIEWS[metricKey]?.label ?? "Metric";
         }
         return;
     }
-    elements.kpiLabelPopulation.textContent = "Einwohner";
-    elements.kpiLabelGdp.textContent = "BIP";
-    elements.kpiLabelUnemployment.textContent = "Jobs";
-    elements.kpiLabelGrowth.textContent = "Wachstum";
+    elements.kpiLabelPopulation.textContent = t("metric.population");
+    elements.kpiLabelGdp.textContent = t("metric.gdp");
+    elements.kpiLabelUnemployment.textContent = t("metric.jobs");
+    elements.kpiLabelGrowth.textContent = t("metric.growth");
     const classicSummary = classicScopeSummary(sourceRows);
     elements.kpiPopulation.textContent = formatInteger(Math.round(classicSummary.population));
     elements.kpiGdp.textContent = `${formatDecimal(classicSummary.gdp)} bn`;
@@ -3823,7 +4140,7 @@ function renderEmptyState() {
         countryRowsByYear: new Map(),
     });
     elements.yearSelect.innerHTML = "";
-    elements.currentYearPill.textContent = "Kein Jahr geladen";
+    elements.currentYearPill.textContent = t("status.noYear");
     updatePlaybackControls();
     setMapMode("country");
     resetMapHoverDetails();
@@ -3865,6 +4182,12 @@ function buildHoverDetailGrid(rows, note = "") {
             ${note ? `<p class="hover-detail-note">${escapeHtml(note)}</p>` : ""}
         </div>
     `;
+}
+function formatSignedPercent(value) {
+    if (!Number.isFinite(value)) {
+        return "-";
+    }
+    return `${value >= 0 ? "+" : ""}${formatPercent(value)}`;
 }
 function buildElectionScale(value) {
     const clamped = clamp(Number(value) || 0, -1, 1);
@@ -3977,13 +4300,13 @@ function buildInflationHoverHtml(row, previousRow) {
     const delta = Number.isFinite(previous) ? current - previous : Number.NaN;
     const tone = current < 0 ? "positive" : current > 0 ? "negative" : "neutral";
     return buildHoverDetailGrid([
-        buildHoverDetailRow("Richtung", formatInflationDirection(current), tone),
-        buildHoverDetailRow("Rate", formatPercent(Math.abs(current)), tone),
+        buildHoverDetailRow(t("metric.direction"), formatInflationDirection(current), tone),
+        buildHoverDetailRow(t("metric.rate"), formatPercent(Math.abs(current)), tone),
         buildHoverDetailRow(
-            "Zum Vorjahr",
+            t("metric.previous"),
             Number.isFinite(delta)
                 ? `${delta >= 0 ? "▲" : "▼"} ${formatPercent(Math.abs(delta))}`
-                : "kein Vorjahr",
+                : t("metric.noPrevious"),
             delta < 0 ? "positive" : delta > 0 ? "negative" : "neutral"
         ),
     ]);
@@ -4034,9 +4357,9 @@ function buildMetricHoverHtml(metricKey, row, previousRow, scopeType = "region")
     const previousValue = previousRow ? metricRowValue(previousRow, metricKey) : Number.NaN;
     const trend = metricTrend(metricKey, currentValue, previousValue);
     return buildHoverDetailGrid([
-        buildHoverDetailRow("Aktuell", formatMetricDisplay(currentValue, metricKey), trend.tone),
-        buildHoverDetailRow("Vorjahr", Number.isFinite(previousValue) ? formatMetricDisplay(previousValue, metricKey) : "-", "neutral"),
-        buildHoverDetailRow("Änderung", formatMetricDelta(currentValue, previousValue, metricKey, scopeType), trend.tone),
+        buildHoverDetailRow(t("metric.current"), formatMetricDisplay(currentValue, metricKey), trend.tone),
+        buildHoverDetailRow(t("metric.previous"), Number.isFinite(previousValue) ? formatMetricDisplay(previousValue, metricKey) : "-", "neutral"),
+        buildHoverDetailRow(t("metric.change"), formatMetricDelta(currentValue, previousValue, metricKey, scopeType), trend.tone),
     ], trend.summary);
 }
 function renderTable(targetElement, rows, emptyRowHtml, rowBuilder) {

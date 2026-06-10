@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de-CH">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,14 +12,18 @@
             <div>
                 <p class="eyebrow">BESP Phase 10.3</p>
                 <h1>Balkan Economy Simulation</h1>
-                <p class="lead">Kalibrierte Balkan-Simulation bis 2050 mit Mehrfachl&auml;ufen, politischer Dynamik und integriertem Grenzmodus. Datenmodell und Kartenlogik sind bereits f&uuml;r Slowenien und Griechenland vorbereitet.</p>
+                <p class="lead" data-i18n="hero.lead">Calibrated Balkan simulation to 2050 with multiple runs, political dynamics, regional events, and an integrated border mode. The data model and map logic are prepared for Slovenia and Greece.</p>
+            </div>
+            <div class="language-toggle" role="group" aria-label="Language">
+                <button id="language-en" class="language-button language-button-active" type="button" data-language="en">EN</button>
+                <button id="language-de" class="language-button" type="button" data-language="de">DE</button>
             </div>
         </header>
         <main class="dashboard-grid">
             <section class="panel map-panel">
                 <div class="section-heading">
                     <div>
-                        <p class="section-kicker">Karte</p>
+                        <p class="section-kicker" data-i18n="map.kicker">Map</p>
                         <h2>Balkan Layer</h2>
                     </div>
                     <div class="section-actions">
@@ -28,7 +32,7 @@
                             <button id="playback-toggle" class="timeline-button timeline-button-primary" type="button">Play</button>
                             <button id="year-step-forward" class="timeline-button" type="button">Next</button>
                             <label class="timeline-select-wrap" for="year-select">
-                                <span>Jahr</span>
+                                <span data-i18n="timeline.year">Year</span>
                                 <select id="year-select" class="timeline-select"></select>
                             </label>
                             <div class="speed-controls" role="group" aria-label="Playback speed">
@@ -37,26 +41,26 @@
                                 <button class="speed-button" data-speed="5" type="button">x5</button>
                                 <button class="speed-button" data-speed="10" type="button">x10</button>
                             </div>
-                            <span id="current-year-pill" class="year-pill">Warte auf Daten</span>
+                            <span id="current-year-pill" class="year-pill">Waiting for data</span>
                         </div>
                         <div class="view-strip">
                             <div class="map-mode-controls" role="group" aria-label="Map layer mode">
-                                <button id="map-mode-country" class="map-mode-button map-mode-button-active" type="button">L&auml;nder</button>
-                                <button id="map-mode-region" class="map-mode-button" type="button">Regionen</button>
-                                <button id="editor-mode-toggle" class="map-mode-button" type="button">Grenzen</button>
+                                <button id="map-mode-country" class="map-mode-button map-mode-button-active" type="button" data-i18n="mode.countries">Countries</button>
+                                <button id="map-mode-region" class="map-mode-button" type="button" data-i18n="mode.regions">Regions</button>
+                                <button id="editor-mode-toggle" class="map-mode-button" type="button" data-i18n="mode.borders">Borders</button>
                             </div>
                             <div class="metric-controls" role="group" aria-label="Map metric mode">
                                 <button class="metric-button metric-button-active" data-metric="classic" type="button">&#128506;&#65039; Std.</button>
-                                <button class="metric-button" data-metric="population" type="button">&#128101; Einw.</button>
-                                <button class="metric-button" data-metric="gdp_per_capita" type="button">&#128182; BIP/K.</button>
+                                <button class="metric-button" data-metric="population" type="button">&#128101; Pop.</button>
+                                <button class="metric-button" data-metric="gdp_per_capita" type="button">&#128182; GDP/c.</button>
                                 <button class="metric-button" data-metric="unemployment" type="button">&#129520; Jobs</button>
                                 <button class="metric-button" data-metric="attractiveness" type="button">&#10024; Attr.</button>
                                 <button class="metric-button" data-metric="integration" type="button">&#129309; Int.</button>
-                                <button class="metric-button" data-metric="inflation" type="button">&#8597;&#65039; Preise</button>
-                                <button class="metric-button" data-metric="debt" type="button">&#127974; Schuld.</button>
-                                <button class="metric-button" data-metric="corruption" type="button">&#9878;&#65039; Korr.</button>
-                                <button class="metric-button" data-metric="satisfaction" type="button">&#128578; Zufr.</button>
-                                <button class="metric-button" data-metric="elections" type="button">&#127963;&#65039; Wahl</button>
+                                <button class="metric-button" data-metric="inflation" type="button">&#8597;&#65039; Prices</button>
+                                <button class="metric-button" data-metric="debt" type="button">&#127974; Debt</button>
+                                <button class="metric-button" data-metric="corruption" type="button">&#9878;&#65039; Corr.</button>
+                                <button class="metric-button" data-metric="satisfaction" type="button">&#128578; Sat.</button>
+                                <button class="metric-button" data-metric="elections" type="button">&#127963;&#65039; Vote</button>
                             </div>
                         </div>
                     </div>
@@ -76,47 +80,47 @@
                     </div>
                     <div class="map-side-panel">
                         <article id="kpi-card" class="meta-card kpi-card">
-                            <span class="meta-label">&Uuml;bersicht</span>
-                            <strong id="kpi-scope" class="meta-value">L&auml;nder</strong>
+                            <span class="meta-label" data-i18n="panel.summary">Summary</span>
+                            <strong id="kpi-scope" class="meta-value">Countries</strong>
                             <p id="kpi-scope-note" class="meta-note"></p>
                                 <div id="kpi-grid" class="kpi-grid">
-                                <div class="kpi-item" data-kpi="population"><span id="kpi-label-population">Einwohner</span><strong id="kpi-population">-</strong></div>
-                                <div class="kpi-item" data-kpi="gdp_per_capita"><span id="kpi-label-gdp">BIP</span><strong id="kpi-gdp">-</strong></div>
+                                <div class="kpi-item" data-kpi="population"><span id="kpi-label-population">Population</span><strong id="kpi-population">-</strong></div>
+                                <div class="kpi-item" data-kpi="gdp_per_capita"><span id="kpi-label-gdp">GDP</span><strong id="kpi-gdp">-</strong></div>
                                 <div class="kpi-item" data-kpi="unemployment"><span id="kpi-label-unemployment">Jobs</span><strong id="kpi-unemployment">-</strong></div>
-                                <div class="kpi-item" data-kpi="attractiveness"><span id="kpi-label-growth">Wachstum</span><strong id="kpi-growth">-</strong></div>
+                                <div class="kpi-item" data-kpi="attractiveness"><span id="kpi-label-growth">Growth</span><strong id="kpi-growth">-</strong></div>
                             </div>
                         </article>
                         <article id="map-editor-card" class="meta-card map-editor-card map-hidden">
-                            <span class="meta-label">Grenzmodus</span>
-                            <strong id="editor-inline-selection-title" class="meta-value">Kein Gebiet gew&auml;hlt</strong>
-                            <p id="editor-inline-selection-note" class="meta-note">Land w&auml;hlen, dann Region &uuml;bernehmen.</p>
+                            <span class="meta-label" data-i18n="border.mode">Border mode</span>
+                            <strong id="editor-inline-selection-title" class="meta-value">No area selected</strong>
+                            <p id="editor-inline-selection-note" class="meta-note">Choose a country, then annex a region.</p>
                             <div class="editor-inline-grid">
                                 <label class="timeline-select-wrap" for="editor-inline-target-country">
-                                    <span>&Uuml;bernimmt</span>
+                                    <span data-i18n="border.annexer">Annexing country</span>
                                     <select id="editor-inline-target-country" class="timeline-select"></select>
                                 </label>
                                 <label class="timeline-select-wrap editor-hidden-field" for="editor-inline-target-region">
-                                    <span>Einordnung</span>
+                                    <span data-i18n="border.assignment">Assignment</span>
                                     <select id="editor-inline-target-region" class="timeline-select"></select>
                                 </label>
                             </div>
                             <div class="editor-inline-actions">
-                                <button id="editor-inline-apply" class="timeline-button timeline-button-primary" type="button">&Uuml;bernehmen</button>
-                                <button id="editor-inline-reset" class="timeline-button" type="button">Zur&uuml;cksetzen</button>
-                                <button id="editor-inline-save" class="timeline-button" type="button">Speichern</button>
+                                <button id="editor-inline-apply" class="timeline-button timeline-button-primary" type="button" data-i18n="action.annex">Annex</button>
+                                <button id="editor-inline-reset" class="timeline-button" type="button" data-i18n="action.reset">Reset</button>
+                                <button id="editor-inline-save" class="timeline-button" type="button" data-i18n="action.save">Save</button>
                             </div>
-                            <p id="editor-inline-status" class="timeline-note">Grenzmodus aus.</p>
+                            <p id="editor-inline-status" class="timeline-note">Border mode off.</p>
                         </article>
                         <article class="meta-card">
-                            <span class="meta-label">Details</span>
-                            <strong id="map-hover-title" class="meta-value">Noch kein Kartenbereich</strong>
-                            <div id="map-hover-body" class="meta-note hover-detail-content">Fahre &uuml;ber eine Fl&auml;che.</div>
+                            <span class="meta-label" data-i18n="panel.details">Details</span>
+                            <strong id="map-hover-title" class="meta-value">No map area yet</strong>
+                            <div id="map-hover-body" class="meta-note hover-detail-content">Hover over an area.</div>
                         </article>
                         <div id="map-summary-cards" class="map-summary-cards">
                             <article class="meta-card empty-card">
-                                <span class="meta-label">Keine Kartendaten</span>
+                                <span class="meta-label">No map data</span>
                                 <strong class="meta-value">-</strong>
-                                <p class="meta-note">Lade einen Export, um die Karte zu rendern.</p>
+                                <p class="meta-note">Load an export to render the map.</p>
                             </article>
                         </div>
                     </div>
