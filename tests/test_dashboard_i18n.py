@@ -15,6 +15,8 @@ class DashboardI18nTests(unittest.TestCase):
         self.assertIn('id="theme-toggle"', html)
         self.assertIn("language-flag-gb", html)
         self.assertIn("language-flag-de", html)
+        self.assertNotIn("BESP Phase", html)
+        self.assertNotIn("prepared for Slovenia and Greece", html)
         self.assertNotIn("🇨🇭", html)
         self.assertIn("const I18N", app_js)
         self.assertIn("COUNTRY_NAME_TRANSLATIONS", app_js)
@@ -38,6 +40,9 @@ class DashboardI18nTests(unittest.TestCase):
             "meta.countryRows",
             "state.budget",
             "state.debt",
+            "status.latestBatch",
+            "status.batchReady",
+            "status.serviceLost",
         ]:
             self.assertIn(key, app_js)
 

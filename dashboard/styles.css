@@ -111,12 +111,10 @@ code { font-family: Consolas, "Courier New", monospace; }
 }
 .language-flag-gb {
     background:
-        linear-gradient(33deg, transparent 42%, #ffffff 42%, #ffffff 48%, #c8102e 48%, #c8102e 55%, #ffffff 55%, #ffffff 61%, transparent 61%),
-        linear-gradient(147deg, transparent 42%, #ffffff 42%, #ffffff 48%, #c8102e 48%, #c8102e 55%, #ffffff 55%, #ffffff 61%, transparent 61%),
-        linear-gradient(90deg, transparent 42%, #ffffff 42%, #ffffff 58%, transparent 58%),
-        linear-gradient(0deg, transparent 38%, #ffffff 38%, #ffffff 62%, transparent 62%),
-        linear-gradient(90deg, transparent 45%, #c8102e 45%, #c8102e 55%, transparent 55%),
-        linear-gradient(0deg, transparent 43%, #c8102e 43%, #c8102e 57%, transparent 57%),
+        linear-gradient(90deg, transparent 38%, #ffffff 38%, #ffffff 62%, transparent 62%),
+        linear-gradient(0deg, transparent 34%, #ffffff 34%, #ffffff 66%, transparent 66%),
+        linear-gradient(90deg, transparent 44%, #c8102e 44%, #c8102e 56%, transparent 56%),
+        linear-gradient(0deg, transparent 42%, #c8102e 42%, #c8102e 58%, transparent 58%),
         #012169;
 }
 .language-flag-de {

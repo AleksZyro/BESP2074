@@ -478,7 +478,7 @@ const METRIC_VIEWS = {
 };
 const I18N = {
     en: {
-        "hero.lead": "Calibrated Balkan simulation to 2050 with multiple runs, political dynamics, regional events, and an integrated border mode. The data model and map logic are prepared for Slovenia and Greece.",
+        "hero.lead": "Calibrated Balkan simulation to 2050 with multiple runs, political dynamics, regional events, and an integrated border mode.",
         "map.kicker": "Map",
         "timeline.year": "Year",
         "mode.countries": "Countries",
@@ -513,6 +513,33 @@ const I18N = {
         "status.running": "Running...",
         "status.on": "on",
         "status.off": "off",
+        "status.shocksOn": "shocks on",
+        "status.shocksOff": "shocks off",
+        "status.unknownScenario": "unknown scenario",
+        "status.unknownYear": "unknown",
+        "status.noSeed": "no seed",
+        "status.shockEvents": "shock events",
+        "status.batchPrepared": "Batch mode prepared for {count} runs.",
+        "status.singleRun": "Single run active.",
+        "status.spreadVisible": "spread visible",
+        "status.noSpread": "no visible spread yet",
+        "status.latestBatch": "Latest batch: {count} runs, population {populationMin}-{populationMax}, GDP {gdpMin}-{gdpMax} bn EUR, unemployment {unemploymentMin}-{unemploymentMax}, {seedCount} Seed(s), {spread}.",
+        "status.generating": "Generating {runCount} {scenario} run(s) ({shocks}) ... {completed}/{runCount} complete.",
+        "status.runFailed": "Local run failed.",
+        "status.batchReady": "The latest {scenario} batch is ready ({runCount} run(s), {shocks}).",
+        "status.startNewResult": "Starting new result run ...",
+        "status.startLocalRuns": "Starting {runCount} local simulation run(s) ...",
+        "status.runStartFailed": "Local run could not be started.",
+        "status.serviceLost": "Connection to the local run service was lost. Restart the service and try again.",
+        "status.loadingExport": "Loading latest export ...",
+        "status.reloadingExport": "Reloading latest export ...",
+        "status.exportLoaded": "Export loaded. {summary}. Years and map views are now available.",
+        "status.exportReloaded": "Export reloaded. {summary}. Years and map views are now available.",
+        "status.exportLoadedStatic": "Export loaded. {summary}. Without the local service, scenario and shocks stay unchanged.",
+        "status.exportReloadedStatic": "Export reloaded. {summary}. Without the local service, scenario and shocks stay unchanged.",
+        "status.exportLoadFailed": "Latest export could not be loaded. Reload under Advanced or start new runs.",
+        "status.exportLoadFailedDetail": "Latest export could not be loaded. Start the local service in the project root, then reload.",
+        "status.invalidExport": "Invalid BESP export structure",
         "theme.light": "Light",
         "theme.dark": "Dark",
         "theme.switchLight": "Switch to light mode",
@@ -627,7 +654,7 @@ const I18N = {
         "error.unknown": "Unknown error",
     },
     de: {
-        "hero.lead": "Kalibrierte Balkan-Simulation bis 2050 mit mehreren Runs, politischer Dynamik, regionalen Ereignissen und integriertem Grenzmodus. Datenmodell und Kartenlogik sind für Slowenien und Griechenland vorbereitet.",
+        "hero.lead": "Kalibrierte Balkan-Simulation bis 2050 mit mehreren Runs, politischer Dynamik, regionalen Ereignissen und integriertem Grenzmodus.",
         "map.kicker": "Karte",
         "timeline.year": "Jahr",
         "mode.countries": "Länder",
@@ -662,6 +689,33 @@ const I18N = {
         "status.running": "Läuft...",
         "status.on": "ein",
         "status.off": "aus",
+        "status.shocksOn": "Schocks ein",
+        "status.shocksOff": "Schocks aus",
+        "status.unknownScenario": "unbekanntes Szenario",
+        "status.unknownYear": "unbekannt",
+        "status.noSeed": "kein Seed",
+        "status.shockEvents": "Schock-Ereignisse",
+        "status.batchPrepared": "Batch-Modus für {count} Runs vorbereitet.",
+        "status.singleRun": "Einzelner Run aktiv.",
+        "status.spreadVisible": "Streuung sichtbar",
+        "status.noSpread": "noch keine sichtbare Streuung",
+        "status.latestBatch": "Letzte Batch: {count} Runs, Bevölkerung {populationMin}-{populationMax}, BIP {gdpMin}-{gdpMax} Mrd. EUR, Arbeitslosigkeit {unemploymentMin}-{unemploymentMax}, {seedCount} Seed(s), {spread}.",
+        "status.generating": "Erzeuge {runCount} {scenario}-Run(s) ({shocks}) ... {completed}/{runCount} fertig.",
+        "status.runFailed": "Lokaler Run fehlgeschlagen.",
+        "status.batchReady": "Die letzte {scenario}-Batch ist bereit ({runCount} Run(s), {shocks}).",
+        "status.startNewResult": "Starte neuen Ergebnisrun ...",
+        "status.startLocalRuns": "Starte {runCount} lokale Simulationsrun(s) ...",
+        "status.runStartFailed": "Lokaler Run konnte nicht gestartet werden.",
+        "status.serviceLost": "Verbindung zum lokalen Run-Service verloren. Bitte Service neu starten und erneut versuchen.",
+        "status.loadingExport": "Lade neuesten Export ...",
+        "status.reloadingExport": "Lade neuesten Export neu ...",
+        "status.exportLoaded": "Export geladen. {summary}. Jahre und Kartenansichten sind jetzt verfügbar.",
+        "status.exportReloaded": "Export neu geladen. {summary}. Jahre und Kartenansichten sind jetzt verfügbar.",
+        "status.exportLoadedStatic": "Export geladen. {summary}. Ohne lokalen Service bleiben Szenario und Schocks unverändert.",
+        "status.exportReloadedStatic": "Export neu geladen. {summary}. Ohne lokalen Service bleiben Szenario und Schocks unverändert.",
+        "status.exportLoadFailed": "Der neueste Export konnte nicht geladen werden. Unter Erweitert neu laden oder neue Runs starten.",
+        "status.exportLoadFailedDetail": "Der neueste Export konnte nicht geladen werden. Starte den lokalen Service im Projektordner und lade danach neu.",
+        "status.invalidExport": "Ungültige BESP-Exportstruktur",
         "theme.light": "Hell",
         "theme.dark": "Dunkel",
         "theme.switchLight": "Zu Hellmodus wechseln",
@@ -1210,6 +1264,7 @@ const dashboardState = {
     isGeneratingRun: false,
     runServiceAvailable: false,
     runStatusPollTimer: null,
+    currentRunStatus: null,
     availableScenarios: [],
     countryRowCount: 0,
     regionRowCount: 0,
@@ -1359,6 +1414,11 @@ function applyLanguage() {
     }
     decorateMetricButtons();
     applyTheme();
+    if (dashboardState.runServiceAvailable && dashboardState.currentRunStatus) {
+        applyRunStatus(dashboardState.currentRunStatus);
+    } else {
+        renderRunBatchSummary(dashboardState.currentRunStatus);
+    }
 }
 function bindLanguageControls() {
     for (const button of elements.languageButtons) {
@@ -2122,19 +2182,19 @@ async function refreshRunServiceState({ includeScenarios = false } = {}) {
 function summarizeRunStatus(runStatus) {
     return {
         scenarioLabel: runStatus?.scenario_name || runStatus?.scenario_code || "Simulation",
-        shocksLabel: runStatus?.shocks_enabled ? "shocks on" : "shocks off",
+        shocksLabel: runStatus?.shocks_enabled ? t("status.shocksOn") : t("status.shocksOff"),
         runCount: Math.max(1, Number.parseInt(String(runStatus?.run_count ?? "1"), 10) || 1),
     };
 }
 function summarizeLoadedExport(exportData) {
     const scenarioMeta = exportData?.meta?.scenario ?? {};
     const shockMeta = exportData?.meta?.shocks ?? {};
-    const baselineYear = exportData?.meta?.baseline_year ?? exportData?.meta?.start_year ?? "unknown";
-    const scenarioLabel = scenarioMeta.name || scenarioMeta.code || "unknown scenario";
-    const shocksLabel = shockMeta.enabled ? "shocks on" : "shocks off";
+    const baselineYear = exportData?.meta?.baseline_year ?? exportData?.meta?.start_year ?? t("status.unknownYear");
+    const scenarioLabel = scenarioMeta.name || scenarioMeta.code || t("status.unknownScenario");
+    const shocksLabel = shockMeta.enabled ? t("status.shocksOn") : t("status.shocksOff");
     const eventCount = formatInteger(shockMeta.event_count ?? 0);
-    const seedLabel = scenarioMeta.variation_seed || "no seed";
-    return `${scenarioLabel}, ${shocksLabel}, ${eventCount} shock events, seed ${seedLabel}, baseline ${baselineYear}`;
+    const seedLabel = scenarioMeta.variation_seed || t("status.noSeed");
+    return `${scenarioLabel}, ${shocksLabel}, ${eventCount} ${t("status.shockEvents")}, seed ${seedLabel}, baseline ${baselineYear}`;
 }
 function renderRunBatchSummary(runStatus) {
     if (!elements.runBatchSummary) {
@@ -2144,8 +2204,8 @@ function renderRunBatchSummary(runStatus) {
     const runCount = Math.max(1, Number.parseInt(String(runStatus?.run_count ?? "1"), 10) || 1);
     if (!batch || !Number.isFinite(Number(batch.count))) {
         elements.runBatchSummary.textContent = runCount > 1
-            ? `Batch mode prepared for ${runCount} runs.`
-            : "Single run active.";
+            ? tf("status.batchPrepared", { count: runCount })
+            : t("status.singleRun");
         return;
     }
     const uniqueSeedCount = new Set(
@@ -2156,13 +2216,19 @@ function renderRunBatchSummary(runStatus) {
     const hasGdpSpread = Number(batch.gdp_max_billion_eur) !== Number(batch.gdp_min_billion_eur);
     const hasUnemploymentSpread = Number(batch.unemployment_max_rate) !== Number(batch.unemployment_min_rate);
     const spreadLabel = (hasPopulationSpread || hasGdpSpread || hasUnemploymentSpread)
-        ? "spread visible"
-        : "no visible spread yet";
-    elements.runBatchSummary.textContent =
-        `Latest batch: ${batch.count} runs, population ${formatInteger(batch.population_min)}-${formatInteger(batch.population_max)}, `
-        + `GDP ${formatDecimal(batch.gdp_min_billion_eur)}-${formatDecimal(batch.gdp_max_billion_eur)} bn EUR, `
-        + `unemployment ${formatPercent(batch.unemployment_min_rate)}-${formatPercent(batch.unemployment_max_rate)}, `
-        + `${uniqueSeedCount} Seed(s), ${spreadLabel}.`;
+        ? t("status.spreadVisible")
+        : t("status.noSpread");
+    elements.runBatchSummary.textContent = tf("status.latestBatch", {
+        count: batch.count,
+        populationMin: formatInteger(batch.population_min),
+        populationMax: formatInteger(batch.population_max),
+        gdpMin: formatDecimal(batch.gdp_min_billion_eur),
+        gdpMax: formatDecimal(batch.gdp_max_billion_eur),
+        unemploymentMin: formatPercent(batch.unemployment_min_rate),
+        unemploymentMax: formatPercent(batch.unemployment_max_rate),
+        seedCount: uniqueSeedCount,
+        spread: spreadLabel,
+    });
 }
 function renderScenarioOptions(scenarios) {
     const safeScenarios = Array.isArray(scenarios) ? scenarios : [];
@@ -2176,6 +2242,7 @@ function renderScenarioOptions(scenarios) {
     }
 }
 function applyRunStatus(runStatus) {
+    dashboardState.currentRunStatus = runStatus ?? null;
     const state = String(runStatus?.state ?? "idle");
     dashboardState.isGeneratingRun = state === "running";
     const { scenarioLabel, shocksLabel, runCount } = summarizeRunStatus(runStatus);
@@ -2183,7 +2250,12 @@ function applyRunStatus(runStatus) {
     if (state === "running") {
         const completedRuns = Number.parseInt(String(runStatus?.completed_runs ?? "0"), 10) || 0;
         setExportStatus(
-            `Erzeuge ${runCount} ${scenarioLabel}-Durchläufe (${shocksLabel}) ... ${completedRuns}/${runCount} fertig.`,
+            tf("status.generating", {
+                runCount,
+                scenario: scenarioLabel,
+                shocks: shocksLabel,
+                completed: completedRuns,
+            }),
             "loading"
         );
         startRunStatusPolling();
@@ -2192,11 +2264,11 @@ function applyRunStatus(runStatus) {
     stopRunStatusPolling();
     if (state === "failed") {
         const detail = runStatus?.message ? ` ${runStatus.message}` : "";
-        setExportStatus(`Lokaler Run fehlgeschlagen.${detail}`.trim(), "error");
+        setExportStatus(`${t("status.runFailed")}${detail}`.trim(), "error");
         return;
     }
     if (state === "success") {
-        setExportStatus(`Die letzte ${scenarioLabel}-Batch ist bereit (${runCount} Durchläufe, ${shocksLabel}).`, "success");
+        setExportStatus(tf("status.batchReady", { scenario: scenarioLabel, runCount, shocks: shocksLabel }), "success");
         return;
     }
     setExportStatus(dashboardState.runServiceAvailable ? PLAYBACK_HELP_MESSAGE : RUN_SERVICE_OFFLINE_MESSAGE, "muted");
@@ -2217,8 +2289,8 @@ async function triggerGenerateRun({ runCount = null, reason = "manual" } = {}) {
     updatePlaybackControls();
     setExportStatus(
         reason === "play-final-year"
-            ? "Starte neuen Ergebnisrun ..."
-            : `Starte ${safeRunCount} lokale Simulationsdurchlaeufe ...`,
+            ? t("status.startNewResult")
+            : tf("status.startLocalRuns", { runCount: safeRunCount }),
         "loading"
     );
     try {
@@ -2241,8 +2313,8 @@ async function triggerGenerateRun({ runCount = null, reason = "manual" } = {}) {
         applyRunStatus(payload);
     } catch (error) {
         dashboardState.isGeneratingRun = false;
-        const detail = error instanceof Error ? error.message : "Unbekannter Fehler beim Start.";
-        setExportStatus(`Lokaler Run konnte nicht gestartet werden. ${detail}`, "error");
+        const detail = error instanceof Error ? error.message : t("error.unknown");
+        setExportStatus(`${t("status.runStartFailed")} ${detail}`, "error");
         updatePlaybackControls();
     }
 }
@@ -2265,7 +2337,7 @@ function startRunStatusPolling() {
             stopRunStatusPolling();
             dashboardState.isGeneratingRun = false;
             dashboardState.runServiceAvailable = false;
-            setExportStatus("Verbindung zum lokalen Run-Service verloren. Bitte Service neu starten und erneut versuchen.", "error");
+            setExportStatus(t("status.serviceLost"), "error");
             updatePlaybackControls();
         }
     }, 1250);
@@ -2281,14 +2353,14 @@ async function loadDashboardData({ reason = "initial" } = {}) {
     stopPlayback();
     dashboardState.isReloading = true;
     setExportStatus(
-        isReload ? "Lade neuesten Export neu ..." : "Lade neuesten Export ...",
+        isReload ? t("status.reloadingExport") : t("status.loadingExport"),
         "loading"
     );
     updatePlaybackControls();
     try {
         const exportData = await fetchJson(EXPORT_PATH);
         if (!isValidExport(exportData)) {
-            throw new Error("Ungültige BESP-Exportstruktur");
+            throw new Error(t("status.invalidExport"));
         }
         let geoData = dashboardState.geoData;
         let geoWarning = dashboardState.geoWarning;
@@ -2304,27 +2376,23 @@ async function loadDashboardData({ reason = "initial" } = {}) {
         const exportSummary = summarizeLoadedExport(exportData);
         if (dashboardState.runServiceAvailable) {
             setExportStatus(
-                isReload
-                    ? `Export reloaded. ${exportSummary}. Years and map views are now available.`
-                    : `Export loaded. ${exportSummary}. Years and map views are now available.`,
+                tf(isReload ? "status.exportReloaded" : "status.exportLoaded", { summary: exportSummary }),
                 "success"
             );
         } else {
             setExportStatus(
-                `${isReload ? "Export reloaded." : "Export loaded."} ${exportSummary}. Without the local service, scenario and shocks stay unchanged.`,
+                tf(isReload ? "status.exportReloadedStatic" : "status.exportLoadedStatic", { summary: exportSummary }),
                 "muted"
             );
         }
     } catch (error) {
         const detail = error instanceof Error ? ` (${error.message})` : "";
         setExportStatus(
-            "Latest export could not be loaded. Reload under Advanced or start new runs."
-            + detail,
+            t("status.exportLoadFailed") + detail,
             "error"
         );
         renderLoadError(
-            "Latest export could not be loaded. Start the local service in the project root, then reload."
-            + detail
+            t("status.exportLoadFailedDetail") + detail
         );
     } finally {
         dashboardState.isReloading = false;
