@@ -53,8 +53,6 @@ def main() -> None:
                             f"max allowed {max_delta:.4f}."
                         )
 
-                previous.setdefault(field_name, value)
-
             previous_by_country[country_code] = {
                 field: float(row[field])
                 for field in STATE_LIMITS

@@ -5,6 +5,26 @@ from besp.simulation import aggregate_country_results, simulate_period
 from main import resolve_simulation_year_window
 
 
+def country_result_signature(rows):
+    return [
+        (
+            row.start_year,
+            row.country_code,
+            row.end_population,
+            round(row.end_gdp_billion_eur, 6),
+            round(row.average_unemployment_rate, 6),
+            round(row.average_integration_index, 6),
+            round(row.average_inflation_rate, 6),
+            round(row.average_satisfaction_index, 6),
+            round(row.election_tension_index, 6),
+            round(row.election_alignment_index, 6),
+            row.election_last_year,
+            row.election_next_year,
+        )
+        for row in rows
+    ]
+
+
 class CountryRegionAggregationTests(unittest.TestCase):
     @staticmethod
     def run_country_results(seed: str):
@@ -84,82 +104,16 @@ class CountryRegionAggregationTests(unittest.TestCase):
                     )
 
     def test_same_seed_is_reproducible_without_shocks(self) -> None:
-        first_run = self.run_country_results("stable-seed")
-        second_run = self.run_country_results("stable-seed")
-        first_signature = [
-            (
-                row.start_year,
-                row.country_code,
-                row.end_population,
-                round(row.end_gdp_billion_eur, 6),
-                round(row.average_unemployment_rate, 6),
-                round(row.average_integration_index, 6),
-                round(row.average_inflation_rate, 6),
-                round(row.average_satisfaction_index, 6),
-                round(row.election_tension_index, 6),
-                round(row.election_alignment_index, 6),
-                row.election_last_year,
-                row.election_next_year,
-            )
-            for row in first_run
-        ]
-        second_signature = [
-            (
-                row.start_year,
-                row.country_code,
-                row.end_population,
-                round(row.end_gdp_billion_eur, 6),
-                round(row.average_unemployment_rate, 6),
-                round(row.average_integration_index, 6),
-                round(row.average_inflation_rate, 6),
-                round(row.average_satisfaction_index, 6),
-                round(row.election_tension_index, 6),
-                round(row.election_alignment_index, 6),
-                row.election_last_year,
-                row.election_next_year,
-            )
-            for row in second_run
-        ]
-        self.assertEqual(first_signature, second_signature)
+        self.assertEqual(
+            country_result_signature(self.run_country_results("stable-seed")),
+            country_result_signature(self.run_country_results("stable-seed")),
+        )
 
     def test_distinct_seeds_produce_distinct_paths_without_shocks(self) -> None:
-        first_run = self.run_country_results("seed-alpha")
-        second_run = self.run_country_results("seed-beta")
-        first_signature = [
-            (
-                row.start_year,
-                row.country_code,
-                row.end_population,
-                round(row.end_gdp_billion_eur, 6),
-                round(row.average_unemployment_rate, 6),
-                round(row.average_integration_index, 6),
-                round(row.average_inflation_rate, 6),
-                round(row.average_satisfaction_index, 6),
-                round(row.election_tension_index, 6),
-                round(row.election_alignment_index, 6),
-                row.election_last_year,
-                row.election_next_year,
-            )
-            for row in first_run
-        ]
-        second_signature = [
-            (
-                row.start_year,
-                row.country_code,
-                row.end_population,
-                round(row.end_gdp_billion_eur, 6),
-                round(row.average_unemployment_rate, 6),
-                round(row.average_integration_index, 6),
-                round(row.average_inflation_rate, 6),
-                round(row.average_satisfaction_index, 6),
-                round(row.election_tension_index, 6),
-                round(row.election_alignment_index, 6),
-                row.election_last_year,
-                row.election_next_year,
-            )
-            for row in second_run
-        ]
-        self.assertNotEqual(first_signature, second_signature)
+        self.assertNotEqual(
+            country_result_signature(self.run_country_results("seed-alpha")),
+            country_result_signature(self.run_country_results("seed-beta")),
+        )
 
     def test_baseline_run_keeps_plausible_positive_development(self) -> None:
         country_results = self.run_country_results("balanced-development")

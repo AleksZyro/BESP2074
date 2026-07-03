@@ -54,15 +54,18 @@ def verify_latest_export_meta() -> None:
 def main() -> None:
     node = require_node()
     python = sys.executable
-
-    run_step("Python test suite", [python, "-m", "pytest"])
-    run_step("Dashboard app syntax", [node, "--check", "dashboard/app.js"])
-    run_step("Dashboard config syntax", [node, "--check", "dashboard/config.js"])
-    run_step("Dashboard editor syntax", [node, "--check", "dashboard/editor.js"])
-    run_step(
-        "Baseline export generation",
-        [python, "main.py", "--scenario", "baseline", "--seed", RELEASE_SEED],
-    )
+    release_steps = [
+        ("Python test suite", [python, "-m", "pytest"]),
+        ("Dashboard app syntax", [node, "--check", "dashboard/app.js"]),
+        ("Dashboard config syntax", [node, "--check", "dashboard/config.js"]),
+        ("Dashboard editor syntax", [node, "--check", "dashboard/editor.js"]),
+        (
+            "Baseline export generation",
+            [python, "main.py", "--scenario", "baseline", "--seed", RELEASE_SEED],
+        ),
+    ]
+    for label, command in release_steps:
+        run_step(label, command)
     verify_latest_export_meta()
 
     for script_name in [

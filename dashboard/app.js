@@ -5688,63 +5688,42 @@ function resolveVisualRegion(countryCode, featureRegionName, bespRegionKey) {
         fill: definition?.fill ?? "rgba(126, 143, 161, 0.38)",
     };
 }
-function metricValueFromCountry(countryData, metricKey) {
-    if (!countryData) {
+const COUNTRY_METRIC_FIELDS = {
+    population: "end_population",
+    gdp_per_capita: "gdp_per_capita_eur",
+    unemployment: "average_unemployment_rate",
+    attractiveness: "average_regional_attractiveness",
+    integration: "average_integration_index",
+    corruption: "corruption_index",
+    inflation: "average_inflation_rate",
+    debt: "debt_to_gdp",
+    satisfaction: "average_satisfaction_index",
+    elections: "election_alignment_index",
+};
+const REGION_METRIC_FIELDS = {
+    population: "end_population",
+    gdp_per_capita: "gdp_per_capita_eur",
+    unemployment: "unemployment_rate",
+    attractiveness: "regional_attractiveness",
+    integration: "integration_index",
+    corruption: "corruption_index",
+    inflation: "inflation_rate",
+    debt: "debt_to_gdp",
+    satisfaction: "satisfaction_index",
+    elections: "election_alignment_index",
+};
+function metricValueFromFieldMap(row, metricKey, fieldMap) {
+    const fieldName = fieldMap[metricKey];
+    if (!row || !fieldName) {
         return Number.NaN;
     }
-    switch (metricKey) {
-        case "population":
-            return Number(countryData.end_population);
-        case "gdp_per_capita":
-            return Number(countryData.gdp_per_capita_eur);
-        case "unemployment":
-            return Number(countryData.average_unemployment_rate);
-        case "attractiveness":
-            return Number(countryData.average_regional_attractiveness);
-        case "integration":
-            return Number(countryData.average_integration_index);
-        case "corruption":
-            return Number(countryData.corruption_index);
-        case "inflation":
-            return Number(countryData.average_inflation_rate);
-        case "debt":
-            return Number(countryData.debt_to_gdp);
-        case "satisfaction":
-            return Number(countryData.average_satisfaction_index);
-        case "elections":
-            return Number(countryData.election_alignment_index);
-        default:
-            return Number.NaN;
-    }
+    return Number(row[fieldName]);
+}
+function metricValueFromCountry(countryData, metricKey) {
+    return metricValueFromFieldMap(countryData, metricKey, COUNTRY_METRIC_FIELDS);
 }
 function metricValueFromRegion(regionData, metricKey) {
-    if (!regionData) {
-        return Number.NaN;
-    }
-    switch (metricKey) {
-        case "population":
-            return Number(regionData.end_population);
-        case "gdp_per_capita":
-            return Number(regionData.gdp_per_capita_eur);
-        case "unemployment":
-            return Number(regionData.unemployment_rate);
-        case "attractiveness":
-            return Number(regionData.regional_attractiveness);
-        case "integration":
-            return Number(regionData.integration_index);
-        case "corruption":
-            return Number(regionData.corruption_index);
-        case "inflation":
-            return Number(regionData.inflation_rate);
-        case "debt":
-            return Number(regionData.debt_to_gdp);
-        case "satisfaction":
-            return Number(regionData.satisfaction_index);
-        case "elections":
-            return Number(regionData.election_alignment_index);
-        default:
-            return Number.NaN;
-    }
+    return metricValueFromFieldMap(regionData, metricKey, REGION_METRIC_FIELDS);
 }
 function calculateMetricRange(rows, valueResolver) {
     const values = rows

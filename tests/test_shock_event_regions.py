@@ -6,6 +6,44 @@ from besp.simulation import build_country_shock_effects, simulate_period
 from main import resolve_simulation_year_window
 
 
+def single_region_country(
+    name: str,
+    code: str,
+    region_name: str,
+    population: int,
+    area_km2: float,
+    urbanization: float,
+    infrastructure: float,
+    housing_capacity: int,
+    economic_attractiveness: float,
+    gdp_billion_eur: float,
+    eu_integration: float,
+) -> Country:
+    return Country(
+        name=name,
+        code=code,
+        base_birth_rate=0.01,
+        base_death_rate=0.01,
+        base_net_migration_rate=0.0,
+        stability=0.5,
+        eu_integration=eu_integration,
+        corruption=0.5,
+        regions=[
+            Region(
+                name=region_name,
+                country_code=code,
+                population=population,
+                area_km2=area_km2,
+                urbanization=urbanization,
+                infrastructure=infrastructure,
+                housing_capacity=housing_capacity,
+                economic_attractiveness=economic_attractiveness,
+                gdp_billion_eur=gdp_billion_eur,
+            )
+        ],
+    )
+
+
 class ShockEventRegionExportTests(unittest.TestCase):
     def test_shock_events_export_affected_regions(self) -> None:
         start_year, _end_year = resolve_simulation_year_window("data")
@@ -40,100 +78,13 @@ class ShockEventRegionExportTests(unittest.TestCase):
             )
 
     def test_cross_border_event_exports_and_applies_neighbor_effects(self) -> None:
-        countries = [
-            Country(
-                name="Serbia",
-                code="SRB",
-                base_birth_rate=0.01,
-                base_death_rate=0.01,
-                base_net_migration_rate=0.0,
-                stability=0.5,
-                eu_integration=0.4,
-                corruption=0.5,
-                regions=[
-                    Region(
-                        name="Vojvodina",
-                        country_code="SRB",
-                        population=1_800_000,
-                        area_km2=21_000,
-                        urbanization=0.62,
-                        infrastructure=0.65,
-                        housing_capacity=2_000_000,
-                        economic_attractiveness=0.6,
-                        gdp_billion_eur=20.0,
-                    )
-                ],
-            ),
-            Country(
-                name="Croatia",
-                code="HRV",
-                base_birth_rate=0.01,
-                base_death_rate=0.01,
-                base_net_migration_rate=0.0,
-                stability=0.5,
-                eu_integration=0.6,
-                corruption=0.5,
-                regions=[
-                    Region(
-                        name="Slavonia",
-                        country_code="HRV",
-                        population=700_000,
-                        area_km2=12_000,
-                        urbanization=0.48,
-                        infrastructure=0.55,
-                        housing_capacity=900_000,
-                        economic_attractiveness=0.45,
-                        gdp_billion_eur=8.0,
-                    )
-                ],
-            ),
-            Country(
-                name="Hungary",
-                code="HUN",
-                base_birth_rate=0.01,
-                base_death_rate=0.01,
-                base_net_migration_rate=0.0,
-                stability=0.5,
-                eu_integration=0.6,
-                corruption=0.5,
-                regions=[
-                    Region(
-                        name="Great Plains",
-                        country_code="HUN",
-                        population=2_000_000,
-                        area_km2=42_000,
-                        urbanization=0.52,
-                        infrastructure=0.58,
-                        housing_capacity=2_300_000,
-                        economic_attractiveness=0.50,
-                        gdp_billion_eur=18.0,
-                    )
-                ],
-            ),
-            Country(
-                name="Bosnia and Herzegovina",
-                code="BIH",
-                base_birth_rate=0.01,
-                base_death_rate=0.01,
-                base_net_migration_rate=0.0,
-                stability=0.5,
-                eu_integration=0.35,
-                corruption=0.5,
-                regions=[
-                    Region(
-                        name="Republika Srpska",
-                        country_code="BIH",
-                        population=1_100_000,
-                        area_km2=24_000,
-                        urbanization=0.44,
-                        infrastructure=0.50,
-                        housing_capacity=1_300_000,
-                        economic_attractiveness=0.42,
-                        gdp_billion_eur=7.0,
-                    )
-                ],
-            ),
+        country_specs = [
+            ("Serbia", "SRB", "Vojvodina", 1_800_000, 21_000, 0.62, 0.65, 2_000_000, 0.60, 20.0, 0.40),
+            ("Croatia", "HRV", "Slavonia", 700_000, 12_000, 0.48, 0.55, 900_000, 0.45, 8.0, 0.60),
+            ("Hungary", "HUN", "Great Plains", 2_000_000, 42_000, 0.52, 0.58, 2_300_000, 0.50, 18.0, 0.60),
+            ("Bosnia and Herzegovina", "BIH", "Republika Srpska", 1_100_000, 24_000, 0.44, 0.50, 1_300_000, 0.42, 7.0, 0.35),
         ]
+        countries = [single_region_country(*spec) for spec in country_specs]
         shock = ShockDefinition(
             code="flood_event",
             name="Flood Event",

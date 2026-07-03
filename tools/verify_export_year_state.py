@@ -7,6 +7,21 @@ from verify_common import (
 from pathlib import Path
 
 
+EXACT_INTEGER_FIELDS = [
+    "start_population",
+    "end_population",
+    "births",
+    "deaths",
+    "natural_change",
+    "net_external_migration",
+    "internal_migration",
+]
+FLOAT_TOTAL_FIELDS = [
+    "start_gdp_billion_eur",
+    "end_gdp_billion_eur",
+]
+
+
 def expected_country_codes() -> set[str]:
     country_data = read_json_file(Path("data/countries.json"))
     if not isinstance(country_data, list) or not country_data:
@@ -87,25 +102,12 @@ def main() -> None:
                 fail(f"{year_key}: region row end_year mismatch.")
             regions_by_country.setdefault(str(row.get("country_code")), []).append(row)
 
-        exact_integer_fields = [
-            "start_population",
-            "end_population",
-            "births",
-            "deaths",
-            "natural_change",
-            "net_external_migration",
-            "internal_migration",
-        ]
-        float_fields = [
-            "start_gdp_billion_eur",
-            "end_gdp_billion_eur",
-        ]
         for country_row in countries:
             code = str(country_row.get("country_code"))
             region_rows = regions_by_country.get(code, [])
             if not region_rows:
                 fail(f"{year_key}: no region rows found for {code}.")
-            for field_name in exact_integer_fields:
+            for field_name in EXACT_INTEGER_FIELDS:
                 country_value = int(country_row.get(field_name, 0))
                 region_total = sum(int(region_row.get(field_name, 0)) for region_row in region_rows)
                 if country_value != region_total:
@@ -113,7 +115,7 @@ def main() -> None:
                         f"{year_key}: {code} {field_name} mismatch. "
                         f"Country={country_value}, regions={region_total}."
                     )
-            for field_name in float_fields:
+            for field_name in FLOAT_TOTAL_FIELDS:
                 country_value = float(country_row.get(field_name, 0.0))
                 region_total = sum(float(region_row.get(field_name, 0.0)) for region_row in region_rows)
                 if abs(country_value - region_total) > 1e-6:
