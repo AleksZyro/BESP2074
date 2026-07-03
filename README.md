@@ -118,7 +118,22 @@ Im Dashboard können `1` bis `100` Runs erzeugt werden. Gleicher Seed bleibt rep
 
 ## Tests
 
-Empfohlene Abschlusschecks:
+Empfohlener Abschlusscheck vor Veröffentlichung:
+
+```powershell
+py tools\verify_release_ready.py
+```
+
+Der Release-Check führt aus:
+
+- komplette Python-Test-Suite
+- JavaScript-Syntaxchecks für Dashboard, Config und Editor
+- echten Baseline-Export bis `2074`
+- Export-Meta- und Jahresprüfungen
+- Staatsdynamik-Prüfung
+- GeoJSON-Abdeckungs- und Namensnormalisierungsprüfungen
+
+Einzelchecks für Debugging:
 
 ```powershell
 python -m pytest
@@ -127,8 +142,6 @@ node --check dashboard/config.js
 node --check dashboard/editor.js
 py main.py --scenario baseline --seed test-local
 ```
-
-Weitere Verifier:
 
 ```powershell
 py tools\verify_export_year_state.py
