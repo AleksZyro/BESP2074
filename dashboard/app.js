@@ -1480,10 +1480,15 @@ function decorateMetricButtons() {
         if (!view?.buttonLabel) {
             continue;
         }
-        button.textContent = view.buttonLabel;
+        button.textContent = metricButtonIcon(view);
         button.title = view.label;
         button.setAttribute("aria-label", view.label);
     }
+}
+function metricButtonIcon(view) {
+    return String(view.buttonLabel ?? "")
+        .trim()
+        .split(/\s+/)[0] || String(view.label ?? "?").slice(0, 1);
 }
 function bindEditorControls() {
     elements.editorModeToggleButton?.addEventListener("click", () => {
