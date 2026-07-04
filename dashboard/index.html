@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BESP2074 Dashboard</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="./styles.css?v=10.3.0">
 </head>
 <body>
@@ -26,7 +27,7 @@
                 </div>
                 <button id="theme-toggle" class="theme-toggle-button" type="button" aria-pressed="false" aria-label="Switch to light mode">
                     <span id="theme-toggle-icon" aria-hidden="true">☀️</span>
-                    <span id="theme-toggle-label">Light</span>
+                    <span id="theme-toggle-label" class="visually-hidden">Light</span>
                 </button>
             </div>
         </header>
@@ -61,17 +62,17 @@
                                 <button id="editor-mode-toggle" class="map-mode-button" type="button" data-i18n="mode.borders">Borders</button>
                             </div>
                             <div class="metric-controls" role="group" aria-label="Map metric mode">
-                                <button class="metric-button metric-button-active" data-metric="classic" type="button">&#128506;&#65039; Std.</button>
-                                <button class="metric-button" data-metric="population" type="button">&#128101; Pop.</button>
-                                <button class="metric-button" data-metric="gdp_per_capita" type="button">&#128182; GDP/c.</button>
-                                <button class="metric-button" data-metric="unemployment" type="button">&#129520; Jobs</button>
-                                <button class="metric-button" data-metric="attractiveness" type="button">&#10024; Attr.</button>
-                                <button class="metric-button" data-metric="integration" type="button">&#129309; Int.</button>
-                                <button class="metric-button" data-metric="inflation" type="button">&#8597;&#65039; Prices</button>
-                                <button class="metric-button" data-metric="debt" type="button">&#127974; Debt</button>
-                                <button class="metric-button" data-metric="corruption" type="button">&#9878;&#65039; Corr.</button>
-                                <button class="metric-button" data-metric="satisfaction" type="button">&#128578; Sat.</button>
-                                <button class="metric-button" data-metric="elections" type="button">&#127963;&#65039; Vote</button>
+                                <button class="metric-button metric-button-active" data-metric="classic" type="button" aria-label="Standard" title="Standard">&#128506;&#65039;</button>
+                                <button class="metric-button" data-metric="population" type="button" aria-label="Population" title="Population">&#128101;</button>
+                                <button class="metric-button" data-metric="gdp_per_capita" type="button" aria-label="GDP per cap." title="GDP per cap.">&#128182;</button>
+                                <button class="metric-button" data-metric="unemployment" type="button" aria-label="Unemployment" title="Unemployment">&#129520;</button>
+                                <button class="metric-button" data-metric="attractiveness" type="button" aria-label="Attractiveness" title="Attractiveness">&#10024;</button>
+                                <button class="metric-button" data-metric="integration" type="button" aria-label="Integration" title="Integration">&#129309;</button>
+                                <button class="metric-button" data-metric="inflation" type="button" aria-label="Inflation / Deflation" title="Inflation / Deflation">&#8597;&#65039;</button>
+                                <button class="metric-button" data-metric="debt" type="button" aria-label="Debt ratio" title="Debt ratio">&#127974;</button>
+                                <button class="metric-button" data-metric="corruption" type="button" aria-label="Corruption risk" title="Corruption risk">&#9878;&#65039;</button>
+                                <button class="metric-button" data-metric="satisfaction" type="button" aria-label="Satisfaction" title="Satisfaction">&#128578;</button>
+                                <button class="metric-button" data-metric="elections" type="button" aria-label="Elections" title="Elections">&#127963;&#65039;</button>
                             </div>
                         </div>
                     </div>
