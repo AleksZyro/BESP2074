@@ -1,12 +1,16 @@
+import csv
+import io
 import json
 import ssl
 import urllib.request
+import zipfile
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COUNTRIES_PATH = REPO_ROOT / "data" / "countries.json"
 SNAPSHOT_LATEST_PATH = REPO_ROOT / "data" / "world_bank_baseline_latest.json"
+ECB_EUR_USD_HISTORY_ZIP = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip"
 COUNTRY_CODES = ["SRB", "MNE", "BIH", "ALB", "MKD", "BGR", "HUN", "HRV", "ROU", "SVN", "GRC"]
 REFERENCE_GDP_YEAR = 2020
 CANDIDATE_BASELINE_YEARS = [2023, 2024, 2025, 2026]
@@ -63,6 +67,26 @@ def fetch_indicator_rows(indicator_code: str) -> tuple[str, list[dict]]:
 
     last_updated = str(meta.get("lastupdated", "unknown"))
     return last_updated, rows
+
+
+def fetch_ecb_eur_usd_annual_averages(years: list[int]) -> dict[int, float]:
+    with urllib.request.urlopen(ECB_EUR_USD_HISTORY_ZIP, timeout=30) as response:
+        archive = zipfile.ZipFile(io.BytesIO(response.read()))
+
+    csv_name = archive.namelist()[0]
+    rows = list(csv.DictReader(io.StringIO(archive.read(csv_name).decode("utf-8"))))
+    averages: dict[int, float] = {}
+
+    for year in years:
+        values = [
+            float(row["USD"])
+            for row in rows
+            if str(row.get("Date", "")).startswith(str(year)) and row.get("USD")
+        ]
+        if values:
+            averages[year] = sum(values) / len(values)
+
+    return averages
 
 
 def values_for_year(rows: list[dict], year: int) -> dict[str, float]:
@@ -145,12 +169,20 @@ def build_snapshot() -> tuple[dict, int]:
 
     coverage_report = build_coverage_report(fetched_values)
     baseline_year = select_best_baseline_year(coverage_report)
+    ecb_eur_usd_averages = fetch_ecb_eur_usd_annual_averages(CANDIDATE_BASELINE_YEARS)
+    baseline_eur_usd_rate = ecb_eur_usd_averages.get(baseline_year)
+    if not baseline_eur_usd_rate:
+        raise RuntimeError(f"Missing ECB EUR/USD annual average for {baseline_year}.")
 
     snapshot = {
         "source": "World Bank indicator API",
         "baseline_year": baseline_year,
         "candidate_baseline_years": CANDIDATE_BASELINE_YEARS,
         "reference_gdp_year": REFERENCE_GDP_YEAR,
+        "gdp_eur_conversion": {
+            "source": "ECB euro foreign exchange reference rates, annual average EUR/USD",
+            "eur_usd_annual_average": baseline_eur_usd_rate,
+        },
         "selection_rule": "Best common year across countries and indicators; latest year wins ties.",
         "coverage_report": coverage_report,
         "countries": {},
@@ -172,6 +204,7 @@ def build_snapshot() -> tuple[dict, int]:
             "population": population,
             "gdp_usd_2020": gdp_2020,
             f"gdp_usd_{baseline_year}": gdp_baseline,
+            "gdp_billion_eur": gdp_baseline / 1_000_000_000 / baseline_eur_usd_rate,
             "gdp_scale_vs_2020": gdp_baseline / gdp_2020 if gdp_2020 else 1.0,
             "unemployment_rate": unemployment_rate,
             "inflation_rate": inflation_rate,
@@ -199,6 +232,7 @@ def update_country_file(snapshot: dict, baseline_year: int) -> None:
 
         entry["baseline_year"] = baseline_year
         entry["baseline_population"] = baseline["population"]
+        entry["baseline_gdp_billion_eur"] = round(baseline["gdp_billion_eur"], 3)
         entry["baseline_gdp_scale_vs_2020"] = round(baseline["gdp_scale_vs_2020"], 6)
         entry["baseline_unemployment_rate"] = round(baseline["unemployment_rate"], 6)
         entry["baseline_inflation_rate"] = round(baseline["inflation_rate"], 6)

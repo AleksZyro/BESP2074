@@ -88,6 +88,29 @@ def scale_integer_attribute_to_total(
         setattr(region, attribute_name, max(int(scaled_value), 0))
 
 
+def scale_float_attribute_to_total(
+    regions: list[Region],
+    attribute_name: str,
+    target_total: float,
+) -> None:
+    if not regions:
+        return
+
+    safe_target_total = max(float(target_total), 0.0)
+    current_total = sum(max(float(getattr(region, attribute_name)), 0.0) for region in regions)
+
+    if current_total <= 0:
+        even_share = safe_target_total / len(regions)
+        for region in regions:
+            setattr(region, attribute_name, even_share)
+        return
+
+    scale_factor = safe_target_total / current_total
+    for region in regions:
+        current_value = max(float(getattr(region, attribute_name)), 0.0)
+        setattr(region, attribute_name, max(current_value * scale_factor, 0.01))
+
+
 def initialize_region_soft_metrics(country: Country, region: Region) -> None:
     integration_anchor = (
         country.base_integration_index
@@ -147,7 +170,13 @@ def align_country_baseline(country: Country) -> None:
             capacity_ratio = original_capacity / original_population
             region.housing_capacity = max(round(region.population * capacity_ratio), region.population)
 
-    if country.baseline_gdp_scale_vs_2020 > 0:
+    if country.baseline_gdp_billion_eur > 0:
+        scale_float_attribute_to_total(
+            country.regions,
+            "gdp_billion_eur",
+            country.baseline_gdp_billion_eur,
+        )
+    elif country.baseline_gdp_scale_vs_2020 > 0:
         for region in country.regions:
             region.gdp_billion_eur = max(
                 region.gdp_billion_eur * country.baseline_gdp_scale_vs_2020,

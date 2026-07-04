@@ -72,6 +72,7 @@ def load_countries(path: str | Path, regions: list[Region]) -> list[Country]:
                 base_investment_climate_index=entry.get("base_investment_climate_index", 0.50),
                 baseline_year=entry.get("baseline_year", 2020),
                 baseline_population=entry.get("baseline_population", 0),
+                baseline_gdp_billion_eur=entry.get("baseline_gdp_billion_eur", 0.0),
                 baseline_gdp_scale_vs_2020=entry.get("baseline_gdp_scale_vs_2020", 1.0),
                 baseline_unemployment_rate=entry.get("baseline_unemployment_rate", 0.12),
                 baseline_inflation_rate=entry.get("baseline_inflation_rate", 0.02),
