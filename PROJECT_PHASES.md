@@ -6,24 +6,24 @@
 
 BESP2074 ist eine abgeschlossene, jahresbasierte Balkan-Simulation mit:
 
-- exportgetriebener Visualisierung
-- klarer Trennung zwischen Python-Simulation und Frontend
-- Regionen als echter Modellschicht statt nur Kartenoptik
-- plausiblen, langsamen Veränderungen statt Event-Spam
+- exportgestützter Visualisierung
+- klarer Trennung zwischen Python-Simulation und Benutzeroberfläche
+- Regionen als echter Modellebene statt nur als Kartendarstellung
+- plausiblen, langsamen Veränderungen statt einer übermässigen Ereignisflut
 - lokalem Dashboard und lokalem Grenzeditor
 
 Das aktuelle Projekt ist vollständig nutzbar. Weitere Ideen sind optionale spätere Erweiterungen und keine Voraussetzung für den abgeschlossenen Stand.
 
-## Workflow-Regeln
+## Arbeitsregeln
 
 1. Arbeit in klaren Blöcken umsetzen.
-2. Ein Commit pro zusammenhängendem Block statt viele Mikro-Commits.
-3. Tests und Doku gehören zum selben Funktionsblock.
-4. Historie nicht leichtfertig umschreiben.
+2. Ein Commit pro zusammenhängendem Block statt vieler kleiner Einzel-Commits.
+3. Tests und Dokumentation gehören zum selben Funktionsblock.
+4. Die Versionshistorie nicht leichtfertig umschreiben.
 
-Empfohlenes Commit-Schema:
+Empfohlenes Schema für Commit-Nachrichten:
 
-`<phase>.<subphase> <type>: <beschreibung>`
+`<phase>.<unterphase> <typ>: <beschreibung>`
 
 Beispiele:
 
@@ -31,60 +31,62 @@ Beispiele:
 - `10.3 dashboard: add multi-run batch summary`
 - `10.4 map: add persistent boundary assignment editor`
 
+Die Beispiele bleiben absichtlich auf Englisch, da sie die tatsächlich verwendeten Commit-Nachrichten zeigen.
+
 ## Phasenübersicht
 
-### Phase 1 - Foundation
-Status: complete
+### Phase 1 - Grundlagen
+Status: abgeschlossen
 
-Basisstruktur, Dataclasses, JSON-Startdaten, erster Jahrestick.
+Basisstruktur, Datenklassen, JSON-Startdaten und erster Jahresschritt.
 
-### Phase 2 - Structured Export
-Status: complete
+### Phase 2 - Strukturierter Export
+Status: abgeschlossen
 
-Jahreswerte pro Land und Region, JSON-Export für das Dashboard.
+Jahreswerte pro Land und Region sowie JSON-Export für das Dashboard.
 
-### Phase 3 - Economy v1
-Status: complete
+### Phase 3 - Wirtschaft v1
+Status: abgeschlossen
 
 Wirtschaftslogik mit BIP, Wachstum, Arbeitslosigkeit und Aggregation.
 
 ### Phase 4 - Dashboard v1
-Status: complete
+Status: abgeschlossen
 
 Erstes Dashboard ohne Kartenschicht.
 
-### Phase 5 - Map and Timeline
-Status: complete
+### Phase 5 - Karte und Zeitachse
+Status: abgeschlossen
 
-Karte, Jahresnavigation, Wiedergabe, Export-Reload und lokaler Run-Service.
+Karte, Jahresnavigation, Wiedergabe, erneutes Laden von Exporten und lokaler Ausführungsdienst.
 
-### Phase 7 - Shock System
-Status: complete
+### Phase 7 - Schocksystem
+Status: abgeschlossen
 
-Begrenzte, seed-konsistente Schocks mit Verifiern.
+Begrenzte, mit identischen Startwerten reproduzierbare Schocks sowie passende Prüfskripte.
 
-### Phase 8 - Politics and State v1
-Status: complete
+### Phase 8 - Politik und Staat v1
+Status: abgeschlossen
 
-Staatliche Kennzahlen und Dashboard-Anzeige.
+Staatliche Kennzahlen und deren Darstellung im Dashboard.
 
-### Phase 9 - Scope Expansion
-Status: complete
+### Phase 9 - Erweiterung des Projektumfangs
+Status: abgeschlossen
 
-Erweiterung auf elf Länder plus verbesserte Kartenabdeckung.
+Erweiterung auf elf Länder sowie verbesserte Kartenabdeckung.
 
 ### Phase 10 - Hauptarbeit
-Status: complete
+Status: abgeschlossen
 
-#### Phase 10.1 - Dynamic Baseline Refresh
-Status: complete
+#### Phase 10.1 - Dynamische Aktualisierung des Basisjahrs
+Status: abgeschlossen
 
-- World-Bank-Refresh für `2023-2026`
+- Aktualisierung der Weltbank-Daten für `2023-2026`
 - automatische Wahl des besten gemeinsamen Basisjahrs
 - `main.py` erkennt das Startjahr dynamisch
 
-#### Phase 10.2 - Social Metric Layer
-Status: complete
+#### Phase 10.2 - Ebene sozialer Kennzahlen
+Status: abgeschlossen
 
 Neue Modellwerte:
 
@@ -95,67 +97,67 @@ Neue Modellwerte:
 
 Diese Werte werden auf Regions- und Landesebene exportiert.
 
-#### Phase 10.3 - Multi-Run Service
-Status: complete
+#### Phase 10.3 - Dienst für Mehrfachläufe
+Status: abgeschlossen
 
 - `1-100` Durchläufe im lokalen Dashboard
-- gleiche Seeds bleiben reproduzierbar
-- verschiedene Seeds liefern auch ohne Schocks unterschiedliche Resultate
-- Batch-Zusammenfassung für Min/Max-Spannen
+- gleiche Startwerte bleiben reproduzierbar
+- verschiedene Startwerte liefern auch ohne Schocks unterschiedliche Resultate
+- Zusammenfassung mehrerer Durchläufe mit Minimal- und Maximalwerten
 
-#### Phase 10.4 - Boundary / Region Editor
-Status: complete
+#### Phase 10.4 - Grenz- und Regionseditor
+Status: abgeschlossen
 
 - lokaler Editor unter `dashboard/editor.html`
-- persistente Overrides in `dashboard/data/map_assignments.json`
-- vorhandene ADM-Flächen können neuen Ländern und Regionen zugeordnet werden
+- dauerhafte Überschreibungen in `dashboard/data/map_assignments.json`
+- vorhandene Verwaltungsflächen können neuen Ländern und Regionen zugeordnet werden
 - einfacher Annexionsmodus mit Zielland und optionaler Zielregion
-- frisch annektierte Zielregionen starten mit tieferer Zufriedenheit
+- neu annektierte Zielregionen starten mit tieferer Zufriedenheit
 
-#### Phase 10.5 - Aggregation and Consistency Tests
-Status: complete
+#### Phase 10.5 - Aggregations- und Konsistenztests
+Status: abgeschlossen
 
-- Unit Test für Länder- gegen Regionssummen pro Jahr
-- Verifier für Exportjahr, Meta-Konsistenz und Zustandsdynamik
+- automatisierter Test für den Vergleich von Länder- und Regionssummen pro Jahr
+- Prüfskripte für Exportjahr, Metadatenkonsistenz und Zustandsdynamik
 
-#### Phase 10.6 - Doku und UX-Bereinigung
-Status: complete
+#### Phase 10.6 - Dokumentations- und Bedienungsbereinigung
+Status: abgeschlossen
 
-- README auf Abschlussstand gebracht
+- README auf den Abschlussstand gebracht
 - Projektphasen bereinigt
-- lokale UI-Texte und Hilfetexte vereinfacht
-- Dashboard-Controls, Light Mode und Favicon finalisiert
+- lokale Oberflächen- und Hilfetexte vereinfacht
+- Dashboard-Steuerelemente, Hellmodus und Favicon finalisiert
 
 ## Aktueller Codezustand
 
 - Länderumfang:
-  - Serbia
+  - Serbien
   - Montenegro
-  - Bosnia and Herzegovina
-  - Albania
-  - North Macedonia
-  - Bulgaria
-  - Hungary
-  - Croatia
-  - Romania
-  - Slovenia
-  - Greece
-- Export:
+  - Bosnien und Herzegowina
+  - Albanien
+  - Nordmazedonien
+  - Bulgarien
+  - Ungarn
+  - Kroatien
+  - Rumänien
+  - Slowenien
+  - Griechenland
+- Exportdateien:
   - `output/latest.json`
   - `output/simulation_<start>_<end>.json`
 - Basisjahr:
-  - automatisch erkannt aus `data/countries.json`
-  - aktueller Refresh-Stand: `2024`
+  - automatisch aus `data/countries.json` erkannt
+  - aktueller Aktualisierungsstand: `2024`
 - Dashboard:
   - `dashboard/index.html`
-  - Länder-, Regions-, KPI-, Border-, Dark- und Light-Mode
-  - Griechenland rendert reale ADM2-Unterlinien, Slowenien reale NUTS3-Unterlinien innerhalb der bestehenden Makroregionen.
+  - Länder-, Regions-, Kennzahlen-, Grenz-, Dunkel- und Hellmodus
+  - Griechenland rendert reale ADM2-Untergrenzen, Slowenien reale NUTS3-Untergrenzen innerhalb der bestehenden Makroregionen.
 - Grenzeditor:
   - `dashboard/editor.html`
-- Lokaler Service:
+- Lokaler Dienst:
   - `tools/local_run_service.py`
 
-## Verify Commands
+## Prüfbefehle
 
 ```powershell
 python tools\verify_release_ready.py
@@ -177,6 +179,6 @@ python tools\local_run_service.py --port 8011
 
 Diese Punkte sind keine offenen Abschlussaufgaben:
 
-1. Zusätzliche Batch-Vergleichsansicht im Dashboard statt nur Min/Max-Zusammenfassung.
-2. Optionaler Polygon-Split-Editor, falls freie Grenzziehung später wirklich nötig wird.
-3. Weitere Datensatz-Refreshes, sobald für `2025` oder `2026` genug gemeinsame öffentliche Werte verfügbar sind.
+1. Zusätzliche Vergleichsansicht für mehrere Durchläufe im Dashboard statt nur einer Zusammenfassung der Minimal- und Maximalwerte.
+2. Optionaler Editor zum Aufteilen von Polygonen, falls frei gezeichnete Grenzen später wirklich nötig werden.
+3. Weitere Datensatzaktualisierungen, sobald für `2025` oder `2026` genügend gemeinsame öffentliche Werte verfügbar sind.
