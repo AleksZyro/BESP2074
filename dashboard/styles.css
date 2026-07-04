@@ -24,9 +24,9 @@
     --soft-row-bg: rgba(12, 23, 36, 0.32);
 }
 html[data-theme="light"] {
-    --bg: #dfe8ee;
-    --panel: #eef3f6;
-    --panel-alt: #e5edf3;
+    --bg: #cedbe4;
+    --panel: #e3ebf0;
+    --panel-alt: #d9e4ec;
     --line: rgba(64, 87, 109, 0.18);
     --text: #162232;
     --muted: #52677a;
@@ -36,17 +36,17 @@ html[data-theme="light"] {
     --danger: #b44b3c;
     --shadow: 0 18px 44px rgba(37, 54, 72, 0.14);
     --body-bg:
-        radial-gradient(circle at top left, rgba(45, 113, 147, 0.12), transparent 34%),
-        linear-gradient(180deg, #ecf2f6 0%, var(--bg) 100%);
-    --panel-glass: rgba(238, 243, 246, 0.94);
-    --control-bg: rgba(226, 235, 242, 0.92);
-    --control-shell-bg: rgba(232, 239, 244, 0.92);
+        radial-gradient(circle at top left, rgba(45, 113, 147, 0.10), transparent 34%),
+        linear-gradient(180deg, #dce6ed 0%, var(--bg) 100%);
+    --panel-glass: rgba(227, 235, 240, 0.95);
+    --control-bg: rgba(216, 228, 236, 0.94);
+    --control-shell-bg: rgba(221, 231, 238, 0.94);
     --control-border: rgba(64, 87, 109, 0.26);
     --canvas-bg:
-        radial-gradient(circle at 20% 20%, rgba(45, 113, 147, 0.10), transparent 35%),
-        linear-gradient(180deg, rgba(231, 239, 245, 0.96), rgba(213, 226, 235, 0.96));
-    --context-bg: rgba(255, 255, 255, 0.97);
-    --soft-row-bg: rgba(228, 236, 242, 0.74);
+        radial-gradient(circle at 20% 20%, rgba(45, 113, 147, 0.09), transparent 35%),
+        linear-gradient(180deg, rgba(219, 230, 237, 0.97), rgba(201, 217, 228, 0.97));
+    --context-bg: rgba(231, 238, 243, 0.98);
+    --soft-row-bg: rgba(216, 227, 235, 0.78);
 }
 * { box-sizing: border-box; }
 .visually-hidden {
@@ -161,9 +161,9 @@ code { font-family: Consolas, "Courier New", monospace; }
     border: 1px solid var(--control-border);
     background: var(--control-shell-bg);
     justify-content: center;
-    width: 46px;
-    min-width: 46px;
-    padding: 7px;
+    width: 72px;
+    min-width: 72px;
+    padding: 7px 11px;
 }
 .panel { padding: 22px; }
 .eyebrow, .section-kicker {
