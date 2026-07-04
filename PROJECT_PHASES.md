@@ -1,4 +1,6 @@
-# BESP2074 Project Phases
+# BESP2074 Projektphasen
+
+**Deutsch** | [English](./PROJECT_PHASES_EN.md)
 
 ## Projektziel
 
