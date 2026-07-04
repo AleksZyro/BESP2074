@@ -1,5 +1,7 @@
 # BESP2074 - Balkan Economy Simulation Player
 
+**Deutsch** | [English](./README_EN.md)
+
 BESP2074 ist eine jahresbasierte Balkan-Simulation mit Python-Modell, strukturiertem JSON-Export und lokalem Web-Dashboard. Das Projekt simuliert Länder und Regionen vom automatisch erkannten Basisjahr bis `2074`, visualisiert Kennzahlen auf einer interaktiven Karte und enthält einen lokalen Grenzeditor für Annexionsszenarien.
 
 ## Kurzüberblick
@@ -47,8 +49,8 @@ Das Projekt umfasst elf Länder:
 1. Repository klonen und in den Projektordner wechseln:
 
 ```powershell
-git clone https://github.com/Aleksandros2/BESP-Balkan-Economy-Simulation-Player-.git
-cd BESP-Balkan-Economy-Simulation-Player-
+git clone https://github.com/Aleksandros2/BESP2074.git
+cd BESP2074
 ```
 
 2. Python prüfen:
