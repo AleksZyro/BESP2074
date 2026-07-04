@@ -73,6 +73,7 @@ class Country:
     enabled: bool = True
     baseline_year: int = 2020
     baseline_population: int = 0
+    baseline_gdp_billion_eur: float = 0.0
     baseline_gdp_scale_vs_2020: float = 1.0
     baseline_unemployment_rate: float = 0.12
     baseline_inflation_rate: float = 0.02

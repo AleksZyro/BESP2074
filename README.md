@@ -8,6 +8,7 @@ BESP2074 ist eine jahresbasierte Balkan-Simulation mit Python-Modell, strukturie
 
 - Python-Simulationsmodell mit Länder-, Regions- und Staatskennzahlen.
 - Elf Länder mit regionalen Ausgangsdaten und automatischer Baseline-Erkennung.
+- GDP-Baselines auf Länderebene aus World-Bank-Werten, in EUR mit ECB-Durchschnittskurs umgerechnet.
 - Reproduzierbare Seeds, Szenarien, Mehrfachläufe und optionale simulierte Ereignisse.
 - Strukturierter JSON-Export für Dashboard und Verifier.
 - Lokales Web-Dashboard mit Karte, Zeitachse, KPI-Modi, Dark-/Light-Mode und Run-Service.

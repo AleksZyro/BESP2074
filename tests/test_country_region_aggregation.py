@@ -45,6 +45,19 @@ class CountryRegionAggregationTests(unittest.TestCase):
         _start_year, end_year = resolve_simulation_year_window("data")
         self.assertEqual(end_year, 2074)
 
+    def test_country_gdp_baselines_match_region_totals(self) -> None:
+        countries = load_world("data")
+        for country in countries:
+            if country.baseline_gdp_billion_eur <= 0:
+                continue
+            with self.subTest(country=country.code):
+                region_gdp = sum(region.gdp_billion_eur for region in country.regions)
+                self.assertAlmostEqual(
+                    region_gdp,
+                    country.baseline_gdp_billion_eur,
+                    places=6,
+                )
+
     def test_country_totals_match_region_sums_for_every_year(self) -> None:
         start_year, end_year = resolve_simulation_year_window("data")
         countries = load_world("data")
