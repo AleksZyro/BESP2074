@@ -2,12 +2,15 @@
 
 ## Projektziel
 
-BESP2074 ist eine realistische, jahresbasierte Balkan-Simulation mit:
+BESP2074 ist eine abgeschlossene, jahresbasierte Balkan-Simulation mit:
 
 - exportgetriebener Visualisierung
 - klarer Trennung zwischen Python-Simulation und Frontend
 - Regionen als echter Modellschicht statt nur Kartenoptik
 - plausiblen, langsamen Veränderungen statt Event-Spam
+- lokalem Dashboard und lokalem Grenzeditor
+
+Das aktuelle Projekt ist vollständig nutzbar. Weitere Ideen sind optionale spätere Erweiterungen und keine Voraussetzung für den abgeschlossenen Stand.
 
 ## Workflow-Regeln
 
@@ -66,10 +69,10 @@ Staatliche Kennzahlen und Dashboard-Anzeige.
 ### Phase 9 - Scope Expansion
 Status: complete
 
-Erweiterung auf neun Länder plus verbesserte Kartenabdeckung.
+Erweiterung auf elf Länder plus verbesserte Kartenabdeckung.
 
 ### Phase 10 - Hauptarbeit
-Status: active
+Status: complete
 
 #### Phase 10.1 - Dynamic Baseline Refresh
 Status: complete
@@ -110,15 +113,16 @@ Status: complete
 #### Phase 10.5 - Aggregation and Consistency Tests
 Status: complete
 
-- Unit Test fuer Laender- gegen Regionssummen pro Jahr
-- Verifier fuer Exportjahr, Meta-Konsistenz und Zustandsdynamik
+- Unit Test für Länder- gegen Regionssummen pro Jahr
+- Verifier für Exportjahr, Meta-Konsistenz und Zustandsdynamik
 
 #### Phase 10.6 - Doku und UX-Bereinigung
-Status: in progress
+Status: complete
 
-- README auf Hauptarbeitsstand bringen
-- Projektphasen aufraeumen
-- lokale UI-Texte und Hilfetexte vereinfachen
+- README auf Abschlussstand gebracht
+- Projektphasen bereinigt
+- lokale UI-Texte und Hilfetexte vereinfacht
+- Dashboard-Controls, Light Mode und Favicon finalisiert
 
 ## Aktueller Codezustand
 
@@ -142,6 +146,7 @@ Status: in progress
   - aktueller Refresh-Stand: `2024`
 - Dashboard:
   - `dashboard/index.html`
+  - Länder-, Regions-, KPI-, Border-, Dark- und Light-Mode
   - Griechenland rendert reale ADM2-Unterlinien, Slowenien reale NUTS3-Unterlinien innerhalb der bestehenden Makroregionen.
 - Grenzeditor:
   - `dashboard/editor.html`
@@ -151,20 +156,25 @@ Status: in progress
 ## Verify Commands
 
 ```powershell
-py tools\refresh_country_baselines.py
-py main.py --scenario baseline
-py main.py --scenario baseline --disable-shocks
-py tools\verify_export_year_state.py
-py tools\verify_state_dynamics.py
-py tools\verify_export_meta.py
-py tools\verify_geo_coverage.py
-py tools\verify_geo_name_normalization.py
-python -m unittest tests.test_country_region_aggregation
-py tools\local_run_service.py --port 8011
+python tools\verify_release_ready.py
+python -m pytest
+node --check dashboard/app.js
+node --check dashboard/config.js
+node --check dashboard/editor.js
+python main.py --scenario baseline
+python main.py --scenario baseline --disable-shocks
+python tools\verify_export_year_state.py
+python tools\verify_state_dynamics.py
+python tools\verify_export_meta.py
+python tools\verify_geo_coverage.py
+python tools\verify_geo_name_normalization.py
+python tools\local_run_service.py --port 8011
 ```
 
-## Nächste sinnvolle Ausbauschritte
+## Optionale spätere Erweiterungen
 
-1. Echte Batch-Vergleichsansicht im Dashboard statt nur Min/Max-Zusammenfassung.
+Diese Punkte sind keine offenen Abschlussaufgaben:
+
+1. Zusätzliche Batch-Vergleichsansicht im Dashboard statt nur Min/Max-Zusammenfassung.
 2. Optionaler Polygon-Split-Editor, falls freie Grenzziehung später wirklich nötig wird.
-3. Weitere Datensatz-Refreshes, sobald für `2025` oder `2026` genug gemeinsame Weltbankwerte verfügbar sind.
+3. Weitere Datensatz-Refreshes, sobald für `2025` oder `2026` genug gemeinsame öffentliche Werte verfügbar sind.
