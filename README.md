@@ -206,3 +206,9 @@ Das Skript prüft die Jahre `2023` bis `2026`, wählt die beste gemeinsame Daten
 BESP2074 ist als lokales Abschlussprojekt vollständig nutzbar. Die Hauptbereiche Simulation, Export, Dashboard, Grenzeditor, Mehrfachläufe, Events, Kartenlogik und Tests sind abgeschlossen.
 
 Optionale zukünftige Erweiterungen sind keine Voraussetzung für den abgeschlossenen Projektstand. Sinnvolle spätere Ideen wären eine zusätzliche Batch-Vergleichsansicht, ein freier Polygon-Split-Editor oder weitere Datenrefreshes, sobald neuere Jahre vollständigere öffentliche Daten bieten.
+
+## Lizenz und Datenquellen
+
+Der eigene Quellcode und die eigene Projektdokumentation von BESP2074 stehen unter der [MIT-Lizenz](./LICENSE).
+
+Externe Datensätze und Kartendateien behalten ihre ursprünglichen Lizenzen. Weitere Angaben stehen in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
