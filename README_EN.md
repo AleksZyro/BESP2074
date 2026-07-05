@@ -20,3 +20,9 @@ Run the complete verification with:
 ```bash
 python tools/verify_release_ready.py
 ```
+
+## License
+
+The original source code and project documentation use the [MIT License](./LICENSE).
+
+External datasets and map files keep their original licences. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
