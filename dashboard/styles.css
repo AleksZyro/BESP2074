@@ -176,6 +176,23 @@ code { font-family: Consolas, "Courier New", monospace; }
 .hero h1, .section-heading h2 { margin: 0; }
 .hero h1 { font-size: clamp(2rem, 3.8vw, 3.2rem); line-height: 1.04; }
 .lead { max-width: 58ch; margin: 12px 0 0; color: var(--muted); line-height: 1.6; }
+.static-demo .hero {
+    flex-wrap: wrap;
+}
+.static-demo-banner {
+    flex: 1 0 100%;
+    margin: 2px 0 0;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--muted);
+    background: var(--soft-row-bg);
+    line-height: 1.5;
+}
+.static-demo-banner a {
+    color: var(--accent-cool);
+    font-weight: 800;
+}
 .dashboard-grid { display: grid; gap: 20px; margin-top: 20px; }
 .section-heading {
     display: flex;
@@ -264,6 +281,10 @@ code { font-family: Consolas, "Courier New", monospace; }
     align-items: center;
     justify-content: center;
     text-decoration: none;
+}
+.timeline-link-button[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.58;
 }
 .timeline-button:disabled, .speed-button:disabled, .timeline-select:disabled { cursor: not-allowed; opacity: 0.55; }
 .timeline-button-primary, .speed-button-active, .map-mode-button-active, .metric-button-active {
