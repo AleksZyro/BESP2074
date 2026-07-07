@@ -185,11 +185,23 @@ code { font-family: Consolas, "Courier New", monospace; }
     margin-bottom: 16px;
 }
 .section-actions { display: grid; gap: 10px; justify-items: end; }
-.timeline-controls, .run-controls, .map-mode-controls, .speed-controls, .metric-controls {
+.timeline-controls, .run-controls, .map-mode-controls, .speed-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+}
+.metric-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px 22px;
+    max-width: 670px;
+}
+.metric-button-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 .view-strip {
     display: grid;
@@ -208,6 +220,17 @@ code { font-family: Consolas, "Courier New", monospace; }
     height: 16px;
     accent-color: var(--accent);
 }
+.shock-toggle-wrap, .compact-toggle-wrap {
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--control-border);
+    border-radius: 999px;
+    background: var(--control-bg);
+    font-weight: 600;
+}
+.report-controls {
+    padding-top: 4px;
+}
 .timeline-button, .speed-button, .timeline-select, .map-mode-button, .metric-button, .run-count-input {
     appearance: none;
     -webkit-appearance: none;
@@ -224,10 +247,11 @@ code { font-family: Consolas, "Courier New", monospace; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
+    width: 50px;
     height: 38px;
-    min-width: 42px;
+    min-width: 50px;
     min-height: 38px;
+    border-radius: 10px;
     padding: 0;
     font-size: 1rem;
 }
@@ -246,6 +270,10 @@ code { font-family: Consolas, "Courier New", monospace; }
     border-color: rgba(220, 184, 107, 0.55);
     background: rgba(220, 184, 107, 0.16);
     color: var(--text);
+}
+.danger-button {
+    border-color: rgba(243, 176, 162, 0.45);
+    color: var(--danger);
 }
 .timeline-select { min-width: 130px; appearance: none; }
 .year-pill {

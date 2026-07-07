@@ -4,7 +4,7 @@
 
 ## Project Goal
 
-BESP2074 is a completed, year-based Balkan simulation with:
+BESP2074 is a year-based Balkan simulation in private review state with:
 
 - export-driven visualization
 - a clear separation between the Python simulation and the frontend
@@ -12,7 +12,7 @@ BESP2074 is a completed, year-based Balkan simulation with:
 - plausible, gradual development instead of excessive event generation
 - a local dashboard and a local border editor
 
-The current project is fully usable. Further ideas are optional future extensions and are not required for the completed state.
+The current project is locally usable and technically verifiable. Further ideas are optional future extensions and are not required for the private review state.
 
 ## Workflow Rules
 
@@ -34,57 +34,57 @@ Examples:
 ## Phase Overview
 
 ### Phase 1 - Foundation
-Status: complete
+Status: implemented
 
 Basic structure, dataclasses, JSON baseline data, and the first yearly simulation tick.
 
 ### Phase 2 - Structured Export
-Status: complete
+Status: implemented
 
 Yearly country and regional values with JSON exports for the dashboard.
 
 ### Phase 3 - Economy v1
-Status: complete
+Status: implemented
 
 Economic logic for GDP, growth, unemployment, and aggregation.
 
 ### Phase 4 - Dashboard v1
-Status: complete
+Status: implemented
 
 Initial dashboard without a map layer.
 
 ### Phase 5 - Map and Timeline
-Status: complete
+Status: implemented
 
 Map, year navigation, playback, export reload, and local run service.
 
 ### Phase 7 - Shock System
-Status: complete
+Status: implemented
 
 Limited, seed-consistent shocks with verification tools.
 
 ### Phase 8 - Politics and State v1
-Status: complete
+Status: implemented
 
 State-level indicators and dashboard presentation.
 
 ### Phase 9 - Scope Expansion
-Status: complete
+Status: implemented
 
 Expansion to eleven countries and improved map coverage.
 
 ### Phase 10 - Main Development Work
-Status: complete
+Status: implemented
 
 #### Phase 10.1 - Dynamic Baseline Refresh
-Status: complete
+Status: implemented
 
 - World Bank refresh for `2023-2026`
 - automatic selection of the best common baseline year
 - dynamic start-year detection in `main.py`
 
 #### Phase 10.2 - Social Metric Layer
-Status: complete
+Status: implemented
 
 New model values:
 
@@ -96,7 +96,7 @@ New model values:
 These values are exported at regional and country level.
 
 #### Phase 10.3 - Multi-Run Service
-Status: complete
+Status: implemented
 
 - `1-100` runs in the local dashboard
 - identical seeds remain reproducible
@@ -104,7 +104,7 @@ Status: complete
 - batch summaries for minimum and maximum ranges
 
 #### Phase 10.4 - Boundary / Region Editor
-Status: complete
+Status: implemented
 
 - local editor at `dashboard/editor.html`
 - persistent overrides in `dashboard/data/map_assignments.json`
@@ -113,15 +113,15 @@ Status: complete
 - newly annexed target regions start with lower satisfaction
 
 #### Phase 10.5 - Aggregation and Consistency Tests
-Status: complete
+Status: implemented
 
 - unit test comparing yearly country totals with regional totals
 - verification tools for export year, metadata consistency, and state dynamics
 
 #### Phase 10.6 - Documentation and UX Cleanup
-Status: complete
+Status: implemented
 
-- README updated to reflect the completed state
+- README updated to reflect the private review state
 - project-phase documentation cleaned up
 - local UI and help text simplified
 - dashboard controls, light mode, and favicon finalized

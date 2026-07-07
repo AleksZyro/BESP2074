@@ -2,15 +2,13 @@ const EXPORT_PATH = "../output/latest.json";
 const RUN_STATUS_PATH = "/api/run-status";
 const RUN_SCENARIOS_PATH = "/api/scenarios";
 const RUN_TRIGGER_PATH = "/api/run";
+const RUN_DELETE_PATH = "/api/latest-run";
+const RUN_REPORT_PATH = "/api/export-report";
 const MAP_ASSIGNMENTS_API_PATH = "/api/map-assignments";
 const MAP_ASSIGNMENTS_PATH = "./data/map_assignments.json";
 const RUN_SERVICE_OFFLINE_MESSAGE =
     "Static preview. Start `tools/local_run_service.py` before generating new numbers, then reload the export.";
 const PLAYBACK_HELP_MESSAGE =
-    "Play replays loaded years. At the final year, Play starts a fresh local run when the service is available.";
-const RUN_SERVICE_OFFLINE_TEXT =
-    "Static preview. Start `tools/local_run_service.py` before generating new numbers, then reload the export.";
-const PLAYBACK_HELP_TEXT =
     "Play replays loaded years. At the final year, Play starts a fresh local run when the service is available.";
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
@@ -540,6 +538,16 @@ const I18N = {
         "status.exportLoadFailed": "Latest export could not be loaded. Reload under Advanced or start new runs.",
         "status.exportLoadFailedDetail": "Latest export could not be loaded. Start the local service in the project root, then reload.",
         "status.invalidExport": "Invalid BESP2074 export structure",
+        "status.exportReportUnavailable": "Start the local service and load a run before exporting.",
+        "status.exportReportInvalidYears": "Choose an end year after the start year.",
+        "status.exportReportStarting": "Preparing TXT export ...",
+        "status.exportReportReady": "TXT export downloaded.",
+        "status.exportReportFailed": "TXT export failed.",
+        "status.deleteRunUnavailable": "Start the local service before deleting the current run.",
+        "status.deleteRunConfirm": "Delete the current run from output/latest.json?",
+        "status.deleteRunStarting": "Deleting current run ...",
+        "status.deleteRunReady": "Current run deleted. Generate a new run to continue.",
+        "status.deleteRunFailed": "Current run could not be deleted.",
         "theme.light": "Light",
         "theme.dark": "Dark",
         "theme.switchLight": "Switch to light mode",
@@ -716,6 +724,16 @@ const I18N = {
         "status.exportLoadFailed": "Der neueste Export konnte nicht geladen werden. Unter Erweitert neu laden oder neue Runs starten.",
         "status.exportLoadFailedDetail": "Der neueste Export konnte nicht geladen werden. Starte den lokalen Service im Projektordner und lade danach neu.",
         "status.invalidExport": "Ungültige BESP2074-Exportstruktur",
+        "status.exportReportUnavailable": "Starte den lokalen Service und lade einen Run, bevor du exportierst.",
+        "status.exportReportInvalidYears": "Wähle ein Endjahr nach dem Startjahr.",
+        "status.exportReportStarting": "Bereite TXT-Export vor ...",
+        "status.exportReportReady": "TXT-Export heruntergeladen.",
+        "status.exportReportFailed": "TXT-Export fehlgeschlagen.",
+        "status.deleteRunUnavailable": "Starte den lokalen Service, bevor du den aktuellen Run löschst.",
+        "status.deleteRunConfirm": "Aktuellen Run aus output/latest.json löschen?",
+        "status.deleteRunStarting": "Lösche aktuellen Run ...",
+        "status.deleteRunReady": "Aktueller Run gelöscht. Erzeuge einen neuen Run, um weiterzumachen.",
+        "status.deleteRunFailed": "Aktueller Run konnte nicht gelöscht werden.",
         "theme.light": "Hell",
         "theme.dark": "Dunkel",
         "theme.switchLight": "Zu Hellmodus wechseln",
@@ -1020,86 +1038,8 @@ const VISUAL_REGION_DEFINITIONS = {
     "GRC::aegean": { label: "Aegean", dataRegionKey: "GRC::aegean", fill: "#6aaec4" },
     "GRC::agion-oros": { label: "Athos", dataRegionKey: "GRC::agion oros", fill: "#8b7fa9" },
 };
-const INLINE_EDITOR_TARGET_OPTIONS = Object.freeze({
-    ALB: [
-        { visualRegionKey: "ALB::north", label: "N ALB", dataRegionKey: "ALB::northern albania", fill: "#7f8d62" },
-        { visualRegionKey: "ALB::central", label: "C ALB", dataRegionKey: "ALB::tirana", fill: "#a68962", useDefinitionDataKeys: true },
-        { visualRegionKey: "ALB::south", label: "S ALB", dataRegionKey: "ALB::southern albania", fill: "#b67658" },
-    ],
-    BGR: [
-        { visualRegionKey: "BGR::sofia", label: "Sofia", dataRegionKey: "BGR::sofia", fill: "#63718d" },
-        { visualRegionKey: "BGR::north", label: "N BUL", dataRegionKey: "BGR::northern bulgaria", fill: "#c58b4a" },
-        { visualRegionKey: "BGR::south", label: "S BUL", dataRegionKey: "BGR::southern bulgaria", fill: "#6f9250" },
-        { visualRegionKey: "BGR::black-sea", label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#4e83a5" },
-    ],
-    GRC: [
-        { visualRegionKey: "GRC::attica", label: "Attica", dataRegionKey: "GRC::attica", fill: "#6689c0" },
-        { visualRegionKey: "GRC::macedonia-thrace", label: "Macedonia-Thrace", dataRegionKey: "GRC::macedonia thrace", fill: "#5b9ba7" },
-        { visualRegionKey: "GRC::epirus-western-macedonia", label: "Epirus-W. Mac.", dataRegionKey: "GRC::epirus western macedonia", fill: "#7aa276" },
-        { visualRegionKey: "GRC::thessalia-central-greece", label: "Thessaly-C. Greece", dataRegionKey: "GRC::thessalia central greece", fill: "#9eb36a" },
-        { visualRegionKey: "GRC::peloponnese-west-greece-ionian", label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece and ionian", fill: "#c19362" },
-        { visualRegionKey: "GRC::crete", label: "Crete", dataRegionKey: "GRC::crete", fill: "#d0a05f" },
-        { visualRegionKey: "GRC::aegean", label: "Aegean", dataRegionKey: "GRC::aegean", fill: "#6aaec4" },
-        { visualRegionKey: "GRC::agion-oros", label: "Athos", dataRegionKey: "GRC::agion oros", fill: "#8b7fa9" },
-    ],
-    BIH: [
-        { visualRegionKey: "BIH::fbih", label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
-        { visualRegionKey: "BIH::rs", label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c", useDefinitionDataKeys: true },
-    ],
-    HRV: [
-        { visualRegionKey: "HRV::zagreb-central", label: "C HRV", dataRegionKey: "HRV::zagreb and central croatia", fill: "#a25d46" },
-        { visualRegionKey: "HRV::slavonia", label: "Slavonija", dataRegionKey: "HRV::slavonia", fill: "#c97f44" },
-        { visualRegionKey: "HRV::dalmatia", label: "Dalmacija", dataRegionKey: "HRV::dalmatia", fill: "#d9ac70" },
-        { visualRegionKey: "HRV::istria-kvarner", label: "Istrija", dataRegionKey: "HRV::istria and kvarner", fill: "#8f6f5a" },
-    ],
-    HUN: [
-        { visualRegionKey: "HUN::central-hungary", label: "Budapest", dataRegionKey: "HUN::central hungary", fill: "#d34b4b" },
-        { visualRegionKey: "HUN::north-hungary", label: "N HUN", dataRegionKey: "HUN::northern hungary", fill: "#81c5d8" },
-        { visualRegionKey: "HUN::great-plains", label: "Great Plains", dataRegionKey: "HUN::great plains", fill: "#41b65a" },
-        { visualRegionKey: "HUN::transdanubia", label: "Transdanubia", dataRegionKey: "HUN::transdanubia", fill: "#6f63c7" },
-    ],
-    MKD: [
-        { visualRegionKey: "MKD::west", label: "W MAC", dataRegionKey: "MKD::western north macedonia", fill: "#b78361" },
-        { visualRegionKey: "MKD::skopje", label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#865c71" },
-        { visualRegionKey: "MKD::se", label: "E MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8f6aa7" },
-    ],
-    MNE: [
-        { visualRegionKey: "MNE::coastal-region", label: "CS MON", dataRegionKey: "MNE::coast", fill: "#66aebe" },
-        { visualRegionKey: "MNE::southern-montenegro", label: "S MON", dataRegionKey: "MNE::inland", fill: "#4f9488", useDefinitionDataKeys: true },
-        { visualRegionKey: "MNE::northern-montenegro", label: "N MON", dataRegionKey: "MNE::inland", fill: "#7aa6cf", useDefinitionDataKeys: true },
-    ],
-    ROU: [
-        { visualRegionKey: "ROU::transylvania-banat", label: "Transylvania", dataRegionKey: "ROU::transylvania and banat", fill: "#ccb65b" },
-        { visualRegionKey: "ROU::wallachia-oltenia", label: "Wallachia", dataRegionKey: "ROU::wallachia and oltenia", fill: "#b48a56" },
-        { visualRegionKey: "ROU::bucharest-ilfov", label: "Bucharest", dataRegionKey: "ROU::bucharest ilfov", fill: "#8a5d4d" },
-        { visualRegionKey: "ROU::moldavia", label: "Moldavia", dataRegionKey: "ROU::moldavia", fill: "#c87892" },
-        { visualRegionKey: "ROU::dobruja-lower-danube", label: "Dobruja", dataRegionKey: "ROU::dobruja and lower danube", fill: "#7fa866" },
-    ],
-    SRB: [
-        { visualRegionKey: "SRB::vojvodina", label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
-        { visualRegionKey: "SRB::belgrade", label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
-        { visualRegionKey: "SRB::sz-srb", label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
-        { visualRegionKey: "SRB::ji-srb", label: "JI SRB", dataRegionKey: "SRB::south and east serbia", fill: "#cf857c" },
-        { visualRegionKey: "SRB::kosovo-metohija", label: "Kosovo", dataRegionKey: "SRB::kosovo and metohija", fill: "#efb287" },
-    ],
-    SVN: [
-        { visualRegionKey: "SVN::western", label: "W SVN", dataRegionKey: "SVN::western slovenia", fill: "#5c9abf" },
-        { visualRegionKey: "SVN::eastern", label: "E SVN", dataRegionKey: "SVN::eastern slovenia", fill: "#78b59f" },
-    ],
-});
-const INLINE_EDITOR_DEFAULT_TARGET_REGION = Object.freeze({
-    ALB: "ALB::central",
-    BGR: "BGR::sofia",
-    BIH: "BIH::rs",
-    GRC: "GRC::attica",
-    HRV: "HRV::zagreb-central",
-    HUN: "HUN::central-hungary",
-    MKD: "MKD::skopje",
-    MNE: "MNE::northern-montenegro",
-    ROU: "ROU::bucharest-ilfov",
-    SRB: "SRB::sz-srb",
-    SVN: "SVN::western",
-});
+const INLINE_EDITOR_TARGET_OPTIONS = Object.freeze(BALKAN_CONFIG.editorTargetOptions ?? {});
+const INLINE_EDITOR_DEFAULT_TARGET_REGION = Object.freeze(BALKAN_CONFIG.defaultTargetRegions ?? {});
 const STATE_METRICS = [
     ["budget_balance_pct_gdp", "state.budget"],
     ["debt_to_gdp", "state.debt"],
@@ -1300,6 +1240,16 @@ const elements = {
     runScenarioSelect: document.getElementById("run-scenario-select"),
     runCountInput: document.getElementById("run-count-input"),
     runShocksEnabled: document.getElementById("run-shocks-enabled"),
+    playShocksEnabled: document.getElementById("play-shocks-enabled"),
+    shockToggleInputs: Array.from(document.querySelectorAll(".shock-toggle-input")),
+    shockToggleLabels: Array.from(document.querySelectorAll("[data-shock-toggle-label]")),
+    reportStartYearSelect: document.getElementById("report-start-year"),
+    reportEndYearSelect: document.getElementById("report-end-year"),
+    reportDetailSelect: document.getElementById("report-detail"),
+    reportIncludeEvents: document.getElementById("report-include-events"),
+    reportIncludeState: document.getElementById("report-include-state"),
+    exportRunReportButton: document.getElementById("export-run-report"),
+    deleteCurrentRunButton: document.getElementById("delete-current-run"),
     runBatchSummary: document.getElementById("run-batch-summary"),
     yearSelect: document.getElementById("year-select"),
     currentYearPill: document.getElementById("current-year-pill"),
@@ -1414,10 +1364,29 @@ function applyLanguage() {
     }
     decorateMetricButtons();
     applyTheme();
+    updateShockToggleLabels();
     if (dashboardState.runServiceAvailable && dashboardState.currentRunStatus) {
         applyRunStatus(dashboardState.currentRunStatus);
     } else {
         renderRunBatchSummary(dashboardState.currentRunStatus);
+    }
+}
+function getShocksEnabled() {
+    return elements.playShocksEnabled?.checked ?? elements.runShocksEnabled?.checked ?? true;
+}
+function setShocksEnabled(enabled) {
+    const nextValue = Boolean(enabled);
+    for (const input of elements.shockToggleInputs) {
+        input.checked = nextValue;
+    }
+    updateShockToggleLabels();
+}
+function updateShockToggleLabels() {
+    const enabled = getShocksEnabled();
+    const labelKey = enabled ? "status.shocksOn" : "status.shocksOff";
+    for (const label of elements.shockToggleLabels) {
+        label.dataset.i18n = labelKey;
+        label.textContent = t(labelKey);
     }
 }
 function bindLanguageControls() {
@@ -1641,56 +1610,6 @@ function setInlineEditorStatus(message, tone = "muted") {
     elements.editorInlineStatus.textContent = message;
     elements.editorInlineStatus.className = `timeline-note export-status-status-${tone}`;
 }
-function renderInlineEditorPanelLegacyUnused() {
-    if (!elements.mapEditorCard) {
-        return;
-    }
-    const editorActive = dashboardState.editorMode;
-    elements.mapEditorCard.classList.toggle("map-hidden", !editorActive);
-    populateInlineEditorTargetCountries();
-    populateInlineEditorTargetRegions(elements.editorInlineTargetCountry?.value);
-    const selectedGroup = getInlineEditorSelectedGroup();
-    const hasSelection = Boolean(selectedGroup);
-    const targetCountryCode = normalizeCountryCode(dashboardState.editorTargetCountryCode);
-    const targetCountryName = countryDisplayName(targetCountryCode, displayCountryCode(targetCountryCode));
-    const sourceOwnerCode = hasSelection ? getInlineEditorSourceOwnerCode(selectedGroup) : "";
-    const sourceAlreadyOwned = hasSelection && sourceOwnerCode === targetCountryCode;
-    const selectionPrompt = activeMapMode === "country"
-        ? t("editor.countryHint")
-        : t("editor.regionHint");
-    if (!editorActive) {
-        elements.editorInlineSelectionTitle.textContent = t("editor.noSelection");
-        elements.editorInlineSelectionNote.textContent = t("editor.off");
-        elements.editorInlineApply.disabled = true;
-        elements.editorInlineReset.disabled = true;
-        elements.editorInlineSave.disabled = !dashboardState.runServiceAvailable;
-        setInlineEditorStatus(t("editor.off"), "muted");
-        return;
-    }
-    const targetOption = getInlineEditorTargetOption();
-    if (!hasSelection) {
-        elements.editorInlineSelectionTitle.textContent = t("editor.noSelection");
-        elements.editorInlineSelectionNote.textContent = selectionPrompt;
-    }
-    if (hasSelection) {
-        elements.editorInlineSelectionTitle.textContent = tf("editor.targetAnnexes", { country: selectedGroup.label });
-        elements.editorInlineSelectionNote.textContent = sourceAlreadyOwned
-            ? tf("editor.areaAlreadyOwned", { country: targetCountryName })
-            : tf("editor.subareasGoTo", { count: selectedGroup.features.length, country: targetCountryName });
-    }
-    elements.editorInlineApply.disabled = !hasSelection || !targetOption || sourceAlreadyOwned;
-    elements.editorInlineReset.disabled = !hasSelection;
-    elements.editorInlineSave.disabled = !dashboardState.runServiceAvailable;
-    if (!dashboardState.runServiceAvailable) {
-        setInlineEditorStatus(t("editor.startServiceToSave"), "muted");
-    } else if (hasSelection && targetOption) {
-        setInlineEditorStatus(sourceAlreadyOwned
-            ? t("editor.areaAlreadyTarget")
-            : tf("editor.countryAnnexesRegion", { country: targetCountryName, region: targetOption.label }), "muted");
-    } else {
-        setInlineEditorStatus(tf("editor.regionAnnexPrompt", { country: targetCountryName }), "muted");
-    }
-}
 function renderInlineEditorPanel() {
     if (!elements.mapEditorCard) {
         return;
@@ -1911,6 +1830,15 @@ function bindPlaybackControls() {
     elements.generateRunButton.addEventListener("click", () => {
         void triggerGenerateRun();
     });
+    elements.exportRunReportButton?.addEventListener("click", () => {
+        void triggerExportRunReport();
+    });
+    elements.deleteCurrentRunButton?.addEventListener("click", () => {
+        void triggerDeleteCurrentRun();
+    });
+    for (const input of elements.shockToggleInputs) {
+        input.addEventListener("change", () => setShocksEnabled(input.checked));
+    }
     elements.yearSelect.addEventListener("change", () => {
         const nextIndex = dashboardState.yearKeys.indexOf(elements.yearSelect.value);
         if (nextIndex >= 0) {
@@ -2058,7 +1986,33 @@ function initializeTimelineControls() {
     elements.yearSelect.innerHTML = dashboardState.yearKeys
         .map((yearKey) => `<option value="${escapeHtml(yearKey)}">${escapeHtml(yearKey)}</option>`)
         .join("");
+    populateReportYearControls();
     updatePlaybackControls();
+}
+function populateReportYearControls() {
+    if (!elements.reportStartYearSelect || !elements.reportEndYearSelect) {
+        return;
+    }
+    const startOptions = dashboardState.yearKeys
+        .map((yearKey) => {
+            const [startYear] = parseYearKey(yearKey);
+            return `<option value="${escapeHtml(String(startYear))}">${escapeHtml(String(startYear))}</option>`;
+        })
+        .join("");
+    const endOptions = dashboardState.yearKeys
+        .map((yearKey) => {
+            const [, endYear] = parseYearKey(yearKey);
+            return `<option value="${escapeHtml(String(endYear))}">${escapeHtml(String(endYear))}</option>`;
+        })
+        .join("");
+    elements.reportStartYearSelect.innerHTML = startOptions;
+    elements.reportEndYearSelect.innerHTML = endOptions;
+    if (dashboardState.yearKeys.length) {
+        const [firstStart] = parseYearKey(dashboardState.yearKeys[0]);
+        const [, lastEnd] = parseYearKey(dashboardState.yearKeys[dashboardState.yearKeys.length - 1]);
+        elements.reportStartYearSelect.value = String(firstStart);
+        elements.reportEndYearSelect.value = String(lastEnd);
+    }
 }
 function getActiveYearKey() {
     return dashboardState.yearKeys[dashboardState.currentYearIndex] ?? "";
@@ -2145,6 +2099,23 @@ function updatePlaybackControls() {
     elements.runScenarioSelect.disabled = runControlsDisabled;
     elements.runCountInput.disabled = runControlsDisabled;
     elements.runShocksEnabled.disabled = runControlsDisabled;
+    if (elements.playShocksEnabled) {
+        elements.playShocksEnabled.disabled = runControlsDisabled;
+    }
+    const reportControlsDisabled = !hasYears || dashboardState.isReloading || !dashboardState.runServiceAvailable;
+    for (const control of [
+        elements.reportStartYearSelect,
+        elements.reportEndYearSelect,
+        elements.reportDetailSelect,
+        elements.reportIncludeEvents,
+        elements.reportIncludeState,
+        elements.exportRunReportButton,
+        elements.deleteCurrentRunButton,
+    ]) {
+        if (control) {
+            control.disabled = reportControlsDisabled || dashboardState.isGeneratingRun;
+        }
+    }
     const atFinalYear = hasYears && dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1;
     elements.playbackToggleButton.textContent = dashboardState.playbackTimer
         ? "Pause"
@@ -2309,7 +2280,7 @@ async function triggerGenerateRun({ runCount = null, reason = "manual" } = {}) {
             cache: "no-store",
             body: JSON.stringify({
                 scenario: elements.runScenarioSelect.value || "baseline",
-                shocks_enabled: elements.runShocksEnabled.checked,
+                shocks_enabled: getShocksEnabled(),
                 run_count: safeRunCount,
             }),
         });
@@ -2322,6 +2293,98 @@ async function triggerGenerateRun({ runCount = null, reason = "manual" } = {}) {
         dashboardState.isGeneratingRun = false;
         const detail = error instanceof Error ? error.message : t("error.unknown");
         setExportStatus(`${t("status.runStartFailed")} ${detail}`, "error");
+        updatePlaybackControls();
+    }
+}
+function reportYearRangePayload() {
+    const startYear = Number.parseInt(elements.reportStartYearSelect?.value ?? "", 10);
+    const endYear = Number.parseInt(elements.reportEndYearSelect?.value ?? "", 10);
+    return {
+        start_year: Number.isFinite(startYear) ? startYear : null,
+        end_year: Number.isFinite(endYear) ? endYear : null,
+    };
+}
+function reportDownloadName(response, fallbackName) {
+    const disposition = response.headers.get("Content-Disposition") ?? "";
+    const match = disposition.match(/filename="([^"]+)"/i);
+    return match?.[1] || fallbackName;
+}
+async function triggerExportRunReport() {
+    if (!dashboardState.runServiceAvailable || !dashboardState.exportData) {
+        setExportStatus(t("status.exportReportUnavailable"), "error");
+        return;
+    }
+    const yearRange = reportYearRangePayload();
+    if (yearRange.start_year && yearRange.end_year && yearRange.start_year >= yearRange.end_year) {
+        setExportStatus(t("status.exportReportInvalidYears"), "error");
+        return;
+    }
+    setExportStatus(t("status.exportReportStarting"), "loading");
+    updatePlaybackControls();
+    try {
+        const response = await fetch(RUN_REPORT_PATH, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+            body: JSON.stringify({
+                ...yearRange,
+                detail: elements.reportDetailSelect?.value || "countries",
+                include_events: Boolean(elements.reportIncludeEvents?.checked),
+                include_state: Boolean(elements.reportIncludeState?.checked),
+            }),
+        });
+        if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload?.message || `HTTP ${response.status}`);
+        }
+        const blob = await response.blob();
+        const fallbackName = `BESP2074_${yearRange.start_year || "start"}-${yearRange.end_year || "end"}.txt`;
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = reportDownloadName(response, fallbackName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(downloadUrl);
+        setExportStatus(t("status.exportReportReady"), "success");
+    } catch (error) {
+        const detail = error instanceof Error ? ` ${error.message}` : "";
+        setExportStatus(`${t("status.exportReportFailed")}${detail}`, "error");
+    } finally {
+        updatePlaybackControls();
+    }
+}
+async function triggerDeleteCurrentRun() {
+    if (!dashboardState.runServiceAvailable) {
+        setExportStatus(t("status.deleteRunUnavailable"), "error");
+        return;
+    }
+    const confirmed = window.confirm(t("status.deleteRunConfirm"));
+    if (!confirmed) {
+        return;
+    }
+    stopPlayback();
+    dashboardState.isReloading = true;
+    setExportStatus(t("status.deleteRunStarting"), "loading");
+    updatePlaybackControls();
+    try {
+        const response = await fetch(RUN_DELETE_PATH, {
+            method: "DELETE",
+            cache: "no-store",
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload?.message || `HTTP ${response.status}`);
+        }
+        applyRunStatus(payload);
+        renderEmptyState();
+        setExportStatus(t("status.deleteRunReady"), "success");
+    } catch (error) {
+        const detail = error instanceof Error ? ` ${error.message}` : "";
+        setExportStatus(`${t("status.deleteRunFailed")}${detail}`, "error");
+    } finally {
+        dashboardState.isReloading = false;
         updatePlaybackControls();
     }
 }
@@ -2716,37 +2779,12 @@ function ringContainsPoint(ring, [pointX, pointY]) {
     return inside;
 }
 function createProjection(features) {
-    let minLon = Number.POSITIVE_INFINITY;
-    let maxLon = Number.NEGATIVE_INFINITY;
-    let minLat = Number.POSITIVE_INFINITY;
-    let maxLat = Number.NEGATIVE_INFINITY;
-    for (const feature of features) {
-        const points = extractCoordinates(feature.geometry);
-        for (const [lon, lat] of points) {
-            if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
-                continue;
-            }
-            minLon = Math.min(minLon, lon);
-            maxLon = Math.max(maxLon, lon);
-            minLat = Math.min(minLat, lat);
-            maxLat = Math.max(maxLat, lat);
-        }
-    }
-    if (!Number.isFinite(minLon) || !Number.isFinite(maxLon) || !Number.isFinite(minLat) || !Number.isFinite(maxLat)) {
-        throw new Error("Could not compute map bounds");
-    }
-    const lonSpan = Math.max(maxLon - minLon, 1e-9);
-    const latSpan = Math.max(maxLat - minLat, 1e-9);
-    const usableWidth = MAP_VIEWBOX_WIDTH - MAP_PADDING * 2;
-    const usableHeight = MAP_VIEWBOX_HEIGHT - MAP_PADDING * 2;
-    const scale = Math.min(usableWidth / lonSpan, usableHeight / latSpan);
-    const offsetX = (MAP_VIEWBOX_WIDTH - lonSpan * scale) / 2;
-    const offsetY = (MAP_VIEWBOX_HEIGHT - latSpan * scale) / 2;
-    return (lon, lat) => {
-        const x = offsetX + (lon - minLon) * scale;
-        const y = offsetY + (maxLat - lat) * scale;
-        return [x, y];
-    };
+    return BESP_UTILS.createProjection(features, {
+        width: MAP_VIEWBOX_WIDTH,
+        height: MAP_VIEWBOX_HEIGHT,
+        padding: MAP_PADDING,
+        throwOnInvalid: true,
+    });
 }
 function projectFeature(feature, projection, kind) {
     const includeHoles = false;
@@ -2793,48 +2831,13 @@ function resolveProjectedVisualRegion(feature, bespRegionKey) {
     return resolveVisualRegion(feature.countryCode, feature.name, bespRegionKey);
 }
 function geometryToPath(geometry, projection, includeHoles = true) {
-    const type = geometry?.type;
-    const coordinates = geometry?.coordinates;
-    if (!type || !coordinates) {
-        return "";
-    }
-    if (type === "Polygon") {
-        return polygonToPath(coordinates, projection, includeHoles);
-    }
-    if (type === "MultiPolygon") {
-        return coordinates.map((polygon) => polygonToPath(polygon, projection, includeHoles)).join(" ");
-    }
-    return "";
+    return BESP_UTILS.geometryToPath(geometry, projection, includeHoles);
 }
 function polygonToPath(polygonCoordinates, projection, includeHoles) {
-    const rings = includeHoles ? polygonCoordinates : polygonCoordinates.slice(0, 1);
-    return rings
-        .map((ring) => {
-            if (!Array.isArray(ring) || ring.length < 3) {
-                return "";
-            }
-            const points = ring
-                .map((coord) => projection(coord[0], coord[1]))
-                .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
-            return `M ${points.join(" L ")} Z`;
-        })
-        .filter((segment) => segment)
-        .join(" ");
+    return BESP_UTILS.polygonToPath(polygonCoordinates, projection, includeHoles);
 }
 function geometryCentroid(geometry, projection) {
-    const points = extractCoordinates(geometry);
-    if (!points.length) {
-        return [MAP_VIEWBOX_WIDTH / 2, MAP_VIEWBOX_HEIGHT / 2];
-    }
-    let lonSum = 0;
-    let latSum = 0;
-    for (const [lon, lat] of points) {
-        lonSum += lon;
-        latSum += lat;
-    }
-    const avgLon = lonSum / points.length;
-    const avgLat = latSum / points.length;
-    return projection(avgLon, avgLat);
+    return BESP_UTILS.geometryCentroid(geometry, projection, MAP_VIEWBOX_WIDTH, MAP_VIEWBOX_HEIGHT);
 }
 function geometryProjectedBounds(geometry, projection) {
     const points = extractCoordinates(geometry).map(([lon, lat]) => projection(lon, lat));
@@ -2854,18 +2857,7 @@ function geometryProjectedBounds(geometry, projection) {
     });
 }
 function extractCoordinates(geometry) {
-    const type = geometry?.type;
-    const coordinates = geometry?.coordinates;
-    if (!type || !coordinates) {
-        return [];
-    }
-    if (type === "Polygon") {
-        return coordinates.flat();
-    }
-    if (type === "MultiPolygon") {
-        return coordinates.flat(2);
-    }
-    return [];
+    return BESP_UTILS.extractCoordinates(geometry);
 }
 function isValidExport(exportData) {
     return Boolean(
@@ -3057,19 +3049,11 @@ function aggregateCountryDisplayRow(countryCode, rows, baseCountryRow) {
     const startGdp = sumMetric(rows, "start_gdp_billion_eur");
     const endGdp = sumMetric(rows, "end_gdp_billion_eur");
     const areaKm2 = sumMetric(rows, "area_km2");
-    const averageUnemployment = weightedAverageMetric(rows, "unemployment_rate", "end_population");
-    const averageAttractiveness = weightedAverageMetric(rows, "regional_attractiveness", "end_population");
-    const averageIntegration = weightedAverageMetric(rows, "integration_index", "end_population");
-    const averageInflation = weightedAverageMetric(rows, "inflation_rate", "end_gdp_billion_eur");
-    const averageSatisfaction = weightedAverageMetric(rows, "satisfaction_index", "end_population");
     const averageCorruption = weightedAverageMetric(rows, "corruption_index", "end_gdp_billion_eur");
     const averageStability = weightedAverageMetric(rows, "stability_index", "end_population");
     const averageInvestmentClimate = weightedAverageMetric(rows, "investment_climate_index", "end_gdp_billion_eur");
     const averageBudgetBalance = weightedAverageMetric(rows, "budget_balance_pct_gdp", "end_gdp_billion_eur");
     const averageDebt = weightedAverageMetric(rows, "debt_to_gdp", "end_gdp_billion_eur");
-    const electionTension = weightedAverageMetric(rows, "election_tension_index", "end_population");
-    const electionAlignment = weightedAverageMetric(rows, "election_alignment_index", "end_population");
-    const electionShift = weightedAverageMetric(rows, "election_alignment_shift", "end_population");
     return {
         ...base,
         yearKey: base.yearKey ?? rows[0]?.yearKey ?? "",
@@ -3088,16 +3072,16 @@ function aggregateCountryDisplayRow(countryCode, rows, baseCountryRow) {
         end_gdp_billion_eur: endGdp,
         gdp_growth_rate: startGdp > 0 ? ((endGdp - startGdp) / startGdp) : Number.NaN,
         gdp_per_capita_eur: endPopulation > 0 ? (endGdp * 1_000_000_000) / endPopulation : Number.NaN,
-        average_unemployment_rate: Number.isFinite(averageUnemployment) ? averageUnemployment : averageMetric(rows, "unemployment_rate"),
+        average_unemployment_rate: weightedOrAverageMetric(rows, "unemployment_rate", "end_population"),
         average_population_density: areaKm2 > 0 ? endPopulation / areaKm2 : averageMetric(rows, "population_density"),
         average_housing_overload: weightedAverageMetric(rows, "housing_overload", "end_population"),
-        average_regional_attractiveness: Number.isFinite(averageAttractiveness) ? averageAttractiveness : averageMetric(rows, "regional_attractiveness"),
-        average_integration_index: Number.isFinite(averageIntegration) ? averageIntegration : averageMetric(rows, "integration_index"),
-        average_inflation_rate: Number.isFinite(averageInflation) ? averageInflation : averageMetric(rows, "inflation_rate"),
-        average_satisfaction_index: Number.isFinite(averageSatisfaction) ? averageSatisfaction : averageMetric(rows, "satisfaction_index"),
-        election_tension_index: Number.isFinite(electionTension) ? electionTension : averageMetric(rows, "election_tension_index"),
-        election_alignment_index: Number.isFinite(electionAlignment) ? electionAlignment : averageMetric(rows, "election_alignment_index"),
-        election_alignment_shift: Number.isFinite(electionShift) ? electionShift : averageMetric(rows, "election_alignment_shift"),
+        average_regional_attractiveness: weightedOrAverageMetric(rows, "regional_attractiveness", "end_population"),
+        average_integration_index: weightedOrAverageMetric(rows, "integration_index", "end_population"),
+        average_inflation_rate: weightedOrAverageMetric(rows, "inflation_rate", "end_gdp_billion_eur"),
+        average_satisfaction_index: weightedOrAverageMetric(rows, "satisfaction_index", "end_population"),
+        election_tension_index: weightedOrAverageMetric(rows, "election_tension_index", "end_population"),
+        election_alignment_index: weightedOrAverageMetric(rows, "election_alignment_index", "end_population"),
+        election_alignment_shift: weightedOrAverageMetric(rows, "election_alignment_shift", "end_population"),
         election_last_year: Number(base.election_last_year ?? rows[0]?.election_last_year ?? 0),
         election_next_year: Number(base.election_next_year ?? rows[0]?.election_next_year ?? 0),
         election_cycle_progress: Number(base.election_cycle_progress ?? rows[0]?.election_cycle_progress ?? 0),
@@ -4230,14 +4214,6 @@ function aggregateVisualRegionRows(group, sourceRows) {
     const endPopulation = sumMetric(sourceRows, "end_population");
     const startGdp = sumMetric(sourceRows, "start_gdp_billion_eur");
     const endGdp = sumMetric(sourceRows, "end_gdp_billion_eur");
-    const weightedUnemployment = weightedAverageMetric(sourceRows, "unemployment_rate", "end_population");
-    const weightedAttractiveness = weightedAverageMetric(sourceRows, "regional_attractiveness", "end_population");
-    const weightedIntegration = weightedAverageMetric(sourceRows, "integration_index", "end_population");
-    const weightedInflation = weightedAverageMetric(sourceRows, "inflation_rate", "end_gdp_billion_eur");
-    const weightedSatisfaction = weightedAverageMetric(sourceRows, "satisfaction_index", "end_population");
-    const weightedElectionTension = weightedAverageMetric(sourceRows, "election_tension_index", "end_population");
-    const weightedElectionAlignment = weightedAverageMetric(sourceRows, "election_alignment_index", "end_population");
-    const weightedElectionShift = weightedAverageMetric(sourceRows, "election_alignment_shift", "end_population");
     return {
         ...base,
         visual_region_key: group.visualRegionKey,
@@ -4253,14 +4229,14 @@ function aggregateVisualRegionRows(group, sourceRows) {
         start_gdp_billion_eur: startGdp,
         end_gdp_billion_eur: endGdp,
         gdp_growth_rate: startGdp > 0 ? ((endGdp - startGdp) / startGdp) : 0,
-        unemployment_rate: Number.isFinite(weightedUnemployment) ? weightedUnemployment : averageMetric(sourceRows, "unemployment_rate"),
-        regional_attractiveness: Number.isFinite(weightedAttractiveness) ? weightedAttractiveness : averageMetric(sourceRows, "regional_attractiveness"),
-        integration_index: Number.isFinite(weightedIntegration) ? weightedIntegration : averageMetric(sourceRows, "integration_index"),
-        inflation_rate: Number.isFinite(weightedInflation) ? weightedInflation : averageMetric(sourceRows, "inflation_rate"),
-        satisfaction_index: Number.isFinite(weightedSatisfaction) ? weightedSatisfaction : averageMetric(sourceRows, "satisfaction_index"),
-        election_tension_index: Number.isFinite(weightedElectionTension) ? weightedElectionTension : averageMetric(sourceRows, "election_tension_index"),
-        election_alignment_index: Number.isFinite(weightedElectionAlignment) ? weightedElectionAlignment : averageMetric(sourceRows, "election_alignment_index"),
-        election_alignment_shift: Number.isFinite(weightedElectionShift) ? weightedElectionShift : averageMetric(sourceRows, "election_alignment_shift"),
+        unemployment_rate: weightedOrAverageMetric(sourceRows, "unemployment_rate", "end_population"),
+        regional_attractiveness: weightedOrAverageMetric(sourceRows, "regional_attractiveness", "end_population"),
+        integration_index: weightedOrAverageMetric(sourceRows, "integration_index", "end_population"),
+        inflation_rate: weightedOrAverageMetric(sourceRows, "inflation_rate", "end_gdp_billion_eur"),
+        satisfaction_index: weightedOrAverageMetric(sourceRows, "satisfaction_index", "end_population"),
+        election_tension_index: weightedOrAverageMetric(sourceRows, "election_tension_index", "end_population"),
+        election_alignment_index: weightedOrAverageMetric(sourceRows, "election_alignment_index", "end_population"),
+        election_alignment_shift: weightedOrAverageMetric(sourceRows, "election_alignment_shift", "end_population"),
         election_last_year: Number(base.election_last_year ?? 0),
         election_next_year: Number(base.election_next_year ?? 0),
         election_cycle_progress: Number(base.election_cycle_progress ?? 0),
@@ -4896,6 +4872,12 @@ function renderEmptyState() {
         countryRowsByYear: new Map(),
     });
     elements.yearSelect.innerHTML = "";
+    if (elements.reportStartYearSelect) {
+        elements.reportStartYearSelect.innerHTML = "";
+    }
+    if (elements.reportEndYearSelect) {
+        elements.reportEndYearSelect.innerHTML = "";
+    }
     elements.currentYearPill.textContent = t("status.noYear");
     updatePlaybackControls();
     setMapMode("country");
@@ -5201,6 +5183,10 @@ function weightedAverageMetric(rows, valueKey, weightKey) {
         totalWeight += weight;
     }
     return totalWeight > 0 ? (weightedSum / totalWeight) : Number.NaN;
+}
+function weightedOrAverageMetric(rows, valueKey, weightKey) {
+    const weighted = weightedAverageMetric(rows, valueKey, weightKey);
+    return Number.isFinite(weighted) ? weighted : averageMetric(rows, valueKey);
 }
 function formatStateRatio(value, metricKey = "") {
     const numeric = Number(value);
@@ -5570,6 +5556,13 @@ function compareYearKeys(left, right) {
     const rightYear = Number.parseInt(String(right).slice(0, 4), 10);
     return leftYear - rightYear;
 }
+function parseYearKey(yearKey) {
+    const [startText, endText] = String(yearKey).split("-");
+    return [
+        Number.parseInt(startText, 10) || 0,
+        Number.parseInt(endText, 10) || 0,
+    ];
+}
 function groupBy(items, keyBuilder) {
     const groups = new Map();
     for (const item of items) {
@@ -5584,7 +5577,7 @@ function groupBy(items, keyBuilder) {
     return groups;
 }
 function buildRegionKey(countryCode, regionName) {
-    return `${normalizeCountryCode(countryCode)}::${normalizeRegionName(regionName)}`;
+    return BESP_UTILS.buildRegionKey(countryCode, regionName, REGION_NAME_ALIASES);
 }
 function rebaseRegionKeyCountry(regionKey, targetCountryCode) {
     const normalizedTargetCode = normalizeCountryCode(targetCountryCode);
@@ -5606,7 +5599,7 @@ function countryDisplayName(countryCode, fallback = "") {
     return COUNTRY_CONFIG[normalized]?.name ?? fallback ?? normalized;
 }
 function normalizeCountryCode(countryCode) {
-    return String(countryCode ?? "").trim().toUpperCase();
+    return BESP_UTILS.normalizeCountryCode(countryCode);
 }
 function repairRegionTextMojibakeAscii(regionName) {
     return String(regionName ?? "")
@@ -5861,10 +5854,5 @@ function countryFlag(countryCode) {
 }
 const hasDisplayValue = (value) => value !== undefined && value !== null && value !== "";
 function escapeHtml(value) {
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+    return BESP_UTILS.escapeHtml(value);
 }

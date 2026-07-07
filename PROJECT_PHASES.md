@@ -4,7 +4,7 @@
 
 ## Projektziel
 
-BESP2074 ist eine abgeschlossene, jahresbasierte Balkan-Simulation mit:
+BESP2074 ist eine jahresbasierte Balkan-Simulation im privaten Review-Stand mit:
 
 - exportgestützter Visualisierung
 - klarer Trennung zwischen Python-Simulation und Benutzeroberfläche
@@ -12,7 +12,7 @@ BESP2074 ist eine abgeschlossene, jahresbasierte Balkan-Simulation mit:
 - plausiblen, langsamen Veränderungen statt einer übermässigen Ereignisflut
 - lokalem Dashboard und lokalem Grenzeditor
 
-Das aktuelle Projekt ist vollständig nutzbar. Weitere Ideen sind optionale spätere Erweiterungen und keine Voraussetzung für den abgeschlossenen Stand.
+Das aktuelle Projekt ist lokal nutzbar und technisch prüfbar. Weitere Ideen sind optionale spätere Erweiterungen und keine Voraussetzung für den privaten Review-Stand.
 
 ## Arbeitsregeln
 
@@ -36,57 +36,57 @@ Die Beispiele bleiben absichtlich auf Englisch, da sie die tatsächlich verwende
 ## Phasenübersicht
 
 ### Phase 1 - Grundlagen
-Status: abgeschlossen
+Status: umgesetzt
 
 Basisstruktur, Datenklassen, JSON-Startdaten und erster Jahresschritt.
 
 ### Phase 2 - Strukturierter Export
-Status: abgeschlossen
+Status: umgesetzt
 
 Jahreswerte pro Land und Region sowie JSON-Export für das Dashboard.
 
 ### Phase 3 - Wirtschaft v1
-Status: abgeschlossen
+Status: umgesetzt
 
 Wirtschaftslogik mit BIP, Wachstum, Arbeitslosigkeit und Aggregation.
 
 ### Phase 4 - Dashboard v1
-Status: abgeschlossen
+Status: umgesetzt
 
 Erstes Dashboard ohne Kartenschicht.
 
 ### Phase 5 - Karte und Zeitachse
-Status: abgeschlossen
+Status: umgesetzt
 
 Karte, Jahresnavigation, Wiedergabe, erneutes Laden von Exporten und lokaler Ausführungsdienst.
 
 ### Phase 7 - Schocksystem
-Status: abgeschlossen
+Status: umgesetzt
 
 Begrenzte, mit identischen Startwerten reproduzierbare Schocks sowie passende Prüfskripte.
 
 ### Phase 8 - Politik und Staat v1
-Status: abgeschlossen
+Status: umgesetzt
 
 Staatliche Kennzahlen und deren Darstellung im Dashboard.
 
 ### Phase 9 - Erweiterung des Projektumfangs
-Status: abgeschlossen
+Status: umgesetzt
 
 Erweiterung auf elf Länder sowie verbesserte Kartenabdeckung.
 
 ### Phase 10 - Hauptarbeit
-Status: abgeschlossen
+Status: umgesetzt
 
 #### Phase 10.1 - Dynamische Aktualisierung des Basisjahrs
-Status: abgeschlossen
+Status: umgesetzt
 
 - Aktualisierung der Weltbank-Daten für `2023-2026`
 - automatische Wahl des besten gemeinsamen Basisjahrs
 - `main.py` erkennt das Startjahr dynamisch
 
 #### Phase 10.2 - Ebene sozialer Kennzahlen
-Status: abgeschlossen
+Status: umgesetzt
 
 Neue Modellwerte:
 
@@ -98,7 +98,7 @@ Neue Modellwerte:
 Diese Werte werden auf Regions- und Landesebene exportiert.
 
 #### Phase 10.3 - Dienst für Mehrfachläufe
-Status: abgeschlossen
+Status: umgesetzt
 
 - `1-100` Durchläufe im lokalen Dashboard
 - gleiche Startwerte bleiben reproduzierbar
@@ -106,7 +106,7 @@ Status: abgeschlossen
 - Zusammenfassung mehrerer Durchläufe mit Minimal- und Maximalwerten
 
 #### Phase 10.4 - Grenz- und Regionseditor
-Status: abgeschlossen
+Status: umgesetzt
 
 - lokaler Editor unter `dashboard/editor.html`
 - dauerhafte Überschreibungen in `dashboard/data/map_assignments.json`
@@ -115,15 +115,15 @@ Status: abgeschlossen
 - neu annektierte Zielregionen starten mit tieferer Zufriedenheit
 
 #### Phase 10.5 - Aggregations- und Konsistenztests
-Status: abgeschlossen
+Status: umgesetzt
 
 - automatisierter Test für den Vergleich von Länder- und Regionssummen pro Jahr
 - Prüfskripte für Exportjahr, Metadatenkonsistenz und Zustandsdynamik
 
 #### Phase 10.6 - Dokumentations- und Bedienungsbereinigung
-Status: abgeschlossen
+Status: umgesetzt
 
-- README auf den Abschlussstand gebracht
+- README auf den privaten Review-Stand gebracht
 - Projektphasen bereinigt
 - lokale Oberflächen- und Hilfetexte vereinfacht
 - Dashboard-Steuerelemente, Hellmodus und Favicon finalisiert
@@ -144,7 +144,8 @@ Status: abgeschlossen
   - Griechenland
 - Exportdateien:
   - `output/latest.json`
-  - `output/simulation_<start>_<end>.json`
+  - `output/simulation_<start>_<end>.json` nur noch mit explizitem `--archive-output`
+  - TXT-Report aus dem Dashboard mit Jahrbereich, Detailgrad, Events und Staatswerten
 - Basisjahr:
   - automatisch aus `data/countries.json` erkannt
   - aktueller Aktualisierungsstand: `2024`

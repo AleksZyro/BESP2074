@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BESP2074 Dashboard</title>
+    <title>BESP2074</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./styles.css?v=10.3.0">
+    <link rel="stylesheet" href="./styles.css?v=10.3.3">
 </head>
 <body>
     <div class="page-shell">
         <header class="hero">
             <div>
                 <h1>BESP2074</h1>
-                <p class="lead" data-i18n="hero.lead">Calibrated Balkan simulation to 2074 with multiple runs, political dynamics, rarer regional events, and an integrated border mode.</p>
             </div>
             <div class="app-controls">
                 <div class="language-toggle" role="group" aria-label="Language">
@@ -53,6 +52,10 @@
                                 <button class="speed-button" data-speed="5" type="button">x5</button>
                                 <button class="speed-button" data-speed="10" type="button">x10</button>
                             </div>
+                            <label class="toggle-wrap shock-toggle-wrap" for="play-shocks-enabled">
+                                <input id="play-shocks-enabled" class="shock-toggle-input" type="checkbox" checked>
+                                <span class="shock-toggle-label" data-shock-toggle-label data-i18n="status.shocksOn">shocks on</span>
+                            </label>
                             <span id="current-year-pill" class="year-pill">Waiting for data</span>
                         </div>
                         <div class="view-strip">
@@ -62,17 +65,23 @@
                                 <button id="editor-mode-toggle" class="map-mode-button" type="button" data-i18n="mode.borders">Borders</button>
                             </div>
                             <div class="metric-controls" role="group" aria-label="Map metric mode">
-                                <button class="metric-button metric-button-active" data-metric="classic" type="button" aria-label="Standard" title="Standard">&#128506;&#65039;</button>
-                                <button class="metric-button" data-metric="population" type="button" aria-label="Population" title="Population">&#128101;</button>
-                                <button class="metric-button" data-metric="gdp_per_capita" type="button" aria-label="GDP per cap." title="GDP per cap.">&#128182;</button>
-                                <button class="metric-button" data-metric="unemployment" type="button" aria-label="Unemployment" title="Unemployment">&#129520;</button>
-                                <button class="metric-button" data-metric="attractiveness" type="button" aria-label="Attractiveness" title="Attractiveness">&#10024;</button>
-                                <button class="metric-button" data-metric="integration" type="button" aria-label="Integration" title="Integration">&#129309;</button>
-                                <button class="metric-button" data-metric="inflation" type="button" aria-label="Inflation / Deflation" title="Inflation / Deflation">&#8597;&#65039;</button>
-                                <button class="metric-button" data-metric="debt" type="button" aria-label="Debt ratio" title="Debt ratio">&#127974;</button>
-                                <button class="metric-button" data-metric="corruption" type="button" aria-label="Corruption risk" title="Corruption risk">&#9878;&#65039;</button>
-                                <button class="metric-button" data-metric="satisfaction" type="button" aria-label="Satisfaction" title="Satisfaction">&#128578;</button>
-                                <button class="metric-button" data-metric="elections" type="button" aria-label="Elections" title="Elections">&#127963;&#65039;</button>
+                                <span class="metric-button-group">
+                                    <button class="metric-button metric-button-active" data-metric="classic" type="button" aria-label="Standard" title="Standard">&#128506;&#65039;</button>
+                                </span>
+                                <span class="metric-button-group">
+                                    <button class="metric-button" data-metric="population" type="button" aria-label="Population" title="Population">&#128101;</button>
+                                    <button class="metric-button" data-metric="gdp_per_capita" type="button" aria-label="GDP per cap." title="GDP per cap.">&#128182;</button>
+                                    <button class="metric-button" data-metric="unemployment" type="button" aria-label="Unemployment" title="Unemployment">&#129520;</button>
+                                    <button class="metric-button" data-metric="inflation" type="button" aria-label="Inflation / Deflation" title="Inflation / Deflation">&#8597;&#65039;</button>
+                                    <button class="metric-button" data-metric="debt" type="button" aria-label="Debt ratio" title="Debt ratio">&#127974;</button>
+                                </span>
+                                <span class="metric-button-group">
+                                    <button class="metric-button" data-metric="attractiveness" type="button" aria-label="Attractiveness" title="Attractiveness">&#10024;</button>
+                                    <button class="metric-button" data-metric="integration" type="button" aria-label="Integration" title="Integration">&#129309;</button>
+                                    <button class="metric-button" data-metric="corruption" type="button" aria-label="Corruption risk" title="Corruption risk">&#9878;&#65039;</button>
+                                    <button class="metric-button" data-metric="satisfaction" type="button" aria-label="Satisfaction" title="Satisfaction">&#128578;</button>
+                                    <button class="metric-button" data-metric="elections" type="button" aria-label="Elections" title="Elections">&#127963;&#65039;</button>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -150,12 +159,39 @@
                                 <input id="run-count-input" class="run-count-input" type="number" min="1" max="100" step="1" value="1">
                             </label>
                             <label class="toggle-wrap" for="run-shocks-enabled">
-                                <input id="run-shocks-enabled" type="checkbox" checked>
-                                <span>Shocks on</span>
+                                <input id="run-shocks-enabled" class="shock-toggle-input" type="checkbox" checked>
+                                <span class="shock-toggle-label" data-shock-toggle-label data-i18n="status.shocksOn">Shocks on</span>
                             </label>
                             <button id="generate-run" class="timeline-button timeline-button-primary" type="button">Generate runs</button>
                             <button id="reload-export" class="timeline-button" type="button">Reload export</button>
                             <a id="open-boundary-editor" class="timeline-button timeline-link-button" href="./editor.html">Expert mode</a>
+                        </div>
+                        <div class="run-controls report-controls" role="group" aria-label="Run export controls">
+                            <label class="timeline-select-wrap" for="report-start-year">
+                                <span>From</span>
+                                <select id="report-start-year" class="timeline-select"></select>
+                            </label>
+                            <label class="timeline-select-wrap" for="report-end-year">
+                                <span>To</span>
+                                <select id="report-end-year" class="timeline-select"></select>
+                            </label>
+                            <label class="timeline-select-wrap" for="report-detail">
+                                <span>Detail</span>
+                                <select id="report-detail" class="timeline-select">
+                                    <option value="countries">Countries</option>
+                                    <option value="countries_regions">Countries + regions</option>
+                                </select>
+                            </label>
+                            <label class="toggle-wrap compact-toggle-wrap" for="report-include-events">
+                                <input id="report-include-events" type="checkbox" checked>
+                                <span>Events</span>
+                            </label>
+                            <label class="toggle-wrap compact-toggle-wrap" for="report-include-state">
+                                <input id="report-include-state" type="checkbox">
+                                <span>State</span>
+                            </label>
+                            <button id="export-run-report" class="timeline-button" type="button">Export TXT</button>
+                            <button id="delete-current-run" class="timeline-button danger-button" type="button">Delete run</button>
                         </div>
                         <p class="timeline-note">Play replays loaded years. New numbers come from new runs.</p>
                         <p id="export-status" class="export-status" aria-live="polite">Loading export.</p>
@@ -284,6 +320,7 @@
         </main>
     </div>
     <script src="./config.js?v=10.3.0"></script>
+    <script src="./map_utils.js?v=10.3.0"></script>
     <script src="./app.js?v=10.3.0"></script>
 </body>
 </html>

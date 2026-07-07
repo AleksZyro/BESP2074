@@ -1,4 +1,4 @@
-const MAP_VIEWBOX_WIDTH = 780;
+﻿const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 10;
 const MAP_ASSIGNMENTS_API_PATH = "/api/map-assignments";
@@ -57,59 +57,7 @@ const REGION_NAME_ALIASES = Object.fromEntries([
     ["budapest", "budapest"],
     ["bucharest ilfov", "bucharest ilfov"],
 ]);
-const SIMPLE_TARGET_OPTIONS = Object.freeze({
-    ALB: [
-        { visualRegionKey: "ALB::north", label: "N ALB", dataRegionKey: "ALB::northern albania", fill: "#7f8d62" },
-        { visualRegionKey: "ALB::central", label: "C ALB", dataRegionKey: "ALB::tirana", fill: "#a68962", useDefinitionDataKeys: true },
-        { visualRegionKey: "ALB::south", label: "S ALB", dataRegionKey: "ALB::southern albania", fill: "#b67658" },
-    ],
-    BGR: [
-        { visualRegionKey: "BGR::sofia", label: "Sofia", dataRegionKey: "BGR::sofia", fill: "#63718d" },
-        { visualRegionKey: "BGR::north", label: "N BUL", dataRegionKey: "BGR::northern bulgaria", fill: "#c58b4a" },
-        { visualRegionKey: "BGR::south", label: "S BUL", dataRegionKey: "BGR::southern bulgaria", fill: "#6f9250" },
-        { visualRegionKey: "BGR::black-sea", label: "Black Sea", dataRegionKey: "BGR::black sea bulgaria", fill: "#4e83a5" },
-    ],
-    BIH: [
-        { visualRegionKey: "BIH::fbih", label: "FBiH", dataRegionKey: "BIH::federation of bosnia and herzegovina", fill: "#8f776d" },
-        { visualRegionKey: "BIH::rs", label: "RS", dataRegionKey: "BIH::republika srpska", fill: "#a4a08c", useDefinitionDataKeys: true },
-    ],
-    HRV: [
-        { visualRegionKey: "HRV::zagreb-central", label: "C HRV", dataRegionKey: "HRV::zagreb and central croatia", fill: "#a25d46" },
-        { visualRegionKey: "HRV::slavonia", label: "Slavonija", dataRegionKey: "HRV::slavonia", fill: "#c97f44" },
-        { visualRegionKey: "HRV::dalmatia", label: "Dalmacija", dataRegionKey: "HRV::dalmatia", fill: "#d9ac70" },
-        { visualRegionKey: "HRV::istria-kvarner", label: "Istrija", dataRegionKey: "HRV::istria and kvarner", fill: "#8f6f5a" },
-    ],
-    HUN: [
-        { visualRegionKey: "HUN::central-hungary", label: "Budapest", dataRegionKey: "HUN::central hungary", fill: "#d34b4b" },
-        { visualRegionKey: "HUN::north-hungary", label: "N HUN", dataRegionKey: "HUN::northern hungary", fill: "#81c5d8" },
-        { visualRegionKey: "HUN::great-plains", label: "Great Plains", dataRegionKey: "HUN::great plains", fill: "#41b65a" },
-        { visualRegionKey: "HUN::transdanubia", label: "Transdanubia", dataRegionKey: "HUN::transdanubia", fill: "#6f63c7" },
-    ],
-    MKD: [
-        { visualRegionKey: "MKD::west", label: "W MAC", dataRegionKey: "MKD::western north macedonia", fill: "#b78361" },
-        { visualRegionKey: "MKD::skopje", label: "Skopje", dataRegionKey: "MKD::skopje", fill: "#865c71" },
-        { visualRegionKey: "MKD::se", label: "E MAC", dataRegionKey: "MKD::southeastern north macedonia", fill: "#8f6aa7" },
-    ],
-    MNE: [
-        { visualRegionKey: "MNE::coastal-region", label: "CS MON", dataRegionKey: "MNE::coast", fill: "#66aebe" },
-        { visualRegionKey: "MNE::southern-montenegro", label: "S MON", dataRegionKey: "MNE::inland", fill: "#4f9488" },
-        { visualRegionKey: "MNE::northern-montenegro", label: "N MON", dataRegionKey: "MNE::inland", fill: "#7aa6cf" },
-    ],
-    ROU: [
-        { visualRegionKey: "ROU::transylvania-banat", label: "Transylvania", dataRegionKey: "ROU::transylvania and banat", fill: "#ccb65b" },
-        { visualRegionKey: "ROU::wallachia-oltenia", label: "Wallachia", dataRegionKey: "ROU::wallachia and oltenia", fill: "#b48a56" },
-        { visualRegionKey: "ROU::bucharest-ilfov", label: "Bucharest", dataRegionKey: "ROU::bucharest ilfov", fill: "#8a5d4d" },
-        { visualRegionKey: "ROU::moldavia", label: "Moldavia", dataRegionKey: "ROU::moldavia", fill: "#c87892" },
-        { visualRegionKey: "ROU::dobruja-lower-danube", label: "Dobruja", dataRegionKey: "ROU::dobruja and lower danube", fill: "#7fa866" },
-    ],
-    SRB: [
-        { visualRegionKey: "SRB::vojvodina", label: "Vojvodina", dataRegionKey: "SRB::vojvodina", fill: "#70b29e" },
-        { visualRegionKey: "SRB::belgrade", label: "Beograd", dataRegionKey: "SRB::belgrade", fill: "#b0a59a" },
-        { visualRegionKey: "SRB::sz-srb", label: "SZ SRB", dataRegionKey: "SRB::central serbia", fill: "#dce68d" },
-        { visualRegionKey: "SRB::ji-srb", label: "JI SRB", dataRegionKey: "SRB::south and east serbia", fill: "#cf857c" },
-        { visualRegionKey: "SRB::kosovo-metohija", label: "Kosovo", dataRegionKey: "SRB::kosovo and metohija", fill: "#efb287" },
-    ],
-});
+const SIMPLE_TARGET_OPTIONS = Object.freeze(BALKAN_CONFIG.editorTargetOptions ?? {});
 
 const editorState = {
     countryFeatures: [],
@@ -353,35 +301,6 @@ function sanitizeAssignments(payload) {
     };
 }
 
-function populateEditorOptions() {
-    const sourceCountryCodes = [...new Set(editorState.allFeatures.map((feature) => feature.rawCountryCode))].sort();
-    elements.countryFilter.innerHTML = [
-        '<option value="all">Alle Länder</option>',
-        ...sourceCountryCodes.map((code) => `<option value="${escapeHtml(code)}">${escapeHtml(code)} - ${escapeHtml(COUNTRY_NAMES[code] ?? code)}</option>`),
-    ].join("");
-
-    const adminLevels = [...new Set(editorState.allFeatures.map((feature) => feature.adminLevel))].sort();
-    elements.adminFilter.innerHTML = [
-        '<option value="all">Alle Level</option>',
-        ...adminLevels.map((level) => `<option value="${escapeHtml(level)}">${escapeHtml(level)}</option>`),
-    ].join("");
-
-    const targetCountries = editorState.countries.map((country) => `
-        <option value="${escapeHtml(country.code)}">${escapeHtml(country.code)} - ${escapeHtml(country.name)}</option>
-    `).join("");
-    elements.targetCountry.innerHTML = '<option value="">Unverändert</option>' + targetCountries;
-
-    const bespOptions = editorState.regions
-        .slice()
-        .sort((left, right) => buildRegionKey(left.country_code, left.name).localeCompare(buildRegionKey(right.country_code, right.name)))
-        .map((region) => {
-            const key = buildRegionKey(region.country_code, region.name);
-            return `<option value="${escapeHtml(key)}">${escapeHtml(region.country_code)} :: ${escapeHtml(region.name)}</option>`;
-        })
-        .join("");
-    elements.targetBespSelect.innerHTML = '<option value="">Unverändert</option>' + bespOptions;
-}
-
 function renderEditor() {
     renderCountryOutlines();
     renderFeatureLayer();
@@ -473,168 +392,6 @@ function renderFeatureList() {
             toggleFeatureSelection(String(node.getAttribute("data-feature-id") ?? ""));
         });
     }
-}
-
-function renderSelectionInspector() {
-    const selectedFeatures = getSelectedFeatures();
-    const visibleFeatures = getVisibleFeatures();
-    elements.selectionSummary.textContent =
-        `${selectedFeatures.length} gewählt | ${visibleFeatures.length} sichtbar | ${Object.keys(editorState.assignments.overrides).length} Override(s)`;
-
-    if (!selectedFeatures.length) {
-        elements.selectedTitle.textContent = "Keine Fläche gewählt";
-        elements.selectedBody.textContent = "Klick auf Karte oder Liste, um eine oder mehrere Flächen zu wählen.";
-        elements.overridePreview.textContent = "{}";
-        resetFormFields();
-        return;
-    }
-
-    if (selectedFeatures.length === 1) {
-        const feature = selectedFeatures[0];
-        const override = editorState.assignments.overrides[feature.featureId] ?? {};
-        elements.selectedTitle.textContent = `${feature.name} (${feature.rawCountryCode} / ${feature.adminLevel})`;
-        elements.selectedBody.textContent =
-            `Feature-ID: ${feature.featureId}. Standard-Ziel ${feature.countryCode}. ${override.hidden ? "Aktuell ausgeblendet." : "Aktuell sichtbar."}`;
-        elements.overridePreview.textContent = JSON.stringify(override, null, 2);
-    } else {
-        elements.selectedTitle.textContent = `${selectedFeatures.length} Flächen gewählt`;
-        elements.selectedBody.textContent =
-            `Batch-Zuweisung aktiv. Die Formularwerte werden auf alle gewählten Features angewendet.`;
-        const preview = {};
-        for (const feature of selectedFeatures) {
-            if (editorState.assignments.overrides[feature.featureId]) {
-                preview[feature.featureId] = editorState.assignments.overrides[feature.featureId];
-            }
-        }
-        elements.overridePreview.textContent = JSON.stringify(preview, null, 2);
-    }
-
-    populateFormFromSelection(selectedFeatures);
-}
-
-function populateFormFromSelection(selectedFeatures) {
-    const overrides = selectedFeatures.map((feature) => editorState.assignments.overrides[feature.featureId] ?? {});
-    const sharedValue = (fieldName) => {
-        const firstValue = overrides[0]?.[fieldName] ?? "";
-        return overrides.every((override) => (override?.[fieldName] ?? "") === firstValue)
-            ? firstValue
-            : "";
-    };
-
-    const targetCountryCode = sharedValue("targetCountryCode");
-    const targetName = sharedValue("targetName");
-    const targetBespRegionKey = sharedValue("targetBespRegionKey");
-    const targetVisualRegionKey = sharedValue("targetVisualRegionKey");
-    const targetVisualRegionLabel = sharedValue("targetVisualRegionLabel");
-    const targetVisualRegionDataKey = sharedValue("targetVisualRegionDataKey");
-    const targetVisualRegionFill = sharedValue("targetVisualRegionFill");
-    const hiddenValues = overrides.map((override) => Boolean(override?.hidden));
-    const sharedHidden = hiddenValues.every((value) => value === hiddenValues[0]) ? hiddenValues[0] : false;
-
-    elements.targetCountry.value = targetCountryCode;
-    elements.targetName.value = targetName;
-    elements.targetBespSelect.value = targetBespRegionKey;
-    elements.targetBespKey.value = targetBespRegionKey;
-    elements.targetVisualKey.value = targetVisualRegionKey;
-    elements.targetVisualLabel.value = targetVisualRegionLabel;
-    elements.targetVisualDataKey.value = targetVisualRegionDataKey;
-    elements.targetVisualFill.value = targetVisualRegionFill;
-    elements.hidden.checked = sharedHidden;
-
-    const pickerColor = normalizeHexColor(targetVisualRegionFill);
-    if (pickerColor) {
-        elements.targetVisualFillPicker.value = pickerColor;
-    }
-}
-
-function resetFormFields() {
-    elements.targetCountry.value = "";
-    elements.targetName.value = "";
-    elements.targetBespSelect.value = "";
-    elements.targetBespKey.value = "";
-    elements.targetVisualKey.value = "";
-    elements.targetVisualLabel.value = "";
-    elements.targetVisualDataKey.value = "";
-    elements.targetVisualFill.value = "";
-    elements.hidden.checked = false;
-}
-
-function applyOverrideToSelection() {
-    const selectedFeatures = getSelectedFeatures();
-    if (!selectedFeatures.length) {
-        setStatus("Zuerst mindestens eine Fläche auswählen.", "error");
-        return;
-    }
-
-    const overridePatch = buildOverridePatchFromForm();
-    for (const feature of selectedFeatures) {
-        const nextOverride = {
-            ...(editorState.assignments.overrides[feature.featureId] ?? {}),
-            ...overridePatch,
-        };
-        for (const [key, value] of Object.entries(nextOverride)) {
-            if (value === "" || value === null || value === undefined || value === false) {
-                delete nextOverride[key];
-            }
-        }
-        if (!Object.keys(nextOverride).length) {
-            delete editorState.assignments.overrides[feature.featureId];
-        } else {
-            editorState.assignments.overrides[feature.featureId] = nextOverride;
-        }
-    }
-    setStatus(`Override lokal auf ${selectedFeatures.length} Fläche(n) angewendet. Danach speichern.`, "success");
-    renderEditor();
-}
-
-function removeOverrideFromSelection() {
-    const selectedFeatures = getSelectedFeatures();
-    if (!selectedFeatures.length) {
-        setStatus("Keine Auswahl zum Löschen.", "error");
-        return;
-    }
-    for (const feature of selectedFeatures) {
-        delete editorState.assignments.overrides[feature.featureId];
-    }
-    setStatus(`Override für ${selectedFeatures.length} Fläche(n) entfernt. Danach speichern.`, "success");
-    renderEditor();
-}
-
-function buildOverridePatchFromForm() {
-    const patch = {};
-    const targetCountryCode = normalizeCountryCode(elements.targetCountry.value);
-    const targetName = String(elements.targetName.value ?? "").trim();
-    const targetBespRegionKey = String(elements.targetBespKey.value ?? "").trim();
-    const targetVisualRegionKey = String(elements.targetVisualKey.value ?? "").trim();
-    const targetVisualRegionLabel = String(elements.targetVisualLabel.value ?? "").trim();
-    const targetVisualRegionDataKey = String(elements.targetVisualDataKey.value ?? "").trim();
-    const targetVisualRegionFill = normalizeHexColor(elements.targetVisualFill.value);
-
-    if (targetCountryCode) {
-        patch.targetCountryCode = targetCountryCode;
-    }
-    if (targetName) {
-        patch.targetName = targetName;
-    }
-    if (targetBespRegionKey) {
-        patch.targetBespRegionKey = targetBespRegionKey;
-    }
-    if (targetVisualRegionKey) {
-        patch.targetVisualRegionKey = targetVisualRegionKey;
-    }
-    if (targetVisualRegionLabel) {
-        patch.targetVisualRegionLabel = targetVisualRegionLabel;
-    }
-    if (targetVisualRegionDataKey) {
-        patch.targetVisualRegionDataKey = targetVisualRegionDataKey;
-    }
-    if (targetVisualRegionFill) {
-        patch.targetVisualRegionFill = targetVisualRegionFill;
-    }
-    if (elements.hidden.checked) {
-        patch.hidden = true;
-    }
-    return patch;
 }
 
 function toggleFeatureSelection(featureId) {
@@ -730,117 +487,48 @@ function projectFeature(feature, projection) {
 }
 
 function createProjection(features) {
-    let minLon = Number.POSITIVE_INFINITY;
-    let maxLon = Number.NEGATIVE_INFINITY;
-    let minLat = Number.POSITIVE_INFINITY;
-    let maxLat = Number.NEGATIVE_INFINITY;
-
-    for (const feature of features) {
-        for (const [lon, lat] of extractCoordinates(feature.geometry)) {
-            if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
-                continue;
-            }
-            minLon = Math.min(minLon, lon);
-            maxLon = Math.max(maxLon, lon);
-            minLat = Math.min(minLat, lat);
-            maxLat = Math.max(maxLat, lat);
-        }
-    }
-
-    const lonSpan = Math.max(maxLon - minLon, 1e-9);
-    const latSpan = Math.max(maxLat - minLat, 1e-9);
-    const usableWidth = MAP_VIEWBOX_WIDTH - MAP_PADDING * 2;
-    const usableHeight = MAP_VIEWBOX_HEIGHT - MAP_PADDING * 2;
-    const scale = Math.min(usableWidth / lonSpan, usableHeight / latSpan);
-    const offsetX = (MAP_VIEWBOX_WIDTH - lonSpan * scale) / 2;
-    const offsetY = (MAP_VIEWBOX_HEIGHT - latSpan * scale) / 2;
-
-    return (lon, lat) => {
-        const x = offsetX + (lon - minLon) * scale;
-        const y = offsetY + (maxLat - lat) * scale;
-        return [x, y];
-    };
+    return BESP_UTILS.createProjection(features, {
+        width: MAP_VIEWBOX_WIDTH,
+        height: MAP_VIEWBOX_HEIGHT,
+        padding: MAP_PADDING,
+    });
 }
 
 function geometryToPath(geometry, projection, includeHoles = true) {
-    const type = geometry?.type;
-    const coordinates = geometry?.coordinates;
-    if (!type || !coordinates) {
-        return "";
-    }
-    if (type === "Polygon") {
-        return polygonToPath(coordinates, projection, includeHoles);
-    }
-    if (type === "MultiPolygon") {
-        return coordinates.map((polygon) => polygonToPath(polygon, projection, includeHoles)).join(" ");
-    }
-    return "";
+    return BESP_UTILS.geometryToPath(geometry, projection, includeHoles);
 }
 
 function polygonToPath(polygonCoordinates, projection, includeHoles) {
-    const rings = includeHoles ? polygonCoordinates : polygonCoordinates.slice(0, 1);
-    return rings
-        .map((ring) => {
-            if (!Array.isArray(ring) || ring.length < 3) {
-                return "";
-            }
-            const points = ring
-                .map((coord) => projection(coord[0], coord[1]))
-                .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`);
-            return `M ${points.join(" L ")} Z`;
-        })
-        .filter(Boolean)
-        .join(" ");
+    return BESP_UTILS.polygonToPath(polygonCoordinates, projection, includeHoles);
 }
 
 function geometryCentroid(geometry, projection) {
-    const points = extractCoordinates(geometry);
-    if (!points.length) {
-        return [MAP_VIEWBOX_WIDTH / 2, MAP_VIEWBOX_HEIGHT / 2];
-    }
-    let lonSum = 0;
-    let latSum = 0;
-    for (const [lon, lat] of points) {
-        lonSum += lon;
-        latSum += lat;
-    }
-    return projection(lonSum / points.length, latSum / points.length);
+    return BESP_UTILS.geometryCentroid(geometry, projection, MAP_VIEWBOX_WIDTH, MAP_VIEWBOX_HEIGHT);
 }
 
 function extractCoordinates(geometry) {
-    const type = geometry?.type;
-    const coordinates = geometry?.coordinates;
-    if (!type || !coordinates) {
-        return [];
-    }
-    if (type === "Polygon") {
-        return coordinates.flat();
-    }
-    if (type === "MultiPolygon") {
-        return coordinates.flat(2);
-    }
-    return [];
+    return BESP_UTILS.extractCoordinates(geometry);
 }
 
 function normalizeCountryCode(countryCode) {
-    return String(countryCode ?? "").trim().toUpperCase();
+    return BESP_UTILS.normalizeCountryCode(countryCode);
 }
 
 function repairRegionTextMojibakeAscii(regionName) {
     return String(regionName ?? "")
-        .replaceAll("Ã«", "ë")
-        .replaceAll("Ã§", "ç")
-        .replaceAll("Ä", "č")
-        .replaceAll("Ã¡", "á")
-        .replaceAll("Ã¢", "â")
-        .replaceAll("Ã©", "é")
-        .replaceAll("Ã­", "í")
-        .replaceAll("Ã³", "ó")
-        .replaceAll("Ã¶", "ö")
-        .replaceAll("Ãº", "ú")
-        .replaceAll("Ã¼", "ü")
-        .replaceAll("Å‘", "ő")
-        .replaceAll("Å±", "ű");
+        .replaceAll("ÃƒÂ«", "Ã«")
+        .replaceAll("ÃƒÂ§", "Ã§")
+        .replaceAll("Ã„Â", "Ä")
+        .replaceAll("ÃƒÂ¡", "Ã¡")
+        .replaceAll("ÃƒÂ¢", "Ã¢")
+        .replaceAll("ÃƒÂ©", "Ã©")
+        .replaceAll("ÃƒÂ­", "Ã­")
+        .replaceAll("ÃƒÂ³", "Ã³")
+        .replaceAll("ÃƒÂ¶", "Ã¶")
+        .replaceAll("ÃƒÂº", "Ãº")
+        .replaceAll("ÃƒÂ¼", "Ã¼")
+        .replaceAll("Ã…â€˜", "Å‘")
+        .replaceAll("Ã…Â±", "Å±");
 }
 
 function normalizeRegionName(regionName) {
@@ -856,7 +544,7 @@ function normalizeRegionName(regionName) {
 }
 
 function buildRegionKey(countryCode, regionName) {
-    return `${normalizeCountryCode(countryCode)}::${normalizeRegionName(regionName)}`;
+    return BESP_UTILS.buildRegionKey(countryCode, regionName, REGION_NAME_ALIASES);
 }
 
 function normalizeHexColor(value) {
@@ -868,17 +556,8 @@ function normalizeHexColor(value) {
     return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex.toLowerCase() : "";
 }
 
-function shortFeatureLabel(feature) {
-    return feature.name.length > 18 ? `${feature.name.slice(0, 18)}…` : feature.name;
-}
-
 function escapeHtml(value) {
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+    return BESP_UTILS.escapeHtml(value);
 }
 
 function shortFeatureLabel(feature) {
