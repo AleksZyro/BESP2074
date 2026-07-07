@@ -38,3 +38,4 @@ def test_pages_workflow_uploads_static_demo_only() -> None:
     assert "tools/local_run_service.py" not in workflow
     assert "dashboard/demo-data" in workflow
     assert "actions/deploy-pages" in workflow
+    assert "vars.ENABLE_PAGES_DEPLOY == 'true'" in workflow
