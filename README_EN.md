@@ -99,11 +99,10 @@ The demo can be checked locally with a simple static file server. The full app w
 python tools\local_run_service.py --port 8011
 ```
 
-The Pages workflow `.github/workflows/deploy-pages.yml` prepares the static artifact. The actual deploy job only runs after GitHub Pages has been enabled manually and the repository variable `ENABLE_PAGES_DEPLOY` has been set to `true`. Configure this in GitHub:
+The Pages workflow `.github/workflows/deploy-pages.yml` prepares and deploys the static artifact once GitHub Pages has been enabled manually:
 
 1. `Settings -> Pages -> Build and deployment -> Source -> GitHub Actions`
-2. `Settings -> Secrets and variables -> Actions -> Variables -> New repository variable`
-3. Name: `ENABLE_PAGES_DEPLOY`, value: `true`
+2. Then run the `Deploy static demo to Pages` workflow manually or push a new commit to `main`.
 
 ## Boundary Editor
 

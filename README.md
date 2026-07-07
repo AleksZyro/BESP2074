@@ -99,11 +99,10 @@ Lokal kann die Demo mit einem einfachen statischen Dateiserver geprüft werden. 
 python tools\local_run_service.py --port 8011
 ```
 
-Der Pages-Workflow `.github/workflows/deploy-pages.yml` bereitet das statische Artefakt vor. Der echte Deploy-Job läuft erst, wenn GitHub Pages manuell aktiviert ist und die Repository-Variable `ENABLE_PAGES_DEPLOY` auf `true` gesetzt wurde. Dafür in GitHub einstellen:
+Der Pages-Workflow `.github/workflows/deploy-pages.yml` bereitet das statische Artefakt vor und deployt es, sobald GitHub Pages manuell aktiviert ist:
 
 1. `Settings -> Pages -> Build and deployment -> Source -> GitHub Actions`
-2. `Settings -> Secrets and variables -> Actions -> Variables -> New repository variable`
-3. Name: `ENABLE_PAGES_DEPLOY`, Wert: `true`
+2. Danach den Workflow `Deploy static demo to Pages` manuell starten oder einen neuen Commit auf `main` pushen.
 
 ## Grenzeditor
 
