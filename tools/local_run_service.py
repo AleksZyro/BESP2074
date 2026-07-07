@@ -8,10 +8,14 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlparse
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCENARIOS_PATH = REPO_ROOT / "data" / "scenarios.json"
 LATEST_EXPORT_PATH = REPO_ROOT / "output" / "latest.json"
 MAP_ASSIGNMENTS_PATH = REPO_ROOT / "dashboard" / "data" / "map_assignments.json"
+REPORT_DETAIL_COUNTRIES = "countries"
+REPORT_DETAIL_COUNTRIES_REGIONS = "countries_regions"
+MAX_JSON_BODY_BYTES = 1_000_000
 STATUS_DEFAULTS = {
     "scenario_code": "baseline",
     "scenario_name": "Baseline continuity",
@@ -37,11 +41,173 @@ def load_scenarios() -> list[dict]:
             }
             for item in json.load(handle)
         ]
-def read_latest_meta() -> dict:
-    if not LATEST_EXPORT_PATH.exists():
-        return {}
-    with LATEST_EXPORT_PATH.open("r", encoding="utf-8") as handle:
-        return json.load(handle).get("meta", {}).get("scenario", {})
+
+
+def load_latest_export(path: Path = LATEST_EXPORT_PATH) -> dict:
+    if not path.exists():
+        raise FileNotFoundError("No current run is available.")
+    with path.open("r", encoding="utf-8") as handle:
+        export = json.load(handle)
+    if not isinstance(export, dict) or not isinstance(export.get("years"), dict):
+        raise ValueError("Current run export is invalid.")
+    return export
+
+
+def parse_year_key(year_key: str) -> tuple[int, int]:
+    start_text, end_text = str(year_key).split("-", 1)
+    return int(start_text), int(end_text)
+
+
+def selected_year_items(export: dict, start_year: int | None, end_year: int | None) -> list[tuple[str, dict]]:
+    items: list[tuple[str, dict]] = []
+    for year_key, year_data in sorted(export.get("years", {}).items()):
+        bucket_start, bucket_end = parse_year_key(year_key)
+        if start_year is not None and bucket_start < start_year:
+            continue
+        if end_year is not None and bucket_end > end_year:
+            continue
+        items.append((year_key, year_data))
+    return items
+
+
+def format_percent(value: object) -> str:
+    try:
+        return f"{float(value) * 100:.1f}%"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def format_number(value: object) -> str:
+    try:
+        return f"{int(value):,}".replace(",", "'")
+    except (TypeError, ValueError):
+        return "-"
+
+
+def format_decimal(value: object, digits: int = 2) -> str:
+    try:
+        return f"{float(value):.{digits}f}"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def build_run_report_text(
+    export: dict,
+    *,
+    start_year: int | None = None,
+    end_year: int | None = None,
+    detail: str = REPORT_DETAIL_COUNTRIES,
+    include_events: bool = False,
+    include_state: bool = False,
+) -> str:
+    meta = export.get("meta", {})
+    scenario = meta.get("scenario", {})
+    shocks = meta.get("shocks", {})
+    year_items = selected_year_items(export, start_year, end_year)
+
+    lines = [
+        "BESP2074 Run Export",
+        "=" * 72,
+        f"Scenario: {scenario.get('name', 'Unknown')} ({scenario.get('code', '-')})",
+        f"Seed: {scenario.get('variation_seed', '-')}",
+        f"Years: {year_items[0][0] if year_items else '-'} to {year_items[-1][0] if year_items else '-'}",
+        f"Shocks: {'on' if shocks.get('enabled') else 'off'}",
+        "",
+    ]
+
+    if not year_items:
+        lines.append("No year rows match the selected range.")
+        return "\n".join(lines) + "\n"
+
+    for year_key, year_data in year_items:
+        lines.extend([f"Year {year_key}", "-" * 72])
+        countries = sorted(
+            year_data.get("countries", []),
+            key=lambda row: str(row.get("country_code", "")),
+        )
+        for country in countries:
+            lines.append(
+                " | ".join([
+                    str(country.get("country_code", "-")),
+                    str(country.get("country_name", "-")),
+                    f"population {format_number(country.get('end_population'))}",
+                    f"GDP {format_decimal(country.get('end_gdp_billion_eur'))} bn EUR",
+                    f"growth {format_percent(country.get('gdp_growth_rate'))}",
+                    f"unemployment {format_percent(country.get('average_unemployment_rate'))}",
+                ])
+            )
+            if include_state:
+                lines.append(
+                    "  state: "
+                    + ", ".join([
+                        f"budget {format_percent(country.get('budget_balance_pct_gdp'))}",
+                        f"debt {format_percent(country.get('debt_to_gdp'))}",
+                        f"stability {format_percent(country.get('stability_index'))}",
+                        f"corruption {format_percent(country.get('corruption_index'))}",
+                        f"investment {format_percent(country.get('investment_climate_index'))}",
+                    ])
+                )
+
+        if detail == REPORT_DETAIL_COUNTRIES_REGIONS:
+            lines.append("")
+            lines.append("Regions")
+            regions = sorted(
+                year_data.get("regions", []),
+                key=lambda row: (str(row.get("country_code", "")), str(row.get("region_name", ""))),
+            )
+            for region in regions:
+                lines.append(
+                    "  "
+                    + " | ".join([
+                        str(region.get("country_code", "-")),
+                        str(region.get("region_name", "-")),
+                        f"population {format_number(region.get('end_population'))}",
+                        f"GDP {format_decimal(region.get('end_gdp_billion_eur'))} bn EUR",
+                        f"unemployment {format_percent(region.get('unemployment_rate'))}",
+                    ])
+                )
+        lines.append("")
+
+    if include_events:
+        lines.extend(["Shock / event letters", "-" * 72])
+        events = [
+            event for event in export.get("shock_events", [])
+            if (start_year is None or int(event.get("start_year", 0)) >= start_year)
+            and (end_year is None or int(event.get("end_year", 0)) <= end_year)
+        ]
+        if not events:
+            lines.append("No events in selected range.")
+        for event in sorted(events, key=lambda item: (int(item.get("start_year", 0)), str(item.get("country_code", "")))):
+            lines.append(
+                f"{event.get('start_year', '-')}-{event.get('end_year', '-')}: "
+                f"{event.get('country_code', '-')} {event.get('shock_name', '-')}. "
+                f"{event.get('message', '')}"
+            )
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def build_report_filename(export: dict, start_year: int | None, end_year: int | None, detail: str) -> str:
+    meta = export.get("meta", {})
+    scenario = meta.get("scenario", {})
+    scenario_code = str(scenario.get("code") or "run").replace(" ", "_")
+    safe_start = start_year or meta.get("start_year") or "start"
+    safe_end = end_year or meta.get("end_year") or "end"
+    safe_detail = "countries_regions" if detail == REPORT_DETAIL_COUNTRIES_REGIONS else "countries"
+    return f"BESP2074_{scenario_code}_{safe_start}-{safe_end}_{safe_detail}.txt"
+
+
+def allowed_cors_origin(origin: str) -> str:
+    clean_origin = str(origin or "").strip()
+    parsed = urlparse(clean_origin)
+    try:
+        port = parsed.port
+    except ValueError:
+        return ""
+    if parsed.scheme == "http" and parsed.hostname in {"127.0.0.1", "localhost"} and port is not None:
+        return clean_origin
+    return ""
 
 
 def read_map_assignments() -> dict:
@@ -177,6 +343,22 @@ class RunManager:
         )
         worker.start()
         return self.get_status()
+    def clear_current_run(self) -> dict:
+        with self._lock:
+            if self._state["state"] == "running":
+                raise RuntimeError("A simulation run is already in progress.")
+            if LATEST_EXPORT_PATH.exists():
+                LATEST_EXPORT_PATH.unlink()
+            self._state = self._build_state(
+                "idle",
+                message="Current run deleted. Generate a fresh local simulation run.",
+                recent_runs=[],
+                latest_batch=None,
+                completed_runs=0,
+                variation_seed=None,
+                finished_at=timestamp_now(),
+            )
+            return dict(self._state)
     def _run_simulation_batch(self, scenario: dict, shocks_enabled: bool, run_count: int) -> None:
         batch_summaries: list[dict] = []
         for run_index in range(run_count):
@@ -277,6 +459,46 @@ class BESP2074RequestHandler(SimpleHTTPRequestHandler):
                 return
             self._send_json(HTTPStatus.OK, saved)
             return
+        if self.path == "/api/export-report":
+            payload = self._read_json_payload()
+            if payload is None:
+                return
+            try:
+                export = load_latest_export()
+                start_year = payload.get("start_year")
+                end_year = payload.get("end_year")
+                detail = str(payload.get("detail") or REPORT_DETAIL_COUNTRIES)
+                if detail not in {REPORT_DETAIL_COUNTRIES, REPORT_DETAIL_COUNTRIES_REGIONS}:
+                    raise ValueError("Unknown report detail level.")
+                report_text = build_run_report_text(
+                    export,
+                    start_year=int(start_year) if start_year else None,
+                    end_year=int(end_year) if end_year else None,
+                    detail=detail,
+                    include_events=bool(payload.get("include_events", False)),
+                    include_state=bool(payload.get("include_state", False)),
+                )
+                filename = build_report_filename(
+                    export,
+                    int(start_year) if start_year else None,
+                    int(end_year) if end_year else None,
+                    detail,
+                )
+            except (FileNotFoundError, ValueError) as error:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"message": str(error)})
+                return
+            self._send_text_file(HTTPStatus.OK, report_text, filename)
+            return
+        self.send_error(HTTPStatus.NOT_FOUND, "Unknown API route.")
+    def do_DELETE(self) -> None:
+        if self.path == "/api/latest-run":
+            try:
+                status = RUN_MANAGER.clear_current_run()
+            except RuntimeError as error:
+                self._send_json(HTTPStatus.CONFLICT, {"message": str(error)})
+                return
+            self._send_json(HTTPStatus.OK, status)
+            return
         self.send_error(HTTPStatus.NOT_FOUND, "Unknown API route.")
     def do_OPTIONS(self) -> None:
         self.send_response(HTTPStatus.NO_CONTENT)
@@ -290,8 +512,20 @@ class BESP2074RequestHandler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+    def _send_text_file(self, status: HTTPStatus, text: str, filename: str) -> None:
+        body = text.encode("utf-8")
+        self.send_response(status)
+        self._send_default_headers()
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
     def _read_json_payload(self) -> dict | None:
         body_length = int(self.headers.get("Content-Length", "0"))
+        if body_length > MAX_JSON_BODY_BYTES:
+            self._send_json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"message": "Request body is too large."})
+            return None
         raw_body = self.rfile.read(body_length) if body_length else b"{}"
         try:
             return json.loads(raw_body.decode("utf-8"))
@@ -300,9 +534,12 @@ class BESP2074RequestHandler(SimpleHTTPRequestHandler):
             return None
     def _send_default_headers(self) -> None:
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = allowed_cors_origin(self.headers.get("Origin", ""))
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
     def log_message(self, format: str, *args) -> None:
         super().log_message(format, *args)
 def parse_args() -> argparse.Namespace:

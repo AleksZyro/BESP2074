@@ -58,6 +58,7 @@ def main() -> None:
         ("Python test suite", [python, "-m", "pytest"]),
         ("Dashboard app syntax", [node, "--check", "dashboard/app.js"]),
         ("Dashboard config syntax", [node, "--check", "dashboard/config.js"]),
+        ("Dashboard map utils syntax", [node, "--check", "dashboard/map_utils.js"]),
         ("Dashboard editor syntax", [node, "--check", "dashboard/editor.js"]),
         (
             "Baseline export generation",

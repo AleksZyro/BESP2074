@@ -1,3 +1,40 @@
 __pycache__/
 *.py[cod]
 output/
+
+# Python environments and tooling
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+coverage/
+htmlcov/
+node_modules/
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+
+# Editor and OS files
+.vscode/
+.idea/
+.vs/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary and generated files
+*.tmp
+*.temp
+*.log
+*.bak
+*.orig
+dist/
+build/

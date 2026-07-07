@@ -2,24 +2,13 @@
 
 **Deutsch** | [English](./README_EN.md)
 
-BESP2074 ist eine jahresbasierte Balkan-Simulation mit Python-Modell, strukturiertem JSON-Export und lokalem Web-Dashboard. Das Projekt simuliert Länder und Regionen vom automatisch erkannten Basisjahr bis `2074`, visualisiert Kennzahlen auf einer interaktiven Karte und enthält einen lokalen Grenzeditor für Annexionsszenarien.
+BESP2074 ist eine lokale, jahresbasierte Balkan-Simulation mit Python-Modell, strukturiertem JSON-Export, Web-Dashboard und Grenzeditor. Das Projekt simuliert Länder und Regionen vom automatisch erkannten Basisjahr bis `2074`, visualisiert Kennzahlen auf einer interaktiven Karte und enthält lokale Werkzeuge für Run-Verwaltung und Karten-Overrides.
 
-## Kurzüberblick
+## Modellcharakter und Nicht-Prognose
 
-- Python-Simulationsmodell mit Länder-, Regions- und Staatskennzahlen.
-- Elf Länder mit regionalen Ausgangsdaten und automatischer Baseline-Erkennung.
-- GDP-Baselines auf Länderebene aus World-Bank-Werten, in EUR mit ECB-Durchschnittskurs umgerechnet.
-- Reproduzierbare Seeds, Szenarien, Mehrfachläufe und optionale simulierte Ereignisse.
-- Strukturierter JSON-Export für Dashboard und Verifier.
-- Lokales Web-Dashboard mit Karte, Zeitachse, KPI-Modi, Dark-/Light-Mode und Run-Service.
-- Lokaler Grenzeditor für Karten-Overrides und Annexionsszenarien.
-- Automatisierte Tests, JavaScript-Syntaxchecks und Release-Prüfungen.
+BESP2074 ist eine explorative Lern- und Szenariosimulation. Die Ergebnisse sind keine wirtschaftlichen, demografischen, politischen oder finanziellen Prognosen. Langfristige Verläufe entstehen aus vereinfachten Modellannahmen, Startwerten, Szenarien, Seeds und optionalen simulierten Schocks.
 
-## Modellcharakter
-
-BESP2074 ist eine explorative Lern- und Szenariosimulation. Die erzeugten Ergebnisse sind keine wirtschaftlichen, demografischen oder politischen Prognosen. Langfristige Verläufe basieren auf vereinfachten Modellannahmen, Szenarien, Seeds und optionalen simulierten Ereignissen.
-
-Die Simulation ist bewusst nicht rein pessimistisch. Länder können sich je nach Ausgangslage, Szenario, Seed und Schocks verbessern oder verschlechtern. Schocks sind temporäre Modellereignisse und sollen Runs beeinflussen, aber nicht dauerhaft jeden Verlauf bestimmen.
+Landes-Baselines für Bevölkerung, GDP, Arbeitslosigkeit, Inflation und Demografie werden über World-Bank-Daten und ECB-Wechselkurse aktualisiert. Regionale Startwerte und einige soziale oder politische Kennzahlen sind Modellannahmen oder Arbeitswerte.
 
 ## Länderumfang
 
@@ -37,75 +26,38 @@ Das Projekt umfasst elf Länder:
 - Serbia
 - Slovenia
 
+Kosovo wird kartografisch als Overlay innerhalb des Serbien-Scopes geführt.
+
+## Hauptfunktionen
+
+- Python-Simulationsmodell mit Länder-, Regions- und Staatskennzahlen.
+- Reproduzierbare Seeds, Szenarien, Mehrfachläufe und optionale simulierte Ereignisse.
+- JSON-Export nach `output/latest.json` für Dashboard und Verifier.
+- Lokales Web-Dashboard mit Karte, Zeitachse, KPI-Modi, Dark-/Light-Mode und Run-Service.
+- TXT-Export und Löschen des aktuellen Runs über den lokalen Service.
+- Lokaler Grenzeditor für Karten-Overrides und Annexionsszenarien.
+- Automatisierte Tests, JavaScript-Syntaxchecks und Release-Prüfung.
+
 ## Voraussetzungen
 
-- Python `3.10+`; entwickelt und geprüft mit Python `3.11`.
-- Für die Simulation und den lokalen Service werden nur Python-Standardbibliotheken verwendet.
-- `pytest` wird für die automatisierte Test-Suite benötigt.
-- Node.js wird nur für JavaScript-Syntaxchecks mit `node --check` benötigt.
-- Es gibt kein `npm install` und keine Node-Paketabhängigkeiten.
+- Python `3.10+`; lokal geprüft mit Python `3.11.9`
+- `pytest` für Tests; gepinnt in `requirements-dev.txt`
+- Node.js für JavaScript-Syntaxchecks; lokal geprüft mit Node `v24.15.0`
+- Kein Node-Paketmanager und kein `npm install` nötig
 
-## Schnellstart
-
-1. Repository klonen und in den Projektordner wechseln:
+## Installation
 
 ```powershell
 git clone https://github.com/Aleksandros2/BESP2074.git
 cd BESP2074
-```
-
-2. Python prüfen:
-
-```powershell
 python --version
+python -m pip install -r requirements-dev.txt
+python -m pytest
 ```
 
-Alternativ unter Windows:
-
-```powershell
-py --version
-```
-
-3. Simulation ausführen:
-
-```powershell
-python main.py --scenario baseline
-```
-
-Alternativ unter Windows:
-
-```powershell
-py main.py --scenario baseline
-```
-
-4. Lokalen Dashboard-Service starten:
-
-```powershell
-python tools\local_run_service.py --port 8011
-```
-
-Alternativ unter Windows:
-
-```powershell
-py tools\local_run_service.py --port 8011
-```
-
-5. Dashboard öffnen:
-
-- Dashboard: [http://127.0.0.1:8011/dashboard/index.html](http://127.0.0.1:8011/dashboard/index.html)
-- Grenzeditor: [http://127.0.0.1:8011/dashboard/editor.html](http://127.0.0.1:8011/dashboard/editor.html)
+Unter Windows kann je nach Installation auch `py` statt `python` verwendet werden.
 
 ## Simulation
-
-BESP2074 rechnet jährlich:
-
-- Bevölkerung, Geburten, Todesfälle und Migration
-- regionales GDP und GDP pro Kopf
-- Arbeitslosigkeit und Attraktivität
-- Integration, Inflation, Zufriedenheit, Korruption und Wahlspannung
-- Budget, Schuldenquote, Stabilität und Investitionsklima auf Staatsebene
-
-Nützliche Befehle:
 
 ```powershell
 python main.py --scenario baseline
@@ -114,73 +66,86 @@ python main.py --scenario reform --seed reform-a
 python main.py --list-scenarios
 ```
 
-## Dashboard und Grenzeditor
+Standardmässig schreibt die Simulation den aktuellen Arbeitsrun nach `output/latest.json`. Alte `simulation_*.json`-Dateien werden im Standardlauf nicht automatisch gesammelt. Ein Archiv-Export ist nur bewusst über `--archive-output` vorgesehen.
 
-Das Dashboard lädt `output/latest.json`, zeigt die simulierten Jahre bis `2074` und stellt Länder, Regionen, KPI-Modi, Ereignisbriefe und Mehrfachläufe dar. Über `Play` kann die Zeitachse abgespielt werden; am Ende kann ein neuer Ergebnisrun gestartet werden, wenn der lokale Service läuft.
+## Dashboard
 
-Der Grenzeditor schneidet keine neuen Polygone. Er ordnet vorhandene ADM-Flächen neu zu. Dadurch bleibt die Kartentopologie stabil.
+Lokalen Service starten:
 
-Workflow im Grenzeditor:
+```powershell
+python tools\local_run_service.py --port 8011
+```
+
+Danach öffnen:
+
+- Dashboard: <http://127.0.0.1:8011/dashboard/index.html>
+- Grenzeditor: <http://127.0.0.1:8011/dashboard/editor.html>
+
+Das Dashboard zeigt Länder, Regionen, KPI-Modi, Events, Dark-/Light-Mode, Timeline, Play-Funktion und Run-Verwaltung. Der aktuelle Run kann als TXT exportiert oder gelöscht werden.
+
+## Grenzeditor
+
+Der Grenzeditor schneidet keine neuen Polygone. Er ordnet vorhandene ADM-Flächen einem Zielland und optional einer Zielregion zu. Dadurch bleibt die Kartentopologie stabil.
+
+Workflow:
 
 1. Region oder Land auswählen.
 2. Zielland und Zielregion setzen.
 3. Annexionszuordnung lokal anwenden.
 4. Speichern.
-5. Simulation oder Dashboard neu laden.
+5. Dashboard oder Simulation neu laden.
+
+## Szenarien und Seeds
+
+Szenarien liegen in `data/scenarios.json`. Seeds steuern reproduzierbare Variation. Gleicher Seed und gleiche Einstellungen sollen denselben Run erzeugen. Verschiedene Seeds erzeugen unterschiedliche Verläufe.
 
 ## Events und Schocks
 
-Schocks sind optional. Im Standardlauf sind sie aktiviert, aber bewusst seltener eingestellt:
-
-- maximal zwei Event-Briefe pro Jahr
-- längerer Mindest-Cooldown zwischen ähnlichen Schocks
-- tiefere Standardwahrscheinlichkeiten in `data/shocks.json`
-- grenzübergreifende Events können in mehreren betroffenen Ländern einen Brief anzeigen
-
-Die Event-Daten kommen aus dem Simulationsoutput in `output/latest.json`. Das Frontend erzeugt keine eigenen Ereignisse.
+Schocks sind optionale, seed-stabile Modellereignisse aus `data/shocks.json`. Sie werden im Simulationsoutput gespeichert und nicht im Frontend erfunden. Schocks sind bewusst seltener eingestellt und können mehrere Regionen oder Länder betreffen.
 
 ## Architektur
 
-1. `data/countries.json` und `data/regions.json` definieren Startwerte.
-2. `data/scenarios.json` definiert Szenarien.
-3. `data/shocks.json` definiert optionale Schocks.
-4. `main.py` erkennt das Basisjahr und simuliert bis `2074`.
-5. `besp/exporter.py` schreibt strukturierte JSON-Exporte.
-6. `tools/local_run_service.py` liefert Dashboard, Run-API und Editor-API lokal aus.
-7. `dashboard/index.html` zeigt Karte, Zeitachse, KPIs und Mehrfachläufe.
-8. `dashboard/editor.html` verwaltet lokale Karten-Overrides.
+- `data/countries.json`: Länder-Baselines und Modellparameter
+- `data/regions.json`: regionale Startwerte und Modellannahmen
+- `data/scenarios.json`: Szenarien
+- `data/shocks.json`: optionale Schocks
+- `main.py`: CLI-Einstieg
+- `besp/`: Simulationsmodell, Loader, Exporter und Validierung
+- `tools/local_run_service.py`: lokaler Dashboard- und Run-Service
+- `dashboard/`: HTML, CSS, JavaScript, Karten und Editor
+- `tests/`: automatisierte Tests
 
-## Qualitätssicherung
+## Tests und Release-Prüfung
 
-Empfohlener Abschlusscheck:
+Pflichtcheck:
 
 ```powershell
 python tools\verify_release_ready.py
 ```
 
-Alternativ unter Windows, wenn `py` auf dieselbe Python-Umgebung mit `pytest` zeigt:
+Der Check führt Tests, JavaScript-Syntaxchecks, einen Baseline-Export und mehrere Export-/Geo-Verifier aus.
 
-```powershell
-py tools\verify_release_ready.py
-```
+Letzter lokaler Auditlauf in diesem Arbeitsbaum:
 
-Der Release-Check führt aus:
+- Datum: `2026-07-07`
+- Betriebssystem: Windows 11 Home `10.0.26200`, 64-bit
+- Python: `3.11.9`
+- Node: `v24.15.0`
+- Befehl: `python tools\verify_release_ready.py`
+- Exit-Status: `0`
+- Laufzeit: `6.64s`
+- Ergebnis: `20 passed`, Release-Verifier erfolgreich
 
-- komplette Python-Test-Suite
-- JavaScript-Syntaxchecks für Dashboard, Config und Editor
-- Baseline-Export bis `2074`
-- Export-Meta- und Jahresprüfungen
-- Staatsdynamik-Prüfung
-- GeoJSON-Abdeckungsprüfung
-- Namensnormalisierungsprüfung
+Diese Angabe beschreibt nur den lokalen Auditlauf in diesem Arbeitsbaum. Vor einer Veröffentlichung sollte der Check erneut in der Zielumgebung laufen.
 
-Einzelchecks für Debugging:
+Einzelchecks:
 
 ```powershell
 python -m pytest
 node --check dashboard/app.js
 node --check dashboard/config.js
 node --check dashboard/editor.js
+node --check dashboard/map_utils.js
 python main.py --scenario baseline --seed test-local
 python tools\verify_export_year_state.py
 python tools\verify_state_dynamics.py
@@ -189,26 +154,44 @@ python tools\verify_geo_coverage.py
 python tools\verify_geo_name_normalization.py
 ```
 
-Release readiness check completed successfully.
+## Build
+
+Es gibt keinen separaten Build-Schritt und keinen Node-Paketmanager. Das Dashboard ist statisches HTML/CSS/JavaScript und wird vom lokalen Python-Service ausgeliefert. Die technische Validierung besteht aus Tests, JavaScript-Syntaxchecks und Export-/Geo-Verifiern.
+
+## CI
+
+Der Workflow `.github/workflows/ci.yml` läuft nur bei Pull Requests nach `main` und Pushes auf `main`. Er installiert `requirements-dev.txt`, richtet Node.js ein und führt `python tools\verify_release_ready.py` aus. Er deployt nichts und benötigt keine Secrets.
 
 ## Daten aktualisieren
-
-World-Bank-Baselines können neu geholt werden:
 
 ```powershell
 python tools\refresh_country_baselines.py
 ```
 
-Das Skript prüft die Jahre `2023` bis `2026`, wählt die beste gemeinsame Datenabdeckung und aktualisiert die Baseline-Dateien. Da neuere Jahre je nach Indikator noch unvollständig sein können, sollte ein Datenrefresh immer als eigener, überprüfter Änderungsschritt behandelt werden.
+Das Skript nutzt World-Bank-Indikatoren und ECB-EUR/USD-Referenzkurse. Es prüft mehrere Kandidatenjahre und wählt die beste gemeinsame Abdeckung. Datenrefreshes sollten als eigener, überprüfter Änderungsschritt behandelt werden.
+
+## Screenshots
+
+Geprüfte lokale Screenshots liegen unter `docs/screenshots/`:
+
+- `dashboard-country-view.png`
 
 ## Projektstatus
 
-BESP2074 ist als lokales Abschlussprojekt vollständig nutzbar. Die Hauptbereiche Simulation, Export, Dashboard, Grenzeditor, Mehrfachläufe, Events, Kartenlogik und Tests sind abgeschlossen.
+BESP2074 ist technisch lokal nutzbar und bereit für privaten Review. Für eine öffentliche Veröffentlichung bleiben Lizenz- und Quellenhinweise entscheidend, besonders für Karten- und Datendateien.
 
-Optionale zukünftige Erweiterungen sind keine Voraussetzung für den abgeschlossenen Projektstand. Sinnvolle spätere Ideen wären eine zusätzliche Batch-Vergleichsansicht, ein freier Polygon-Split-Editor oder weitere Datenrefreshes, sobald neuere Jahre vollständigere öffentliche Daten bieten.
+## Bekannte Einschränkungen
 
-## Lizenz und Datenquellen
+- Keine echte Prognose und keine Entscheidungshilfe für Politik, Wirtschaft oder Finanzen.
+- Regionale Werte enthalten Modellannahmen und Arbeitswerte.
+- Karten basieren auf vereinfachten Drittanbieter-Geodaten.
+- Der Grenzeditor ordnet bestehende Flächen um, erstellt aber keine freien Grenzschnitte.
+- `output/` ist generiert und soll nicht committed werden.
 
-Der eigene Quellcode und die eigene Projektdokumentation von BESP2074 stehen unter der [MIT-Lizenz](./LICENSE).
+## Lizenz und Drittanbieterquellen
 
-Externe Datensätze und Kartendateien behalten ihre ursprünglichen Lizenzen. Weitere Angaben stehen in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+Der selbst erstellte Quellcode und die eigene Projektdokumentation stehen unter der MIT-Lizenz in `LICENSE`.
+
+Drittanbieter-Daten, Geodaten und externe Quellen unterliegen weiterhin ihren eigenen Lizenzen und Nutzungsbedingungen. Die MIT-Lizenz erteilt keine zusätzlichen Rechte an diesen Drittanbieter-Inhalten.
+
+Details stehen in `THIRD_PARTY_NOTICES.md`. Unklare oder nicht belegte Lizenzpunkte sind dort als offene Risiken markiert.

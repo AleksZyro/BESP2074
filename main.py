@@ -125,6 +125,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable yearly shock draws for this run.",
     )
+    parser.add_argument(
+        "--archive-output",
+        action="store_true",
+        help="Also write output/simulation_<start>_<end>.json. By default only output/latest.json is overwritten.",
+    )
     return parser.parse_args()
 
 
@@ -198,13 +203,14 @@ def main() -> None:
         baseline_year=start_year,
     )
     output_dir = Path("output")
-    output_path = output_dir / f"simulation_{start_year}_{end_year}.json"
     latest_output_path = output_dir / "latest.json"
-    save_simulation_export_json(export_data, output_path)
     save_simulation_export_json(export_data, latest_output_path)
     print()
-    print(f"Structured JSON export saved to: {output_path}")
     print(f"Stable dashboard export saved to: {latest_output_path}")
+    if args.archive_output:
+        output_path = output_dir / f"simulation_{start_year}_{end_year}.json"
+        save_simulation_export_json(export_data, output_path)
+        print(f"Archived JSON export saved to: {output_path}")
 
 
 if __name__ == "__main__":
