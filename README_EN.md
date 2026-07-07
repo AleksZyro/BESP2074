@@ -83,26 +83,7 @@ Open:
 
 The dashboard shows countries, regions, KPI modes, events, dark/light mode, timeline playback, and run management. The current run can be exported as TXT or deleted.
 
-## Static Portfolio Demo
-
-Alongside the full local version, the project includes a read-only static demo for GitHub Pages:
-
-- Repository entry point: `dashboard/demo.html`
-- Demo data: `dashboard/demo-data/latest.json`
-- Target path on GitHub Pages: `/BESP2074/`
-
-The demo loads prepared sample data only. It does not start new runs, delete runs, save boundary editor changes, modify `output/latest.json`, or call `/api/...` routes. TXT export in the demo runs fully in the browser from the loaded sample data.
-
-The demo can be checked locally with a simple static file server. The full app with simulation, saving, deletion, and run generation still requires:
-
-```powershell
-python tools\local_run_service.py --port 8011
-```
-
-The Pages workflow `.github/workflows/deploy-pages.yml` prepares and deploys the static artifact once GitHub Pages has been enabled manually:
-
-1. `Settings -> Pages -> Build and deployment -> Source -> GitHub Actions`
-2. Then run the `Deploy static demo to Pages` workflow manually or push a new commit to `main`.
+BESP2074 is not a GitHub Pages web version. The full application runs locally through the Python service, processes runs and data locally, and may later be packaged as a desktop application. No desktop release has been published yet.
 
 ## Boundary Editor
 

@@ -158,18 +158,6 @@ Generated outputs are not third-party source data and should not be committed:
 
 `output/` is ignored by `.gitignore`.
 
-## Static Demo Sample
-
-File affected:
-
-- `dashboard/demo-data/latest.json`
-
-Status:
-
-- This is a deliberately trimmed, read-only sample generated from the project simulation for the static portfolio demo.
-- It is not an official dataset and not a forecast.
-- It is included so the GitHub Pages demo can load without a Python service or generated `output/latest.json`.
-
 ## Open Licence Risks Before Public Release
 
 1. Confirm exact World Bank data licence and attribution wording.

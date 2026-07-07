@@ -83,26 +83,7 @@ Danach öffnen:
 
 Das Dashboard zeigt Länder, Regionen, KPI-Modi, Events, Dark-/Light-Mode, Timeline, Play-Funktion und Run-Verwaltung. Der aktuelle Run kann als TXT exportiert oder gelöscht werden.
 
-## Statische Portfolio-Demo
-
-Zusätzlich zur lokalen Vollversion gibt es eine schreibgeschützte statische Demo für GitHub Pages:
-
-- Einstieg im Repository: `dashboard/demo.html`
-- Demo-Daten: `dashboard/demo-data/latest.json`
-- Zielpfad auf GitHub Pages: `/BESP2074/`
-
-Die Demo lädt nur vorbereitete Beispieldaten. Sie startet keine neuen Runs, löscht keine Runs, speichert keine Grenzeditor-Änderungen, verändert kein `output/latest.json` und ruft keine `/api/...`-Routen auf. Der TXT-Export läuft in der Demo vollständig im Browser aus den geladenen Beispieldaten.
-
-Lokal kann die Demo mit einem einfachen statischen Dateiserver geprüft werden. Die volle App mit Simulation, Speichern, Löschen und Run-Erzeugung benötigt weiterhin:
-
-```powershell
-python tools\local_run_service.py --port 8011
-```
-
-Der Pages-Workflow `.github/workflows/deploy-pages.yml` bereitet das statische Artefakt vor und deployt es, sobald GitHub Pages manuell aktiviert ist:
-
-1. `Settings -> Pages -> Build and deployment -> Source -> GitHub Actions`
-2. Danach den Workflow `Deploy static demo to Pages` manuell starten oder einen neuen Commit auf `main` pushen.
+BESP2074 ist keine GitHub-Pages-Webversion. Die vollständige Anwendung läuft lokal über den Python-Dienst, verarbeitet Runs und Daten lokal und soll später höchstens als Desktop-Anwendung veröffentlicht werden. Eine Desktop-Veröffentlichung ist noch nicht erfolgt.
 
 ## Grenzeditor
 

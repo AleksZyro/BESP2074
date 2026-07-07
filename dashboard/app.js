@@ -1,9 +1,4 @@
-const DEMO_QUERY_ENABLED = new URLSearchParams(window.location.search).get("demo") === "1";
-const BESP_DEMO_CONFIG = window.BESP_DEMO_CONFIG ?? {};
-const IS_STATIC_DEMO = Boolean(BESP_DEMO_CONFIG.enabled ?? DEMO_QUERY_ENABLED);
-const EXPORT_PATH = IS_STATIC_DEMO
-    ? (BESP_DEMO_CONFIG.exportPath ?? "./demo-data/latest.json")
-    : "../output/latest.json";
+const EXPORT_PATH = "../output/latest.json";
 const RUN_STATUS_PATH = "/api/run-status";
 const RUN_SCENARIOS_PATH = "/api/scenarios";
 const RUN_TRIGGER_PATH = "/api/run";
@@ -15,8 +10,6 @@ const RUN_SERVICE_OFFLINE_MESSAGE =
     "Static preview. Start `tools/local_run_service.py` before generating new numbers, then reload the export.";
 const PLAYBACK_HELP_MESSAGE =
     "Play replays loaded years. At the final year, Play starts a fresh local run when the service is available.";
-const STATIC_DEMO_NOTICE =
-    "Static portfolio demo: read-only sample data. Local runs, deleting, saving border edits, and server exports need the Python service.";
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
 const MAP_PADDING = 10;
@@ -542,8 +535,6 @@ const I18N = {
         "status.exportReloaded": "Export reloaded. {summary}. Years and map views are now available.",
         "status.exportLoadedStatic": "Export loaded. {summary}. Without the local service, scenario and shocks stay unchanged.",
         "status.exportReloadedStatic": "Export reloaded. {summary}. Without the local service, scenario and shocks stay unchanged.",
-        "status.staticDemoNotice": "Static portfolio demo loaded. It uses read-only sample data and cannot start, delete, or save runs.",
-        "status.staticDemoUnavailable": "This action is not available in the static portfolio demo. Start the local Python service for the full app.",
         "status.exportLoadFailed": "Latest export could not be loaded. Reload under Advanced or start new runs.",
         "status.exportLoadFailedDetail": "Latest export could not be loaded. Start the local service in the project root, then reload.",
         "status.invalidExport": "Invalid BESP2074 export structure",
@@ -551,7 +542,6 @@ const I18N = {
         "status.exportReportInvalidYears": "Choose an end year after the start year.",
         "status.exportReportStarting": "Preparing TXT export ...",
         "status.exportReportReady": "TXT export downloaded.",
-        "status.staticExportReportReady": "TXT export downloaded from the loaded demo data.",
         "status.exportReportFailed": "TXT export failed.",
         "status.deleteRunUnavailable": "Start the local service before deleting the current run.",
         "status.deleteRunConfirm": "Delete the current run from output/latest.json?",
@@ -731,8 +721,6 @@ const I18N = {
         "status.exportReloaded": "Export neu geladen. {summary}. Jahre und Kartenansichten sind jetzt verfügbar.",
         "status.exportLoadedStatic": "Export geladen. {summary}. Ohne lokalen Service bleiben Szenario und Schocks unverändert.",
         "status.exportReloadedStatic": "Export neu geladen. {summary}. Ohne lokalen Service bleiben Szenario und Schocks unverändert.",
-        "status.staticDemoNotice": "Statische Portfolio-Demo geladen. Sie nutzt schreibgeschützte Beispieldaten und kann keine Runs starten, löschen oder speichern.",
-        "status.staticDemoUnavailable": "Diese Aktion ist in der statischen Portfolio-Demo nicht verfügbar. Starte den lokalen Python-Service für die Vollversion.",
         "status.exportLoadFailed": "Der neueste Export konnte nicht geladen werden. Unter Erweitert neu laden oder neue Runs starten.",
         "status.exportLoadFailedDetail": "Der neueste Export konnte nicht geladen werden. Starte den lokalen Service im Projektordner und lade danach neu.",
         "status.invalidExport": "Ungültige BESP2074-Exportstruktur",
@@ -740,7 +728,6 @@ const I18N = {
         "status.exportReportInvalidYears": "Wähle ein Endjahr nach dem Startjahr.",
         "status.exportReportStarting": "Bereite TXT-Export vor ...",
         "status.exportReportReady": "TXT-Export heruntergeladen.",
-        "status.staticExportReportReady": "TXT-Export aus den geladenen Demo-Daten heruntergeladen.",
         "status.exportReportFailed": "TXT-Export fehlgeschlagen.",
         "status.deleteRunUnavailable": "Starte den lokalen Service, bevor du den aktuellen Run löschst.",
         "status.deleteRunConfirm": "Aktuellen Run aus output/latest.json löschen?",
@@ -1263,7 +1250,6 @@ const elements = {
     reportIncludeState: document.getElementById("report-include-state"),
     exportRunReportButton: document.getElementById("export-run-report"),
     deleteCurrentRunButton: document.getElementById("delete-current-run"),
-    openBoundaryEditorLink: document.getElementById("open-boundary-editor"),
     runBatchSummary: document.getElementById("run-batch-summary"),
     yearSelect: document.getElementById("year-select"),
     currentYearPill: document.getElementById("current-year-pill"),
@@ -1328,7 +1314,6 @@ const EMPTY_TABLE_ROWS = {
 document.addEventListener("DOMContentLoaded", () => {
     applyTheme();
     applyLanguage();
-    applyStaticDemoMode();
     decorateMetricButtons();
     bindLanguageControls();
     bindThemeControls();
@@ -1384,25 +1369,6 @@ function applyLanguage() {
         applyRunStatus(dashboardState.currentRunStatus);
     } else {
         renderRunBatchSummary(dashboardState.currentRunStatus);
-    }
-}
-function applyStaticDemoMode() {
-    if (!IS_STATIC_DEMO) {
-        return;
-    }
-    document.body.classList.add("static-demo");
-    document.title = "BESP2074 Static Demo";
-    const hero = document.querySelector(".hero");
-    if (hero && !document.querySelector(".static-demo-banner")) {
-        const banner = document.createElement("p");
-        banner.className = "static-demo-banner";
-        banner.innerHTML = `${escapeHtml(STATIC_DEMO_NOTICE)} <a href="../THIRD_PARTY_NOTICES.md">Third-party notices</a>.`;
-        hero.appendChild(banner);
-    }
-    if (elements.openBoundaryEditorLink) {
-        elements.openBoundaryEditorLink.removeAttribute("href");
-        elements.openBoundaryEditorLink.setAttribute("aria-disabled", "true");
-        elements.openBoundaryEditorLink.title = t("status.staticDemoUnavailable");
     }
 }
 function getShocksEnabled() {
@@ -1495,10 +1461,6 @@ function metricButtonIcon(view) {
 }
 function bindEditorControls() {
     elements.editorModeToggleButton?.addEventListener("click", () => {
-        if (IS_STATIC_DEMO) {
-            setExportStatus(t("status.staticDemoUnavailable"), "muted");
-            return;
-        }
         setEditorMode(!dashboardState.editorMode);
     });
     elements.editorInlineTargetCountry?.addEventListener("change", () => {
@@ -1825,10 +1787,6 @@ async function resetInlineEditorAssignment() {
 }
 async function saveInlineEditorAssignments() {
     try {
-        if (IS_STATIC_DEMO) {
-            setInlineEditorStatus(t("status.staticDemoUnavailable"), "error");
-            return;
-        }
         if (!dashboardState.runServiceAvailable) {
             setInlineEditorStatus(t("editor.saveAssignmentsFirst"), "error");
             return;
@@ -1996,10 +1954,6 @@ function setMapMode(mode) {
     resetMapHoverDetails();
 }
 function setEditorMode(enabled) {
-    if (IS_STATIC_DEMO && enabled) {
-        setExportStatus(t("status.staticDemoUnavailable"), "muted");
-        return;
-    }
     hideMapContextMenu();
     dashboardState.editorMode = Boolean(enabled);
     if (!dashboardState.editorMode) {
@@ -2124,7 +2078,7 @@ function restartPlaybackTimer() {
 function updatePlaybackControls() {
     const hasYears = dashboardState.yearKeys.length > 0;
     const activeYearKey = getActiveYearKey();
-    const runControlsDisabled = IS_STATIC_DEMO || dashboardState.isGeneratingRun || !dashboardState.runServiceAvailable;
+    const runControlsDisabled = dashboardState.isGeneratingRun || !dashboardState.runServiceAvailable;
     elements.yearSelect.value = activeYearKey;
     elements.yearSelect.disabled = !hasYears || dashboardState.isReloading;
     elements.yearStepBackButton.disabled =
@@ -2148,7 +2102,7 @@ function updatePlaybackControls() {
     if (elements.playShocksEnabled) {
         elements.playShocksEnabled.disabled = runControlsDisabled;
     }
-    const reportControlsDisabled = !hasYears || dashboardState.isReloading || (!IS_STATIC_DEMO && !dashboardState.runServiceAvailable);
+    const reportControlsDisabled = !hasYears || dashboardState.isReloading || !dashboardState.runServiceAvailable;
     for (const control of [
         elements.reportStartYearSelect,
         elements.reportEndYearSelect,
@@ -2156,34 +2110,16 @@ function updatePlaybackControls() {
         elements.reportIncludeEvents,
         elements.reportIncludeState,
         elements.exportRunReportButton,
+        elements.deleteCurrentRunButton,
     ]) {
         if (control) {
             control.disabled = reportControlsDisabled || dashboardState.isGeneratingRun;
         }
     }
-    if (elements.deleteCurrentRunButton) {
-        elements.deleteCurrentRunButton.disabled =
-            IS_STATIC_DEMO || reportControlsDisabled || dashboardState.isGeneratingRun;
-    }
-    if (elements.editorModeToggleButton) {
-        elements.editorModeToggleButton.disabled = IS_STATIC_DEMO || dashboardState.isReloading || !hasYears;
-        elements.editorModeToggleButton.title = IS_STATIC_DEMO ? t("status.staticDemoUnavailable") : "";
-    }
-    for (const control of [
-        elements.editorInlineTargetCountry,
-        elements.editorInlineTargetRegion,
-        elements.editorInlineApply,
-        elements.editorInlineReset,
-        elements.editorInlineSave,
-    ]) {
-        if (control) {
-            control.disabled = IS_STATIC_DEMO || control.disabled;
-        }
-    }
     const atFinalYear = hasYears && dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1;
     elements.playbackToggleButton.textContent = dashboardState.playbackTimer
         ? "Pause"
-        : atFinalYear && dashboardState.runServiceAvailable && !IS_STATIC_DEMO
+        : atFinalYear && dashboardState.runServiceAvailable
             ? t("status.newRun")
             : "Play";
     for (const button of elements.speedButtons) {
@@ -2198,16 +2134,6 @@ function updatePlaybackControls() {
     }
 }
 async function refreshRunServiceState({ includeScenarios = false } = {}) {
-    if (IS_STATIC_DEMO) {
-        dashboardState.runServiceAvailable = false;
-        dashboardState.isGeneratingRun = false;
-        stopRunStatusPolling();
-        renderScenarioOptions([]);
-        renderRunBatchSummary(null);
-        setExportStatus(t("status.staticDemoNotice"), "muted");
-        updatePlaybackControls();
-        return;
-    }
     try {
         const requests = [fetchJson(RUN_STATUS_PATH)];
         if (includeScenarios || !dashboardState.availableScenarios.length) {
@@ -2326,10 +2252,6 @@ function applyRunStatus(runStatus) {
     setExportStatus(dashboardState.runServiceAvailable ? PLAYBACK_HELP_MESSAGE : RUN_SERVICE_OFFLINE_MESSAGE, "muted");
 }
 async function triggerGenerateRun({ runCount = null, reason = "manual" } = {}) {
-    if (IS_STATIC_DEMO) {
-        setExportStatus(t("status.staticDemoUnavailable"), "muted");
-        return;
-    }
     if (!dashboardState.runServiceAvailable || dashboardState.isGeneratingRun) {
         return;
     }
@@ -2387,122 +2309,7 @@ function reportDownloadName(response, fallbackName) {
     const match = disposition.match(/filename="([^"]+)"/i);
     return match?.[1] || fallbackName;
 }
-function demoReportRowsForYear(yearData, detail) {
-    const rows = [];
-    for (const row of yearData.countries ?? []) {
-        rows.push([
-            "Country",
-            row.country_name,
-            row.country_code,
-            formatInteger(row.end_population),
-            formatDecimal(row.end_gdp_billion_eur),
-            formatPercent(row.average_unemployment_rate),
-            formatPercent(row.average_inflation_rate),
-        ]);
-    }
-    if (detail === "countries_regions") {
-        for (const row of yearData.regions ?? []) {
-            rows.push([
-                "Region",
-                row.region_name,
-                row.country_code,
-                formatInteger(row.end_population),
-                formatDecimal(row.end_gdp_billion_eur),
-                formatPercent(row.unemployment_rate),
-                formatPercent(row.inflation_rate),
-            ]);
-        }
-    }
-    return rows;
-}
-function demoReportEventsForYear(exportData, yearKey) {
-    const [startYear, endYear] = parseYearKey(yearKey);
-    return (exportData.shock_events ?? []).filter((event) => {
-        const eventYear = Number.parseInt(String(event.start_year ?? event.year ?? ""), 10);
-        return Number.isFinite(eventYear) && eventYear >= startYear && eventYear < endYear;
-    });
-}
-function buildStaticReportText(exportData, options) {
-    const lines = [
-        "BESP2074 static portfolio demo export",
-        "Read-only sample data. Full local run generation requires tools/local_run_service.py.",
-        "",
-        `Scenario: ${exportData.meta?.scenario?.name ?? exportData.meta?.scenario?.code ?? "unknown"}`,
-        `Years: ${options.startYear}-${options.endYear}`,
-        `Detail: ${options.detail === "countries_regions" ? "countries + regions" : "countries"}`,
-        "",
-        "Type\tName\tCode\tPopulation\tGDP bn EUR\tUnemployment\tInflation",
-    ];
-    for (const yearKey of dashboardState.yearKeys) {
-        const [startYear, endYear] = parseYearKey(yearKey);
-        if (startYear < options.startYear || endYear > options.endYear) {
-            continue;
-        }
-        lines.push("", `# ${yearKey}`);
-        for (const row of demoReportRowsForYear(exportData.years[yearKey] ?? {}, options.detail)) {
-            lines.push(row.map((value) => String(value ?? "-")).join("\t"));
-        }
-        if (options.includeEvents) {
-            const events = demoReportEventsForYear(exportData, yearKey);
-            if (events.length) {
-                lines.push("", "Events");
-                for (const event of events) {
-                    lines.push(`- ${event.shock_name ?? event.title ?? event.event_type ?? "Event"} (${event.country_code ?? "regional"}): ${event.message ?? event.description ?? ""}`);
-                }
-            }
-        }
-        if (options.includeState) {
-            lines.push(
-                "",
-                "State values are included in the country rows: budget balance, debt, stability, corruption, and investment climate."
-            );
-        }
-    }
-    return `${lines.join("\n")}\n`;
-}
-function downloadTextFile(filename, text) {
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const downloadUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(downloadUrl);
-}
-function triggerStaticExportRunReport() {
-    if (!dashboardState.exportData) {
-        setExportStatus(t("status.exportReportUnavailable"), "error");
-        return;
-    }
-    const yearRange = reportYearRangePayload();
-    if (yearRange.start_year && yearRange.end_year && yearRange.start_year >= yearRange.end_year) {
-        setExportStatus(t("status.exportReportInvalidYears"), "error");
-        return;
-    }
-    const firstYear = parseYearKey(dashboardState.yearKeys[0] ?? "")[0];
-    const lastYear = parseYearKey(dashboardState.yearKeys[dashboardState.yearKeys.length - 1] ?? "")[1];
-    const startYear = yearRange.start_year ?? firstYear;
-    const endYear = yearRange.end_year ?? lastYear;
-    const detail = elements.reportDetailSelect?.value || "countries";
-    const text = buildStaticReportText(dashboardState.exportData, {
-        startYear,
-        endYear,
-        detail,
-        includeEvents: Boolean(elements.reportIncludeEvents?.checked),
-        includeState: Boolean(elements.reportIncludeState?.checked),
-    });
-    const scenario = dashboardState.exportData.meta?.scenario?.code ?? "baseline";
-    const filename = `BESP2074_${scenario}_${startYear}-${endYear}_${detail}.txt`;
-    downloadTextFile(filename, text);
-    setExportStatus(t("status.staticExportReportReady"), "success");
-}
 async function triggerExportRunReport() {
-    if (IS_STATIC_DEMO) {
-        triggerStaticExportRunReport();
-        return;
-    }
     if (!dashboardState.runServiceAvailable || !dashboardState.exportData) {
         setExportStatus(t("status.exportReportUnavailable"), "error");
         return;
@@ -2549,10 +2356,6 @@ async function triggerExportRunReport() {
     }
 }
 async function triggerDeleteCurrentRun() {
-    if (IS_STATIC_DEMO) {
-        setExportStatus(t("status.staticDemoUnavailable"), "muted");
-        return;
-    }
     if (!dashboardState.runServiceAvailable) {
         setExportStatus(t("status.deleteRunUnavailable"), "error");
         return;
@@ -2684,7 +2487,7 @@ function sanitizeMapAssignments(payload) {
     };
 }
 async function fetchMapAssignmentsPayload() {
-    if (!IS_STATIC_DEMO && dashboardState.runServiceAvailable) {
+    if (dashboardState.runServiceAvailable) {
         try {
             return sanitizeMapAssignments(await fetchJson(MAP_ASSIGNMENTS_API_PATH));
         } catch {
