@@ -502,6 +502,8 @@ const I18N = {
         "event.effects": "Model effect",
         "event.description": "Description",
         "event.countryWide": "Country-wide",
+        "event.scope": "Scope",
+        "event.severity": "Severity",
         "status.noYear": "No year loaded",
         "status.waiting": "Waiting for data",
         "status.reload": "Reload Export",
@@ -540,9 +542,12 @@ const I18N = {
         "status.invalidExport": "Invalid BESP2074 export structure",
         "status.exportReportUnavailable": "Start the local service and load a run before exporting.",
         "status.exportReportInvalidYears": "Choose an end year after the start year.",
-        "status.exportReportStarting": "Preparing TXT export ...",
-        "status.exportReportReady": "TXT export downloaded.",
-        "status.exportReportFailed": "TXT export failed.",
+        "status.exportReportStarting": "Preparing export ...",
+        "status.exportReportReady": "Export ready.",
+        "status.exportReportPrintReady": "Print view opened. Use the browser print dialog to save as PDF.",
+        "status.exportReportPopupBlocked": "The print view was blocked by the browser.",
+        "status.exportReportFailed": "Export failed.",
+        "status.runReadyExportHint": "Run finished. Export it as TXT or Print/PDF below.",
         "status.deleteRunUnavailable": "Start the local service before deleting the current run.",
         "status.deleteRunConfirm": "Delete the current run from output/latest.json?",
         "status.deleteRunStarting": "Deleting current run ...",
@@ -688,6 +693,8 @@ const I18N = {
         "event.effects": "Modellwirkung",
         "event.description": "Beschreibung",
         "event.countryWide": "Landesweit",
+        "event.scope": "Umfang",
+        "event.severity": "Stärke",
         "status.noYear": "Kein Jahr geladen",
         "status.waiting": "Warte auf Daten",
         "status.reload": "Export neu laden",
@@ -726,9 +733,12 @@ const I18N = {
         "status.invalidExport": "Ungültige BESP2074-Exportstruktur",
         "status.exportReportUnavailable": "Starte den lokalen Service und lade einen Run, bevor du exportierst.",
         "status.exportReportInvalidYears": "Wähle ein Endjahr nach dem Startjahr.",
-        "status.exportReportStarting": "Bereite TXT-Export vor ...",
-        "status.exportReportReady": "TXT-Export heruntergeladen.",
-        "status.exportReportFailed": "TXT-Export fehlgeschlagen.",
+        "status.exportReportStarting": "Bereite Export vor ...",
+        "status.exportReportReady": "Export bereit.",
+        "status.exportReportPrintReady": "Druckansicht geöffnet. Im Browserdruckdialog kannst du als PDF speichern.",
+        "status.exportReportPopupBlocked": "Die Druckansicht wurde vom Browser blockiert.",
+        "status.exportReportFailed": "Export fehlgeschlagen.",
+        "status.runReadyExportHint": "Run fertig. Exportiere ihn unten als TXT oder Print/PDF.",
         "status.deleteRunUnavailable": "Starte den lokalen Service, bevor du den aktuellen Run löschst.",
         "status.deleteRunConfirm": "Aktuellen Run aus output/latest.json löschen?",
         "status.deleteRunStarting": "Lösche aktuellen Run ...",
@@ -1246,6 +1256,7 @@ const elements = {
     reportStartYearSelect: document.getElementById("report-start-year"),
     reportEndYearSelect: document.getElementById("report-end-year"),
     reportDetailSelect: document.getElementById("report-detail"),
+    reportFormatSelect: document.getElementById("report-format"),
     reportIncludeEvents: document.getElementById("report-include-events"),
     reportIncludeState: document.getElementById("report-include-state"),
     exportRunReportButton: document.getElementById("export-run-report"),
@@ -2107,6 +2118,7 @@ function updatePlaybackControls() {
         elements.reportStartYearSelect,
         elements.reportEndYearSelect,
         elements.reportDetailSelect,
+        elements.reportFormatSelect,
         elements.reportIncludeEvents,
         elements.reportIncludeState,
         elements.exportRunReportButton,
@@ -2246,7 +2258,10 @@ function applyRunStatus(runStatus) {
         return;
     }
     if (state === "success") {
-        setExportStatus(tf("status.batchReady", { scenario: scenarioLabel, runCount, shocks: shocksLabel }), "success");
+        setExportStatus(
+            `${tf("status.batchReady", { scenario: scenarioLabel, runCount, shocks: shocksLabel })} ${t("status.runReadyExportHint")}`,
+            "success"
+        );
         return;
     }
     setExportStatus(dashboardState.runServiceAvailable ? PLAYBACK_HELP_MESSAGE : RUN_SERVICE_OFFLINE_MESSAGE, "muted");
@@ -2319,6 +2334,7 @@ async function triggerExportRunReport() {
         setExportStatus(t("status.exportReportInvalidYears"), "error");
         return;
     }
+    const reportFormat = elements.reportFormatSelect?.value || "txt";
     setExportStatus(t("status.exportReportStarting"), "loading");
     updatePlaybackControls();
     try {
@@ -2337,12 +2353,19 @@ async function triggerExportRunReport() {
             const payload = await response.json().catch(() => ({}));
             throw new Error(payload?.message || `HTTP ${response.status}`);
         }
-        const blob = await response.blob();
         const fallbackName = `BESP2074_${yearRange.start_year || "start"}-${yearRange.end_year || "end"}.txt`;
+        const filename = reportDownloadName(response, fallbackName);
+        const reportText = await response.text();
+        if (reportFormat === "print") {
+            openPrintableReport(reportText, filename);
+            setExportStatus(t("status.exportReportPrintReady"), "success");
+            return;
+        }
+        const blob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
         const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = downloadUrl;
-        link.download = reportDownloadName(response, fallbackName);
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -2354,6 +2377,33 @@ async function triggerExportRunReport() {
     } finally {
         updatePlaybackControls();
     }
+}
+function openPrintableReport(reportText, filename) {
+    const printWindow = window.open("", "_blank", "width=920,height=720");
+    if (!printWindow) {
+        throw new Error(t("status.exportReportPopupBlocked"));
+    }
+    const title = filename.replace(/\.txt$/i, "");
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="${escapeHtml(dashboardState.language || "en")}">
+<head>
+    <meta charset="UTF-8">
+    <title>${escapeHtml(title)}</title>
+    <style>
+        body { margin: 32px; color: #17212f; font: 13px/1.45 Consolas, "Courier New", monospace; }
+        h1 { margin: 0 0 18px; font: 700 24px/1.2 Georgia, "Times New Roman", serif; }
+        pre { white-space: pre-wrap; word-break: break-word; }
+        @media print { body { margin: 18mm; } }
+    </style>
+</head>
+<body>
+    <h1>${escapeHtml(title)}</h1>
+    <pre>${escapeHtml(reportText)}</pre>
+</body>
+</html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    window.setTimeout(() => printWindow.print(), 250);
 }
 async function triggerDeleteCurrentRun() {
     if (!dashboardState.runServiceAvailable) {
@@ -3715,17 +3765,41 @@ function renderEventDetails(event) {
         `GDP ${formatSignedPercent(Number(event.gdp_growth_bias ?? 0))}`,
         `Jobs ${formatSignedPercent(Number(event.unemployment_bias ?? 0))}`,
         `Migration ${formatSignedPercent(Number(event.net_migration_rate_shift ?? 0))}`,
-    ].join(" | ");
+    ];
+    const regionChips = regionNames
+        .split(",")
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .slice(0, 8)
+        .map((name) => `<span class="event-region-chip">${escapeHtml(name)}</span>`)
+        .join("");
     setMapHoverDetails(
         `${title} (${displayCountryCode(event.country_code)})`,
-        buildHoverDetailGrid([
-            buildHoverDetailRow(t("event.year"), String(event.start_year ?? "-")),
-            buildHoverDetailRow(t("event.regions"), regionNames),
-            buildHoverDetailRow(t("event.effects"), effects),
-            buildHoverDetailRow(t("event.description"), event.message || event.description || title),
-        ]),
+        `
+            <div class="event-detail-card">
+                <div class="event-detail-meta">
+                    <span>${escapeHtml(t("event.year"))}: <strong>${escapeHtml(String(event.start_year ?? "-"))}</strong></span>
+                    <span>${escapeHtml(t("event.scope"))}: <strong>${escapeHtml(displayCountryCode(event.country_code))}</strong></span>
+                    <span>${escapeHtml(t("event.severity"))}: <strong>${escapeHtml(formatEventSeverity(event))}</strong></span>
+                </div>
+                <p class="event-detail-description">${escapeHtml(event.message || event.description || title)}</p>
+                <div class="event-effect-grid">
+                    ${effects.map((effect) => `<span>${escapeHtml(effect)}</span>`).join("")}
+                </div>
+                <div class="event-region-chip-list" aria-label="${escapeHtml(t("event.regions"))}">
+                    ${regionChips || `<span class="event-region-chip">${escapeHtml(t("event.countryWide"))}</span>`}
+                </div>
+            </div>
+        `,
         true
     );
+}
+function formatEventSeverity(event) {
+    const severity = Number(event?.severity_scale ?? 0);
+    if (!Number.isFinite(severity) || severity <= 0) {
+        return "-";
+    }
+    return severity.toFixed(2).replace(/\.?0+$/, "");
 }
 function formatEventAffectedRegions(event) {
     const affectedKeys = Array.isArray(event?.affected_region_keys) ? event.affected_region_keys : [];

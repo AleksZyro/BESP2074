@@ -81,7 +81,7 @@ Danach öffnen:
 - Dashboard: <http://127.0.0.1:8011/dashboard/index.html>
 - Grenzeditor: <http://127.0.0.1:8011/dashboard/editor.html>
 
-Das Dashboard zeigt Länder, Regionen, KPI-Modi, Events, Dark-/Light-Mode, Timeline, Play-Funktion und Run-Verwaltung. Der aktuelle Run kann als TXT exportiert oder gelöscht werden.
+Das Dashboard zeigt Länder, Regionen, KPI-Modi, Events, Dark-/Light-Mode, Timeline, Play-Funktion und Run-Verwaltung. Der aktuelle Run kann als TXT exportiert, als druckbare PDF-Ansicht geöffnet oder gelöscht werden.
 
 BESP2074 ist keine GitHub-Pages-Webversion. Die vollständige Anwendung läuft lokal über den Python-Dienst, verarbeitet Runs und Daten lokal und soll später höchstens als Desktop-Anwendung veröffentlicht werden. Eine Desktop-Veröffentlichung ist noch nicht erfolgt.
 
