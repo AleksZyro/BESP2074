@@ -190,7 +190,14 @@
                                 <input id="report-include-state" type="checkbox">
                                 <span>State</span>
                             </label>
-                            <button id="export-run-report" class="timeline-button" type="button">Export TXT</button>
+                            <label class="timeline-select-wrap" for="report-format">
+                                <span>Format</span>
+                                <select id="report-format" class="timeline-select">
+                                    <option value="txt">TXT</option>
+                                    <option value="print">Print / PDF</option>
+                                </select>
+                            </label>
+                            <button id="export-run-report" class="timeline-button timeline-button-primary" type="button">Export</button>
                             <button id="delete-current-run" class="timeline-button danger-button" type="button">Delete run</button>
                         </div>
                         <p class="timeline-note">Play replays loaded years. New numbers come from new runs.</p>

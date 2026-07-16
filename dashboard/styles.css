@@ -10,23 +10,19 @@
     --success: #9fd6b8;
     --danger: #f3b0a2;
     --shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
-    --body-bg:
-        radial-gradient(circle at top left, rgba(220, 184, 107, 0.12), transparent 35%),
-        linear-gradient(180deg, #0d1b2a 0%, var(--bg) 100%);
+    --body-bg: #0a1320;
     --panel-glass: rgba(16, 32, 51, 0.92);
     --control-bg: rgba(28, 50, 73, 0.72);
     --control-shell-bg: rgba(13, 28, 46, 0.78);
     --control-border: rgba(173, 198, 224, 0.34);
-    --canvas-bg:
-        radial-gradient(circle at 20% 20%, rgba(118, 183, 214, 0.13), transparent 35%),
-        linear-gradient(180deg, rgba(22, 40, 61, 0.92), rgba(13, 28, 45, 0.95));
+    --canvas-bg: #14263a;
     --context-bg: rgba(13, 28, 45, 0.97);
     --soft-row-bg: rgba(12, 23, 36, 0.32);
 }
 html[data-theme="light"] {
-    --bg: #cedbe4;
-    --panel: #e3ebf0;
-    --panel-alt: #d9e4ec;
+    --bg: #c4d1da;
+    --panel: #dce6ec;
+    --panel-alt: #d1dde6;
     --line: rgba(64, 87, 109, 0.18);
     --text: #162232;
     --muted: #52677a;
@@ -35,16 +31,12 @@ html[data-theme="light"] {
     --success: #21734d;
     --danger: #b44b3c;
     --shadow: 0 18px 44px rgba(37, 54, 72, 0.14);
-    --body-bg:
-        radial-gradient(circle at top left, rgba(45, 113, 147, 0.10), transparent 34%),
-        linear-gradient(180deg, #dce6ed 0%, var(--bg) 100%);
-    --panel-glass: rgba(227, 235, 240, 0.95);
-    --control-bg: rgba(216, 228, 236, 0.94);
-    --control-shell-bg: rgba(221, 231, 238, 0.94);
+    --body-bg: #c4d1da;
+    --panel-glass: rgba(220, 230, 236, 0.96);
+    --control-bg: rgba(207, 219, 228, 0.96);
+    --control-shell-bg: rgba(213, 224, 232, 0.96);
     --control-border: rgba(64, 87, 109, 0.26);
-    --canvas-bg:
-        radial-gradient(circle at 20% 20%, rgba(45, 113, 147, 0.09), transparent 35%),
-        linear-gradient(180deg, rgba(219, 230, 237, 0.97), rgba(201, 217, 228, 0.97));
+    --canvas-bg: #cdd9e2;
     --context-bg: rgba(231, 238, 243, 0.98);
     --soft-row-bg: rgba(216, 227, 235, 0.78);
 }
@@ -644,6 +636,49 @@ code { font-family: Consolas, "Courier New", monospace; }
 .hover-detail-row-value.tone-positive { color: var(--success); }
 .hover-detail-row-value.tone-negative { color: var(--danger); }
 .hover-detail-row-value.tone-neutral { color: var(--text); }
+.event-detail-card {
+    display: grid;
+    gap: 10px;
+}
+.event-detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.event-detail-meta span,
+.event-effect-grid span,
+.event-region-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 6px 9px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--soft-row-bg);
+}
+.event-detail-description {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.45;
+}
+.event-effect-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+.event-effect-grid span {
+    justify-content: center;
+    font-weight: 700;
+}
+.event-region-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.event-region-chip {
+    color: var(--muted);
+    font-size: 0.8rem;
+}
 .hover-detail-note {
     margin: 0;
     color: var(--muted);

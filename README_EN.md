@@ -81,7 +81,7 @@ Open:
 - Dashboard: <http://127.0.0.1:8011/dashboard/index.html>
 - Boundary editor: <http://127.0.0.1:8011/dashboard/editor.html>
 
-The dashboard shows countries, regions, KPI modes, events, dark/light mode, timeline playback, and run management. The current run can be exported as TXT or deleted.
+The dashboard shows countries, regions, KPI modes, events, dark/light mode, timeline playback, and run management. The current run can be exported as TXT, opened as a printable PDF view, or deleted.
 
 BESP2074 is not a GitHub Pages web version. The full application runs locally through the Python service, processes runs and data locally, and may later be packaged as a desktop application. No desktop release has been published yet.
 
