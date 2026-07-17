@@ -36,7 +36,7 @@ window.BALKAN_CONFIG = {
       { visualRegionKey: "GRC::macedonia-thrace", label: "Macedonia-Thrace", dataRegionKey: "GRC::macedonia thrace", fill: "#5b9ba7" },
       { visualRegionKey: "GRC::epirus-western-macedonia", label: "Epirus-W. Mac.", dataRegionKey: "GRC::epirus western macedonia", fill: "#7aa276" },
       { visualRegionKey: "GRC::thessalia-central-greece", label: "Thessaly-C. Greece", dataRegionKey: "GRC::thessalia central greece", fill: "#9eb36a" },
-      { visualRegionKey: "GRC::peloponnese-west-greece-ionian", label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece and ionian", fill: "#c19362" },
+      { visualRegionKey: "GRC::peloponnese-west-greece-ionian", label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece ionian", fill: "#c19362" },
       { visualRegionKey: "GRC::crete", label: "Crete", dataRegionKey: "GRC::crete", fill: "#d0a05f" },
       { visualRegionKey: "GRC::aegean", label: "Aegean", dataRegionKey: "GRC::aegean", fill: "#6aaec4" },
       { visualRegionKey: "GRC::agion-oros", label: "Athos", dataRegionKey: "GRC::agion oros", fill: "#8b7fa9" }

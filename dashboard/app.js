@@ -12,7 +12,7 @@ const PLAYBACK_HELP_MESSAGE =
     "Play replays loaded years. At the final year, Play starts a fresh local run when the service is available.";
 const MAP_VIEWBOX_WIDTH = 780;
 const MAP_VIEWBOX_HEIGHT = 520;
-const MAP_PADDING = 10;
+const MAP_PADDING = 42;
 const EVENT_LETTER_OFFSETS = [
     [0, -16],
     [14, -10],
@@ -21,6 +21,65 @@ const EVENT_LETTER_OFFSETS = [
     [-10, 8],
     [0, 16],
 ];
+const HOTKEY_STORAGE_KEY = "bespHotkeys";
+const DEFAULT_HOTKEYS = Object.freeze({
+    play: "Space",
+    previousYear: "ArrowLeft",
+    nextYear: "ArrowRight",
+    countries: "Digit1",
+    regions: "Digit2",
+    borders: "KeyB",
+    classicMetric: "KeyQ",
+    populationMetric: "KeyW",
+    gdpMetric: "KeyE",
+    jobsMetric: "KeyR",
+    inflationMetric: "KeyT",
+    debtMetric: "KeyY",
+    attractivenessMetric: "KeyU",
+    integrationMetric: "KeyI",
+    corruptionMetric: "KeyO",
+    satisfactionMetric: "KeyP",
+    electionsMetric: "BracketLeft",
+    theme: "KeyL",
+    settings: "Escape",
+});
+const METRIC_HOTKEY_ACTIONS = Object.freeze({
+    classic: "classicMetric",
+    population: "populationMetric",
+    gdp_per_capita: "gdpMetric",
+    unemployment: "jobsMetric",
+    inflation: "inflationMetric",
+    debt: "debtMetric",
+    attractiveness: "attractivenessMetric",
+    integration: "integrationMetric",
+    corruption: "corruptionMetric",
+    satisfaction: "satisfactionMetric",
+    elections: "electionsMetric",
+});
+const HOTKEY_METRICS = Object.freeze(Object.fromEntries(
+    Object.entries(METRIC_HOTKEY_ACTIONS).map(([metric, action]) => [action, metric])
+));
+const HOTKEY_ACTIONS = Object.freeze([
+    { key: "play", labelEn: "Play / pause", labelDe: "Play / Pause" },
+    { key: "previousYear", labelEn: "Previous year", labelDe: "Vorheriges Jahr" },
+    { key: "nextYear", labelEn: "Next year", labelDe: "Nächstes Jahr" },
+    { key: "countries", labelEn: "Countries view", labelDe: "Länderansicht" },
+    { key: "regions", labelEn: "Regions view", labelDe: "Regionenansicht" },
+    { key: "borders", labelEn: "Border editor", labelDe: "Grenzeditor" },
+    { key: "classicMetric", labelEn: "Standard map", labelDe: "Standardkarte" },
+    { key: "populationMetric", labelEn: "Population map", labelDe: "Bevölkerungskarte" },
+    { key: "jobsMetric", labelEn: "Jobs map", labelDe: "Arbeitslosenkarte" },
+    { key: "gdpMetric", labelEn: "GDP/capita map", labelDe: "BIP/Kopf-Karte" },
+    { key: "inflationMetric", labelEn: "Prices map", labelDe: "Preiskarte" },
+    { key: "debtMetric", labelEn: "Debt map", labelDe: "Schuldenkarte" },
+    { key: "attractivenessMetric", labelEn: "Attractiveness map", labelDe: "Attraktivitätskarte" },
+    { key: "integrationMetric", labelEn: "Integration map", labelDe: "Integrationskarte" },
+    { key: "corruptionMetric", labelEn: "Corruption map", labelDe: "Korruptionskarte" },
+    { key: "satisfactionMetric", labelEn: "Satisfaction map", labelDe: "Zufriedenheitskarte" },
+    { key: "electionsMetric", labelEn: "Elections map", labelDe: "Wahlkarte" },
+    { key: "theme", labelEn: "Toggle theme", labelDe: "Hell/Dunkel wechseln" },
+    { key: "settings", labelEn: "Open settings", labelDe: "Einstellungen öffnen" },
+]);
 const BALKAN_CONFIG = window.BALKAN_CONFIG ?? { activeMapCountryCodes: [], plannedMapCountryCodes: [], countries: {} };
 const COUNTRY_CONFIG = BALKAN_CONFIG.countries ?? {};
 const COUNTRY_NAME_TRANSLATIONS = Object.freeze({
@@ -557,6 +616,15 @@ const I18N = {
         "theme.dark": "Dark",
         "theme.switchLight": "Switch to light mode",
         "theme.switchDark": "Switch to dark mode",
+        "settings.title": "Settings",
+        "settings.hotkeys": "Hotkeys",
+        "settings.resetHotkeys": "Reset hotkeys",
+        "settings.pressKey": "Press a key",
+        "runFinished.kicker": "Run complete",
+        "runFinished.title": "Save this run?",
+        "runFinished.body": "Starting a new run overwrites the current output. Save it first or continue without saving.",
+        "runFinished.noSave": "Do not save",
+        "common.cancel": "Cancel",
         "meta.selectedYear": "Selected year",
         "meta.startYear": "Start year",
         "meta.endYear": "End year",
@@ -748,6 +816,15 @@ const I18N = {
         "theme.dark": "Dunkel",
         "theme.switchLight": "Zu Hellmodus wechseln",
         "theme.switchDark": "Zu Dunkelmodus wechseln",
+        "settings.title": "Einstellungen",
+        "settings.hotkeys": "Hotkeys",
+        "settings.resetHotkeys": "Hotkeys zurücksetzen",
+        "settings.pressKey": "Taste drücken",
+        "runFinished.kicker": "Run fertig",
+        "runFinished.title": "Run speichern?",
+        "runFinished.body": "Ein neuer Run überschreibt den aktuellen Output. Speichere ihn zuerst oder fahre ohne Speichern fort.",
+        "runFinished.noSave": "Nicht speichern",
+        "common.cancel": "Abbrechen",
         "meta.selectedYear": "Ausgewähltes Jahr",
         "meta.startYear": "Startjahr",
         "meta.endYear": "Endjahr",
@@ -1043,7 +1120,7 @@ const VISUAL_REGION_DEFINITIONS = {
     "GRC::macedonia-thrace": { label: "Macedonia-Thrace", dataRegionKey: "GRC::macedonia thrace", fill: "#5b9ba7" },
     "GRC::epirus-western-macedonia": { label: "Epirus-W. Mac.", dataRegionKey: "GRC::epirus western macedonia", fill: "#7aa276" },
     "GRC::thessalia-central-greece": { label: "Thessaly-C. Greece", dataRegionKey: "GRC::thessalia central greece", fill: "#9eb36a" },
-    "GRC::peloponnese-west-greece-ionian": { label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece and ionian", fill: "#c19362" },
+    "GRC::peloponnese-west-greece-ionian": { label: "Peloponnese", dataRegionKey: "GRC::peloponisos w greece ionian", fill: "#c19362" },
     "GRC::crete": { label: "Crete", dataRegionKey: "GRC::crete", fill: "#d0a05f" },
     "GRC::aegean": { label: "Aegean", dataRegionKey: "GRC::aegean", fill: "#6aaec4" },
     "GRC::agion-oros": { label: "Athos", dataRegionKey: "GRC::agion oros", fill: "#8b7fa9" },
@@ -1221,6 +1298,9 @@ const dashboardState = {
     activeMetric: "classic",
     language: window.localStorage?.getItem("bespLanguage") === "de" ? "de" : "en",
     theme: window.localStorage?.getItem("bespTheme") === "light" ? "light" : "dark",
+    hotkeys: loadHotkeyBindings(),
+    awaitingHotkeyAction: "",
+    settingsOpen: false,
     selectedEventIndex: -1,
     currentCountryRows: [],
     currentRegionRows: [],
@@ -1271,8 +1351,20 @@ const elements = {
     themeToggleButton: document.getElementById("theme-toggle"),
     themeToggleIcon: document.getElementById("theme-toggle-icon"),
     themeToggleLabel: document.getElementById("theme-toggle-label"),
+    settingsToggleButton: document.getElementById("settings-toggle"),
+    settingsCloseButton: document.getElementById("settings-close"),
+    settingsPanel: document.getElementById("settings-panel"),
+    hotkeyList: document.getElementById("hotkey-list"),
+    hotkeyResetButton: document.getElementById("hotkey-reset"),
+    runFinishedDialog: document.getElementById("run-finished-dialog"),
+    runSaveTxtButton: document.getElementById("run-save-txt"),
+    runSavePdfButton: document.getElementById("run-save-pdf"),
+    runSaveDocxButton: document.getElementById("run-save-docx"),
+    runSkipSaveButton: document.getElementById("run-skip-save"),
+    runFinishedCancelButton: document.getElementById("run-finished-cancel"),
     mapHoverTitle: document.getElementById("map-hover-title"),
     mapHoverBody: document.getElementById("map-hover-body"),
+    mapLayout: document.getElementById("map-layout"),
     mapRoot: document.getElementById("country-map"),
     mapContextMenu: document.getElementById("map-context-menu"),
     kpiCard: document.getElementById("kpi-card"),
@@ -1326,13 +1418,18 @@ document.addEventListener("DOMContentLoaded", () => {
     applyTheme();
     applyLanguage();
     decorateMetricButtons();
+    decorateMapModeButtons();
     bindLanguageControls();
     bindThemeControls();
     bindMapModeEvents();
     bindPlaybackControls();
     bindEditorControls();
+    bindSettingsControls();
+    bindRunFinishedControls();
+    bindDashboardHotkeys();
     bindMapRootReset();
     bindMapContextMenuEvents();
+    renderHotkeySettings();
     renderEmptyState();
     void initializeDashboard();
 });
@@ -1373,7 +1470,9 @@ function applyLanguage() {
             ? (view.buttonLabelDe ?? view.buttonLabelEn ?? view.buttonLabel)
             : (view.buttonLabelEn ?? view.buttonLabel);
     }
+    renderHotkeySettings();
     decorateMetricButtons();
+    decorateMapModeButtons();
     applyTheme();
     updateShockToggleLabels();
     if (dashboardState.runServiceAvailable && dashboardState.currentRunStatus) {
@@ -1434,10 +1533,271 @@ function applyTheme() {
 }
 function bindThemeControls() {
     elements.themeToggleButton?.addEventListener("click", () => {
-        dashboardState.theme = dashboardState.theme === "light" ? "dark" : "light";
-        window.localStorage?.setItem("bespTheme", dashboardState.theme);
-        applyTheme();
+        toggleTheme();
     });
+}
+function toggleTheme() {
+    dashboardState.theme = dashboardState.theme === "light" ? "dark" : "light";
+    window.localStorage?.setItem("bespTheme", dashboardState.theme);
+    applyTheme();
+}
+function loadHotkeyBindings() {
+    try {
+        const stored = JSON.parse(window.localStorage?.getItem(HOTKEY_STORAGE_KEY) ?? "{}");
+        if (!stored || typeof stored !== "object") {
+            return { ...DEFAULT_HOTKEYS };
+        }
+        const hotkeys = { ...DEFAULT_HOTKEYS, ...stored };
+        const oldMetricDefaults = stored.jobsMetric === "KeyE"
+            || stored.gdpMetric === "KeyR"
+            || stored.debtMetric === "KeyZ"
+            || stored.electionsMetric === "KeyA";
+        if (oldMetricDefaults || !stored.inflationMetric) {
+            Object.assign(hotkeys, {
+                classicMetric: DEFAULT_HOTKEYS.classicMetric,
+                populationMetric: DEFAULT_HOTKEYS.populationMetric,
+                gdpMetric: DEFAULT_HOTKEYS.gdpMetric,
+                jobsMetric: DEFAULT_HOTKEYS.jobsMetric,
+                inflationMetric: DEFAULT_HOTKEYS.inflationMetric,
+                debtMetric: DEFAULT_HOTKEYS.debtMetric,
+                attractivenessMetric: DEFAULT_HOTKEYS.attractivenessMetric,
+                integrationMetric: DEFAULT_HOTKEYS.integrationMetric,
+                corruptionMetric: DEFAULT_HOTKEYS.corruptionMetric,
+                satisfactionMetric: DEFAULT_HOTKEYS.satisfactionMetric,
+                electionsMetric: DEFAULT_HOTKEYS.electionsMetric,
+            });
+        }
+        if (stored.theme === "KeyT" && !stored.inflationMetric) {
+            hotkeys.theme = DEFAULT_HOTKEYS.theme;
+        }
+        if (stored.settings === "Comma") {
+            hotkeys.settings = DEFAULT_HOTKEYS.settings;
+        }
+        return hotkeys;
+    } catch {
+        return { ...DEFAULT_HOTKEYS };
+    }
+}
+function saveHotkeyBindings() {
+    window.localStorage?.setItem(HOTKEY_STORAGE_KEY, JSON.stringify(dashboardState.hotkeys));
+}
+function bindSettingsControls() {
+    elements.settingsToggleButton?.addEventListener("click", () => setSettingsOpen(!dashboardState.settingsOpen));
+    elements.settingsCloseButton?.addEventListener("click", () => setSettingsOpen(false));
+    elements.hotkeyResetButton?.addEventListener("click", () => {
+        dashboardState.hotkeys = { ...DEFAULT_HOTKEYS };
+        dashboardState.awaitingHotkeyAction = "";
+        saveHotkeyBindings();
+        renderHotkeySettings();
+        decorateMetricButtons();
+        decorateMapModeButtons();
+    });
+    elements.hotkeyList?.addEventListener("click", (event) => {
+        const button = event.target instanceof Element ? event.target.closest("[data-hotkey-action]") : null;
+        if (!button) {
+            return;
+        }
+        dashboardState.awaitingHotkeyAction = String(button.getAttribute("data-hotkey-action") ?? "");
+        renderHotkeySettings();
+    });
+    elements.hotkeyList?.addEventListener("keydown", (event) => {
+        const action = dashboardState.awaitingHotkeyAction;
+        if (!action) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.code === "Escape") {
+            dashboardState.awaitingHotkeyAction = "";
+            renderHotkeySettings();
+            return;
+        }
+        dashboardState.hotkeys[action] = event.code;
+        dashboardState.awaitingHotkeyAction = "";
+        saveHotkeyBindings();
+        renderHotkeySettings();
+        decorateMetricButtons();
+        decorateMapModeButtons();
+    });
+}
+function bindRunFinishedControls() {
+    elements.runSaveTxtButton?.addEventListener("click", () => {
+        void saveCurrentRunThenStartNew("txt");
+    });
+    elements.runSavePdfButton?.addEventListener("click", () => {
+        void saveCurrentRunThenStartNew("print");
+    });
+    elements.runSkipSaveButton?.addEventListener("click", () => {
+        closeRunFinishedDialog();
+        void triggerGenerateRun({ runCount: 1, reason: "play-final-year" });
+    });
+    elements.runFinishedCancelButton?.addEventListener("click", () => closeRunFinishedDialog());
+    elements.runFinishedDialog?.addEventListener("click", (event) => {
+        if (event.target === elements.runFinishedDialog) {
+            closeRunFinishedDialog();
+        }
+    });
+}
+function openRunFinishedDialog() {
+    if (!elements.runFinishedDialog) {
+        return;
+    }
+    elements.runFinishedDialog.classList.remove("map-hidden");
+    elements.runSaveTxtButton?.focus();
+}
+function closeRunFinishedDialog() {
+    elements.runFinishedDialog?.classList.add("map-hidden");
+}
+async function saveCurrentRunThenStartNew(format) {
+    closeRunFinishedDialog();
+    const saved = await triggerExportRunReport({ formatOverride: format });
+    if (saved) {
+        await triggerGenerateRun({ runCount: 1, reason: "play-final-year" });
+    }
+}
+function bindDashboardHotkeys() {
+    document.addEventListener("keydown", (event) => {
+        if (event.code === "Escape" && elements.runFinishedDialog && !elements.runFinishedDialog.classList.contains("map-hidden")) {
+            event.preventDefault();
+            closeRunFinishedDialog();
+            return;
+        }
+        if (event.code === "Escape" && dashboardState.settingsOpen && !dashboardState.awaitingHotkeyAction) {
+            event.preventDefault();
+            setSettingsOpen(false);
+            return;
+        }
+        if (event.defaultPrevented || isHotkeyInputTarget(event.target)) {
+            return;
+        }
+        const action = getActionForHotkey(event.code);
+        if (!action) {
+            return;
+        }
+        event.preventDefault();
+        executeHotkeyAction(action);
+    });
+}
+function isHotkeyInputTarget(target) {
+    if (!(target instanceof Element)) {
+        return false;
+    }
+    return Boolean(target.closest("input, select, textarea, button, [contenteditable='true']"));
+}
+function getActionForHotkey(code) {
+    return HOTKEY_ACTIONS.find((action) => dashboardState.hotkeys[action.key] === code)?.key ?? "";
+}
+function executeHotkeyAction(action) {
+    const metricKey = HOTKEY_METRICS[action];
+    if (metricKey) {
+        setActiveMetric(metricKey);
+        return;
+    }
+    switch (action) {
+        case "play":
+            if (dashboardState.playbackTimer) {
+                stopPlayback();
+            } else {
+                void startPlayback();
+            }
+            break;
+        case "previousYear":
+            stepTimeline(-1);
+            break;
+        case "nextYear":
+            stepTimeline(1);
+            break;
+        case "countries":
+            if (dashboardState.editorMode) {
+                setEditorMode(false);
+            }
+            setMapMode("country");
+            break;
+        case "regions":
+            if (dashboardState.editorMode) {
+                setEditorMode(false);
+            }
+            setMapMode("region");
+            break;
+        case "borders":
+            setEditorMode(!dashboardState.editorMode);
+            break;
+        case "classicMetric":
+            setActiveMetric("classic");
+            break;
+        case "populationMetric":
+            setActiveMetric("population");
+            break;
+        case "jobsMetric":
+            setActiveMetric("unemployment");
+            break;
+        case "gdpMetric":
+            setActiveMetric("gdp_per_capita");
+            break;
+        case "theme":
+            toggleTheme();
+            break;
+        case "settings":
+            setSettingsOpen(!dashboardState.settingsOpen);
+            break;
+        default:
+            break;
+    }
+}
+function setSettingsOpen(open) {
+    dashboardState.settingsOpen = Boolean(open);
+    elements.settingsPanel?.classList.toggle("map-hidden", !dashboardState.settingsOpen);
+    elements.settingsToggleButton?.setAttribute("aria-expanded", dashboardState.settingsOpen ? "true" : "false");
+    if (dashboardState.settingsOpen) {
+        renderHotkeySettings();
+    } else {
+        dashboardState.awaitingHotkeyAction = "";
+    }
+}
+function renderHotkeySettings() {
+    if (!elements.hotkeyList) {
+        return;
+    }
+    elements.hotkeyList.innerHTML = HOTKEY_ACTIONS.map((action) => {
+        const waiting = dashboardState.awaitingHotkeyAction === action.key;
+        const label = dashboardState.language === "de" ? action.labelDe : action.labelEn;
+        const keyLabel = waiting ? t("settings.pressKey") : formatHotkeyCode(dashboardState.hotkeys[action.key]);
+        return `
+            <button class="hotkey-row${waiting ? " hotkey-row-waiting" : ""}" type="button" data-hotkey-action="${escapeHtml(action.key)}">
+                <span>${escapeHtml(label)}</span>
+                <kbd>${escapeHtml(keyLabel)}</kbd>
+            </button>
+        `;
+    }).join("");
+}
+function formatHotkeyCode(code) {
+    const labels = {
+        Space: "Space",
+        ArrowLeft: "Left",
+        ArrowRight: "Right",
+        ArrowUp: "Up",
+        ArrowDown: "Down",
+        Escape: "Esc",
+        Comma: ",",
+        Period: ".",
+        Slash: "/",
+        Backslash: "\\",
+        BracketLeft: "Ü",
+        Minus: "-",
+        Equal: "=",
+        KeyY: "Z",
+        KeyZ: "Y",
+    };
+    if (labels[code]) {
+        return labels[code];
+    }
+    if (/^Key[A-Z]$/.test(code)) {
+        return code.slice(3);
+    }
+    if (/^Digit[0-9]$/.test(code)) {
+        return code.slice(5);
+    }
+    return code || "-";
 }
 function bindMapModeEvents() {
     elements.mapModeCountryButton.addEventListener("click", () => {
@@ -1453,6 +1813,22 @@ function bindMapModeEvents() {
         setMapMode("region");
     });
 }
+function decorateMapModeButtons() {
+    decorateMapModeButton(elements.mapModeCountryButton, t("mode.countries"), "countries");
+    decorateMapModeButton(elements.mapModeRegionButton, t("mode.regions"), "regions");
+}
+function decorateMapModeButton(button, label, hotkeyAction) {
+    if (!button) {
+        return;
+    }
+    const hotkey = formatHotkeyCode(dashboardState.hotkeys[hotkeyAction]);
+    button.innerHTML = `
+        <span>${escapeHtml(label)}</span>
+        ${hotkey ? `<kbd class="mode-hotkey-badge">${escapeHtml(hotkey)}</kbd>` : ""}
+    `;
+    button.title = hotkey ? `${label} (${hotkey})` : label;
+    button.setAttribute("aria-label", label);
+}
 function decorateMetricButtons() {
     for (const button of elements.metricButtons) {
         const metricKey = String(button.dataset.metric ?? "");
@@ -1460,10 +1836,18 @@ function decorateMetricButtons() {
         if (!view?.buttonLabel) {
             continue;
         }
-        button.textContent = metricButtonIcon(view);
-        button.title = view.label;
+        const hotkey = getMetricHotkeyLabel(metricKey);
+        button.innerHTML = `
+            <span class="metric-button-icon">${escapeHtml(metricButtonIcon(view))}</span>
+            ${hotkey ? `<kbd class="metric-hotkey-badge">${escapeHtml(hotkey)}</kbd>` : ""}
+        `;
+        button.title = hotkey ? `${view.label} (${hotkey})` : view.label;
         button.setAttribute("aria-label", view.label);
     }
+}
+function getMetricHotkeyLabel(metricKey) {
+    const action = METRIC_HOTKEY_ACTIONS[metricKey];
+    return action ? formatHotkeyCode(dashboardState.hotkeys[action]) : "";
 }
 function metricButtonIcon(view) {
     return String(view.buttonLabel ?? "")
@@ -1878,7 +2262,6 @@ function bindMapRootReset() {
             activeHoverNode = null;
         }
         clearHoverOutline();
-        resetMapHoverDetails();
     });
 }
 function bindMapContextMenuEvents() {
@@ -1967,6 +2350,7 @@ function setMapMode(mode) {
 function setEditorMode(enabled) {
     hideMapContextMenu();
     dashboardState.editorMode = Boolean(enabled);
+    setMapDetailPanelOpen(false);
     if (!dashboardState.editorMode) {
         dashboardState.editorTargetCountrySelected = false;
         clearEditorSelection();
@@ -2057,7 +2441,7 @@ async function startPlayback() {
     }
     if (dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1) {
         if (dashboardState.runServiceAvailable && !dashboardState.isGeneratingRun) {
-            await triggerGenerateRun({ runCount: 1, reason: "play-final-year" });
+            openRunFinishedDialog();
             return;
         }
         dashboardState.currentYearIndex = 0;
@@ -2079,6 +2463,9 @@ function restartPlaybackTimer() {
     dashboardState.playbackTimer = window.setInterval(() => {
         if (dashboardState.currentYearIndex >= dashboardState.yearKeys.length - 1) {
             stopPlayback();
+            if (dashboardState.runServiceAvailable && !dashboardState.isGeneratingRun) {
+                openRunFinishedDialog();
+            }
             return;
         }
         dashboardState.currentYearIndex += 1;
@@ -2324,17 +2711,17 @@ function reportDownloadName(response, fallbackName) {
     const match = disposition.match(/filename="([^"]+)"/i);
     return match?.[1] || fallbackName;
 }
-async function triggerExportRunReport() {
+async function triggerExportRunReport({ formatOverride = null } = {}) {
     if (!dashboardState.runServiceAvailable || !dashboardState.exportData) {
         setExportStatus(t("status.exportReportUnavailable"), "error");
-        return;
+        return false;
     }
     const yearRange = reportYearRangePayload();
     if (yearRange.start_year && yearRange.end_year && yearRange.start_year >= yearRange.end_year) {
         setExportStatus(t("status.exportReportInvalidYears"), "error");
-        return;
+        return false;
     }
-    const reportFormat = elements.reportFormatSelect?.value || "txt";
+    const reportFormat = formatOverride || elements.reportFormatSelect?.value || "txt";
     setExportStatus(t("status.exportReportStarting"), "loading");
     updatePlaybackControls();
     try {
@@ -2359,7 +2746,7 @@ async function triggerExportRunReport() {
         if (reportFormat === "print") {
             openPrintableReport(reportText, filename);
             setExportStatus(t("status.exportReportPrintReady"), "success");
-            return;
+            return true;
         }
         const blob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
         const downloadUrl = URL.createObjectURL(blob);
@@ -2371,9 +2758,11 @@ async function triggerExportRunReport() {
         link.remove();
         URL.revokeObjectURL(downloadUrl);
         setExportStatus(t("status.exportReportReady"), "success");
+        return true;
     } catch (error) {
         const detail = error instanceof Error ? ` ${error.message}` : "";
         setExportStatus(`${t("status.exportReportFailed")}${detail}`, "error");
+        return false;
     } finally {
         updatePlaybackControls();
     }
@@ -3705,6 +4094,7 @@ function bindMapEventEvents() {
             const shockEvent = getShockEventByIndex(dashboardState.selectedEventIndex);
             if (shockEvent) {
                 renderEventDetails(shockEvent);
+                setMapDetailPanelOpen(true);
             }
             renderMapEventLayer();
             renderRegionLayer(dashboardState.geoData);
@@ -4320,31 +4710,12 @@ function aggregateVisualRegionRows(group, sourceRows) {
     };
 }
 function bindMapHoverEvents() {
-    bindMapHoverTargets(elements.countryLayer.querySelectorAll(".map-country-shape"), (node) => {
-        const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
-        renderCountryHover(countryCode, mapDataCache.countriesByCode.get(countryCode) ?? null);
-    });
-    bindMapHoverTargets(elements.regionLayer.querySelectorAll(".map-region-shape"), (node) => {
-        const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
-        const regionName = String(node.getAttribute("data-region-name") ?? "");
-        const visualRegionKey = String(node.getAttribute("data-visual-region-key") ?? "");
-        const regionData = visualRegionKey
-            ? mapDataCache.visualRegionsByKey.get(visualRegionKey)?.displayData ?? null
-            : null;
-        renderRegionHover(
-            countryCode,
-            regionName,
-            regionData,
-            mapDataCache.countriesByCode.get(countryCode) ?? null,
-        );
-    });
+    bindMapHoverTargets(elements.countryLayer.querySelectorAll(".map-country-shape"));
+    bindMapHoverTargets(elements.regionLayer.querySelectorAll(".map-region-shape"));
 }
-function bindMapHoverTargets(nodes, enterHandler) {
+function bindMapHoverTargets(nodes) {
     for (const node of nodes) {
-        const activate = () => {
-            setActiveHoverNode(node);
-            enterHandler(node);
-        };
+        const activate = () => setActiveHoverNode(node);
         node.addEventListener("mouseenter", activate);
         node.addEventListener("pointerenter", activate);
         node.addEventListener("mousemove", activate);
@@ -4388,10 +4759,12 @@ function bindEditorMapEvents() {
 function bindMapSelectionEvents() {
     for (const node of elements.countryLayer.querySelectorAll(".map-country-shape")) {
         node.addEventListener("click", () => {
+            const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
             if (!dashboardState.editorMode) {
+                renderCountryHover(countryCode, mapDataCache.countriesByCode.get(countryCode) ?? null);
+                setMapDetailPanelOpen(true);
                 return;
             }
-            const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
             selectInlineEditorTargetCountryFromMap(countryCode, { switchToRegion: false });
         });
         node.addEventListener("contextmenu", (event) => {
@@ -4431,14 +4804,27 @@ function bindMapSelectionEvents() {
     }
     for (const node of elements.regionLayer.querySelectorAll(".map-region-shape")) {
         node.addEventListener("click", () => {
+            const countryCode = normalizeCountryCode(node.getAttribute("data-country-code"));
+            const regionName = String(node.getAttribute("data-region-name") ?? "");
+            const visualRegionKey = String(node.getAttribute("data-visual-region-key") ?? "");
             if (!dashboardState.editorMode) {
+                const regionData = visualRegionKey
+                    ? mapDataCache.visualRegionsByKey.get(visualRegionKey)?.displayData ?? null
+                    : null;
+                renderRegionHover(
+                    countryCode,
+                    regionName,
+                    regionData,
+                    mapDataCache.countriesByCode.get(countryCode) ?? null,
+                );
+                setMapDetailPanelOpen(true);
                 return;
             }
-            setEditorSelection("region", String(node.getAttribute("data-visual-region-key") ?? ""));
+            setEditorSelection("region", visualRegionKey);
             syncInlineEditorTargetRegionForSource(getInlineEditorSelectedGroup());
             renderInlineEditorPanel();
             setMapHoverDetails(
-                tf("editor.targetAnnexes", { country: String(node.getAttribute("data-region-name") ?? "Region") }),
+                tf("editor.targetAnnexes", { country: regionName || "Region" }),
                 t("editor.rightClickForeignRegion")
             );
         });
@@ -4970,6 +5356,9 @@ function setExportStatus(message, tone = "muted") {
     }
     elements.exportStatus.textContent = message;
     elements.exportStatus.className = `export-status export-status-status-${tone}`;
+}
+function setMapDetailPanelOpen(open) {
+    elements.mapLayout?.classList.toggle("map-detail-open", Boolean(open));
 }
 function setMapHoverDetails(title, body, html = false) {
     elements.mapHoverTitle.textContent = title;

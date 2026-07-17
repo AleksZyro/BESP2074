@@ -5,64 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BESP2074</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./styles.css?v=10.3.3">
+    <link rel="stylesheet" href="./styles.css?v=10.3.8">
 </head>
 <body>
     <div class="page-shell">
-        <header class="hero">
+        <header class="hero map-hidden">
             <div>
                 <h1>BESP2074</h1>
             </div>
             <div class="app-controls">
                 <div class="language-toggle" role="group" aria-label="Language">
-                    <button id="language-en" class="language-button language-button-active" type="button" data-language="en" aria-label="English">
+                    <button id="language-en-hidden" class="language-button language-button-active" type="button" data-language="en" aria-label="English">
                         <span class="language-flag language-flag-gb" aria-hidden="true"></span>
                         <span>EN</span>
                     </button>
-                    <button id="language-de" class="language-button" type="button" data-language="de" aria-label="Deutsch">
+                    <button id="language-de-hidden" class="language-button" type="button" data-language="de" aria-label="Deutsch">
                         <span class="language-flag language-flag-de" aria-hidden="true"></span>
                         <span>DE</span>
                     </button>
                 </div>
-                <button id="theme-toggle" class="theme-toggle-button" type="button" aria-pressed="false" aria-label="Switch to light mode">
-                    <span id="theme-toggle-icon" aria-hidden="true">☀️</span>
-                    <span id="theme-toggle-label" class="visually-hidden">Light</span>
+                <button id="theme-toggle-hidden" class="theme-toggle-button" type="button" aria-pressed="false" aria-label="Switch to light mode">
+                    <span id="theme-toggle-icon-hidden" aria-hidden="true">☀️</span>
+                    <span id="theme-toggle-label-hidden" class="visually-hidden">Light</span>
                 </button>
             </div>
         </header>
         <main class="dashboard-grid">
             <section class="panel map-panel">
-                <div class="section-heading">
-                    <div>
-                        <p class="section-kicker" data-i18n="map.kicker">Map</p>
-                        <h2>Balkan Layer</h2>
-                    </div>
-                    <div class="section-actions">
-                        <div class="timeline-controls" role="group" aria-label="Timeline controls">
-                            <button id="year-step-back" class="timeline-button" type="button">Prev</button>
-                            <button id="playback-toggle" class="timeline-button timeline-button-primary" type="button">Play</button>
-                            <button id="year-step-forward" class="timeline-button" type="button">Next</button>
-                            <label class="timeline-select-wrap" for="year-select">
-                                <span data-i18n="timeline.year">Year</span>
-                                <select id="year-select" class="timeline-select"></select>
-                            </label>
-                            <div class="speed-controls" role="group" aria-label="Playback speed">
-                                <button class="speed-button speed-button-active" data-speed="1" type="button">x1</button>
-                                <button class="speed-button" data-speed="2" type="button">x2</button>
-                                <button class="speed-button" data-speed="5" type="button">x5</button>
-                                <button class="speed-button" data-speed="10" type="button">x10</button>
+                <div id="map-layout" class="map-layout">
+                    <div class="map-canvas-wrap">
+                        <div class="map-hud map-hud-top">
+                            <div class="map-title-block">
+                                <img src="./favicon.svg" alt="" aria-hidden="true">
+                                <h2>BESP2074</h2>
                             </div>
-                            <label class="toggle-wrap shock-toggle-wrap" for="play-shocks-enabled">
-                                <input id="play-shocks-enabled" class="shock-toggle-input" type="checkbox" checked>
-                                <span class="shock-toggle-label" data-shock-toggle-label data-i18n="status.shocksOn">shocks on</span>
-                            </label>
-                            <span id="current-year-pill" class="year-pill">Waiting for data</span>
+                            <div class="timeline-controls" role="group" aria-label="Timeline controls">
+                                <button id="year-step-back" class="timeline-button" type="button">Prev</button>
+                                <button id="playback-toggle" class="timeline-button timeline-button-primary" type="button">Play</button>
+                                <button id="year-step-forward" class="timeline-button" type="button">Next</button>
+                                <label class="timeline-select-wrap" for="year-select">
+                                    <span data-i18n="timeline.year">Year</span>
+                                    <select id="year-select" class="timeline-select"></select>
+                                </label>
+                                <div class="speed-controls" role="group" aria-label="Playback speed">
+                                    <button class="speed-button speed-button-active" data-speed="1" type="button">x1</button>
+                                    <button class="speed-button" data-speed="2" type="button">x2</button>
+                                    <button class="speed-button" data-speed="5" type="button">x5</button>
+                                    <button class="speed-button" data-speed="10" type="button">x10</button>
+                                </div>
+                                <label class="toggle-wrap shock-toggle-wrap" for="play-shocks-enabled">
+                                    <input id="play-shocks-enabled" class="shock-toggle-input" type="checkbox" checked>
+                                    <span class="shock-toggle-label" data-shock-toggle-label data-i18n="status.shocksOn">shocks on</span>
+                                </label>
+                                <span id="current-year-pill" class="year-pill">Waiting for data</span>
+                            </div>
+                            <div class="app-controls map-app-controls">
+                                <div class="language-toggle" role="group" aria-label="Language">
+                                    <button id="language-en" class="language-button language-button-active" type="button" data-language="en" aria-label="English">
+                                        <span class="language-flag language-flag-gb" aria-hidden="true"></span>
+                                        <span>EN</span>
+                                    </button>
+                                    <button id="language-de" class="language-button" type="button" data-language="de" aria-label="Deutsch">
+                                        <span class="language-flag language-flag-de" aria-hidden="true"></span>
+                                        <span>DE</span>
+                                    </button>
+                                </div>
+                                <button id="theme-toggle" class="theme-toggle-button" type="button" aria-pressed="false" aria-label="Switch to light mode">
+                                    <span id="theme-toggle-icon" aria-hidden="true">☀️</span>
+                                    <span id="theme-toggle-label" class="visually-hidden">Light</span>
+                                    <kbd class="control-hotkey-badge">L</kbd>
+                                </button>
+                                <button id="settings-toggle" class="settings-toggle-button" type="button" aria-expanded="false" aria-controls="settings-panel" aria-label="Settings">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                        <path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2Zm8.1 3.6c0-.5-.1-.9-.2-1.4l2-1.5-2-3.5-2.4 1a8.3 8.3 0 0 0-2.4-1.4L14.8 2h-4l-.4 3.2a8.3 8.3 0 0 0-2.4 1.4l-2.4-1-2 3.5 2 1.5a7.4 7.4 0 0 0 0 2.8l-2 1.5 2 3.5 2.4-1a8.3 8.3 0 0 0 2.4 1.4l.4 3.2h4l.4-3.2a8.3 8.3 0 0 0 2.4-1.4l2.4 1 2-3.5-2-1.5c.1-.5.2-.9.2-1.4Z"/>
+                                    </svg>
+                                    <kbd class="control-hotkey-badge">Esc</kbd>
+                                </button>
+                            </div>
                         </div>
-                        <div class="view-strip">
+                        <svg id="country-map" viewBox="0 0 780 520" aria-label="Balkan country map" shape-rendering="geometricPrecision">
+                            <g id="country-layer"></g>
+                            <g id="country-hover-layer"></g>
+                            <g id="country-label-layer"></g>
+                            <g id="region-layer"></g>
+                            <g id="region-hover-layer"></g>
+                            <g id="region-label-layer"></g>
+                            <g id="map-event-layer"></g>
+                        </svg>
+                        <div class="map-hud map-hud-bottom">
                             <div class="map-mode-controls" role="group" aria-label="Map layer mode">
                                 <button id="map-mode-country" class="map-mode-button map-mode-button-active" type="button" data-i18n="mode.countries">Countries</button>
                                 <button id="map-mode-region" class="map-mode-button" type="button" data-i18n="mode.regions">Regions</button>
-                                <button id="editor-mode-toggle" class="map-mode-button" type="button" data-i18n="mode.borders">Borders</button>
                             </div>
                             <div class="metric-controls" role="group" aria-label="Map metric mode">
                                 <span class="metric-button-group">
@@ -84,20 +117,32 @@
                                 </span>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div class="map-layout">
-                    <div class="map-canvas-wrap">
-                        <svg id="country-map" viewBox="0 0 780 520" aria-label="Balkan country map" shape-rendering="geometricPrecision">
-                            <g id="country-layer"></g>
-                            <g id="country-hover-layer"></g>
-                            <g id="country-label-layer"></g>
-                            <g id="region-layer"></g>
-                            <g id="region-hover-layer"></g>
-                            <g id="region-label-layer"></g>
-                            <g id="map-event-layer"></g>
-                        </svg>
                         <div id="map-context-menu" class="map-context-menu map-hidden" role="menu" aria-label="Kartenaktion"></div>
+                        <section id="settings-panel" class="settings-panel map-hidden" aria-label="Settings">
+                            <div class="settings-panel-header">
+                                <div>
+                                    <span class="meta-label" data-i18n="settings.title">Settings</span>
+                                    <strong data-i18n="settings.hotkeys">Hotkeys</strong>
+                                </div>
+                                <button id="settings-close" class="settings-icon-button" type="button" aria-label="Close settings">×</button>
+                            </div>
+                            <div id="hotkey-list" class="hotkey-list"></div>
+                            <button id="hotkey-reset" class="timeline-button" type="button" data-i18n="settings.resetHotkeys">Reset hotkeys</button>
+                        </section>
+                        <section id="run-finished-dialog" class="run-finished-dialog map-hidden" role="dialog" aria-modal="true" aria-labelledby="run-finished-title">
+                            <div class="run-finished-card">
+                                <span class="meta-label" data-i18n="runFinished.kicker">Run complete</span>
+                                <h3 id="run-finished-title" data-i18n="runFinished.title">Save this run?</h3>
+                                <p data-i18n="runFinished.body">Starting a new run overwrites the current output. Save it first or continue without saving.</p>
+                                <div class="run-finished-actions">
+                                    <button id="run-save-txt" class="timeline-button timeline-button-primary" type="button">TXT</button>
+                                    <button id="run-save-pdf" class="timeline-button" type="button">PDF</button>
+                                    <button id="run-save-docx" class="timeline-button" type="button" disabled title="DOCX export is not available yet">DOCX</button>
+                                    <button id="run-skip-save" class="timeline-button danger-button" type="button" data-i18n="runFinished.noSave">Do not save</button>
+                                    <button id="run-finished-cancel" class="timeline-button" type="button" data-i18n="common.cancel">Cancel</button>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                     <div class="map-side-panel">
                         <article id="kpi-card" class="meta-card kpi-card">
@@ -132,7 +177,7 @@
                             </div>
                             <p id="editor-inline-status" class="timeline-note">Border mode off.</p>
                         </article>
-                        <article class="meta-card">
+                        <article class="meta-card detail-card">
                             <span class="meta-label" data-i18n="panel.details">Details</span>
                             <strong id="map-hover-title" class="meta-value">No map area yet</strong>
                             <div id="map-hover-body" class="meta-note hover-detail-content">Hover over an area.</div>
@@ -144,67 +189,67 @@
                                 <p class="meta-note">Load an export to render the map.</p>
                             </article>
                         </div>
+                        <details class="advanced-block command-panel" open>
+                            <summary>Command center</summary>
+                            <div class="advanced-content">
+                                <div class="run-controls" role="group" aria-label="Simulation run controls">
+                                    <label class="timeline-select-wrap" for="run-scenario-select">
+                                        <span>Scenario</span>
+                                        <select id="run-scenario-select" class="timeline-select"></select>
+                                    </label>
+                                    <label class="timeline-select-wrap" for="run-count-input">
+                                        <span>Runs</span>
+                                        <input id="run-count-input" class="run-count-input" type="number" min="1" max="100" step="1" value="1">
+                                    </label>
+                                    <label class="toggle-wrap" for="run-shocks-enabled">
+                                        <input id="run-shocks-enabled" class="shock-toggle-input" type="checkbox" checked>
+                                        <span class="shock-toggle-label" data-shock-toggle-label data-i18n="status.shocksOn">Shocks on</span>
+                                    </label>
+                                    <button id="generate-run" class="timeline-button timeline-button-primary" type="button">Generate runs</button>
+                                    <button id="reload-export" class="timeline-button" type="button">Reload export</button>
+                                    <a id="open-boundary-editor" class="timeline-button timeline-link-button" href="./editor.html">Expert mode</a>
+                                </div>
+                                <div class="run-controls report-controls" role="group" aria-label="Run export controls">
+                                    <label class="timeline-select-wrap" for="report-start-year">
+                                        <span>From</span>
+                                        <select id="report-start-year" class="timeline-select"></select>
+                                    </label>
+                                    <label class="timeline-select-wrap" for="report-end-year">
+                                        <span>To</span>
+                                        <select id="report-end-year" class="timeline-select"></select>
+                                    </label>
+                                    <label class="timeline-select-wrap" for="report-detail">
+                                        <span>Detail</span>
+                                        <select id="report-detail" class="timeline-select">
+                                            <option value="countries">Countries</option>
+                                            <option value="countries_regions">Countries + regions</option>
+                                        </select>
+                                    </label>
+                                    <label class="toggle-wrap compact-toggle-wrap" for="report-include-events">
+                                        <input id="report-include-events" type="checkbox" checked>
+                                        <span>Events</span>
+                                    </label>
+                                    <label class="toggle-wrap compact-toggle-wrap" for="report-include-state">
+                                        <input id="report-include-state" type="checkbox">
+                                        <span>State</span>
+                                    </label>
+                                    <label class="timeline-select-wrap" for="report-format">
+                                        <span>Format</span>
+                                        <select id="report-format" class="timeline-select">
+                                            <option value="txt">TXT</option>
+                                            <option value="print">Print / PDF</option>
+                                        </select>
+                                    </label>
+                                    <button id="export-run-report" class="timeline-button timeline-button-primary" type="button">Export</button>
+                                    <button id="delete-current-run" class="timeline-button danger-button" type="button">Delete run</button>
+                                </div>
+                                <p class="timeline-note">Play replays loaded years. New numbers come from new runs.</p>
+                                <p id="export-status" class="export-status" aria-live="polite">Loading export.</p>
+                                <p id="run-batch-summary" class="timeline-note" data-i18n="status.singleRun">Single run active.</p>
+                            </div>
+                        </details>
                     </div>
                 </div>
-                <details class="advanced-block">
-                    <summary>Advanced: Simulation</summary>
-                    <div class="advanced-content">
-                        <div class="run-controls" role="group" aria-label="Simulation run controls">
-                            <label class="timeline-select-wrap" for="run-scenario-select">
-                                <span>Scenario</span>
-                                <select id="run-scenario-select" class="timeline-select"></select>
-                            </label>
-                            <label class="timeline-select-wrap" for="run-count-input">
-                                <span>Runs</span>
-                                <input id="run-count-input" class="run-count-input" type="number" min="1" max="100" step="1" value="1">
-                            </label>
-                            <label class="toggle-wrap" for="run-shocks-enabled">
-                                <input id="run-shocks-enabled" class="shock-toggle-input" type="checkbox" checked>
-                                <span class="shock-toggle-label" data-shock-toggle-label data-i18n="status.shocksOn">Shocks on</span>
-                            </label>
-                            <button id="generate-run" class="timeline-button timeline-button-primary" type="button">Generate runs</button>
-                            <button id="reload-export" class="timeline-button" type="button">Reload export</button>
-                            <a id="open-boundary-editor" class="timeline-button timeline-link-button" href="./editor.html">Expert mode</a>
-                        </div>
-                        <div class="run-controls report-controls" role="group" aria-label="Run export controls">
-                            <label class="timeline-select-wrap" for="report-start-year">
-                                <span>From</span>
-                                <select id="report-start-year" class="timeline-select"></select>
-                            </label>
-                            <label class="timeline-select-wrap" for="report-end-year">
-                                <span>To</span>
-                                <select id="report-end-year" class="timeline-select"></select>
-                            </label>
-                            <label class="timeline-select-wrap" for="report-detail">
-                                <span>Detail</span>
-                                <select id="report-detail" class="timeline-select">
-                                    <option value="countries">Countries</option>
-                                    <option value="countries_regions">Countries + regions</option>
-                                </select>
-                            </label>
-                            <label class="toggle-wrap compact-toggle-wrap" for="report-include-events">
-                                <input id="report-include-events" type="checkbox" checked>
-                                <span>Events</span>
-                            </label>
-                            <label class="toggle-wrap compact-toggle-wrap" for="report-include-state">
-                                <input id="report-include-state" type="checkbox">
-                                <span>State</span>
-                            </label>
-                            <label class="timeline-select-wrap" for="report-format">
-                                <span>Format</span>
-                                <select id="report-format" class="timeline-select">
-                                    <option value="txt">TXT</option>
-                                    <option value="print">Print / PDF</option>
-                                </select>
-                            </label>
-                            <button id="export-run-report" class="timeline-button timeline-button-primary" type="button">Export</button>
-                            <button id="delete-current-run" class="timeline-button danger-button" type="button">Delete run</button>
-                        </div>
-                        <p class="timeline-note">Play replays loaded years. New numbers come from new runs.</p>
-                        <p id="export-status" class="export-status" aria-live="polite">Loading export.</p>
-                        <p id="run-batch-summary" class="timeline-note" data-i18n="status.singleRun">Single run active.</p>
-                    </div>
-                </details>
             </section>
 
             <details class="panel details-panel">
@@ -328,6 +373,6 @@
     </div>
     <script src="./config.js?v=10.3.0"></script>
     <script src="./map_utils.js?v=10.3.0"></script>
-    <script src="./app.js?v=10.3.0"></script>
+    <script src="./app.js?v=10.3.8"></script>
 </body>
 </html>
