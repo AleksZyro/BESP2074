@@ -289,31 +289,31 @@ code { font-family: Consolas, "Courier New", monospace; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 50px;
-    height: 38px;
-    min-width: 50px;
-    min-height: 38px;
+    width: 58px;
+    height: 44px;
+    min-width: 58px;
+    min-height: 44px;
     border-radius: 10px;
     padding: 0;
-    font-size: 1rem;
+    font-size: 1.18rem;
 }
 .metric-button-icon {
     line-height: 1;
 }
 .metric-hotkey-badge {
     position: absolute;
-    right: 4px;
-    bottom: 3px;
-    min-width: 14px;
-    height: 14px;
+    right: 5px;
+    bottom: 4px;
+    min-width: 15px;
+    height: 15px;
     padding: 0 3px;
     border: 1px solid rgba(173, 198, 224, 0.34);
     border-radius: 4px;
     background: rgba(8, 14, 24, 0.58);
     color: var(--text);
     font-family: Consolas, "Courier New", monospace;
-    font-size: 0.58rem;
-    line-height: 12px;
+    font-size: 0.62rem;
+    line-height: 13px;
     text-align: center;
 }
 html[data-theme="light"] .metric-hotkey-badge {
