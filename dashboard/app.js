@@ -235,24 +235,90 @@ const REGION_LABEL_PRIORITY_BOOST = {
     "GRC::peloponnese-west-greece-ionian": 1050,
     "GRC::crete": 1100,
 };
-const REGION_LABEL_FORCE_SHOW = new Set([
-    "ALB::central",
+const REGION_MAP_LABEL_KEYS = new Set([
     "ALB::north",
-    "HUN::central-hungary",
+    "ALB::central",
+    "ALB::south",
+    "BGR::sofia",
+    "BGR::north",
+    "BGR::south",
+    "BGR::black-sea",
+    "BIH::fbih",
+    "BIH::rs",
+    "GRC::attica",
+    "GRC::macedonia-thrace",
+    "GRC::epirus-western-macedonia",
+    "GRC::thessalia-central-greece",
+    "GRC::peloponnese-west-greece-ionian",
+    "GRC::crete",
+    "GRC::aegean",
+    "HRV::istria-kvarner",
     "HRV::slavonia",
+    "HRV::dalmatia",
+    "HRV::zagreb-central",
+    "HUN::central-hungary",
+    "HUN::great-plains",
+    "HUN::north-hungary",
+    "HUN::transdanubia",
     "MKD::skopje",
     "MKD::west",
     "MKD::se",
     "MNE::coastal-region",
-    "MNE::southern-montenegro",
     "MNE::northern-montenegro",
     "ROU::bucharest-ilfov",
+    "ROU::transylvania-banat",
+    "ROU::moldavia",
+    "ROU::wallachia-oltenia",
+    "ROU::dobruja-lower-danube",
+    "SRB::belgrade",
+    "SRB::vojvodina",
+    "SRB::sz-srb",
+    "SRB::ji-srb",
     "SRB::kosovo-metohija",
+    "SVN::western",
+    "SVN::eastern",
+]);
+const REGION_LABEL_FORCE_SHOW = new Set([
+    "ALB::central",
+    "ALB::north",
+    "ALB::south",
+    "BGR::black-sea",
+    "BGR::north",
+    "BGR::sofia",
+    "BGR::south",
+    "BIH::fbih",
+    "BIH::rs",
+    "HUN::central-hungary",
+    "HUN::great-plains",
+    "HUN::north-hungary",
+    "HUN::transdanubia",
+    "HRV::dalmatia",
+    "HRV::istria-kvarner",
+    "HRV::slavonia",
+    "HRV::zagreb-central",
+    "MKD::skopje",
+    "MKD::west",
+    "MKD::se",
+    "MNE::coastal-region",
+    "MNE::northern-montenegro",
+    "ROU::bucharest-ilfov",
+    "ROU::dobruja-lower-danube",
+    "ROU::moldavia",
+    "ROU::transylvania-banat",
+    "ROU::wallachia-oltenia",
+    "SRB::belgrade",
+    "SRB::ji-srb",
+    "SRB::kosovo-metohija",
+    "SRB::sz-srb",
     "SRB::vojvodina",
     "SVN::western",
     "SVN::eastern",
     "GRC::attica",
+    "GRC::aegean",
+    "GRC::epirus-western-macedonia",
     "GRC::macedonia-thrace",
+    "GRC::peloponnese-west-greece-ionian",
+    "GRC::thessalia-central-greece",
     "GRC::crete",
 ]);
 const REGION_LABEL_ALWAYS_SHORT = new Set([
@@ -343,7 +409,7 @@ const REGION_LABEL_SHORT = {
     "HUN::great-plains": "Great Plains",
     "HUN::north-hungary": "N HUN",
     "HUN::transdanubia": "Transdanubia",
-    "HRV::zagreb-central": "C HRV",
+    "HRV::zagreb-central": "C CROA",
     "HRV::istria-kvarner": "Istrija",
     "HRV::slavonia": "Slavonija",
     "HRV::dalmatia": "Dalmacija",
@@ -374,7 +440,7 @@ const REGION_LABEL_TRANSLATIONS = {
     "HUN::great-plains": { en: { short: "Great Plains", long: "Great Plains" }, de: { short: "Grosse Tiefebene", long: "Grosse Tiefebene" } },
     "HUN::north-hungary": { en: { short: "N HUN", long: "Northern Hungary" }, de: { short: "N HUN", long: "Nordungarn" } },
     "HUN::transdanubia": { en: { short: "Transdanubia", long: "Transdanubia" }, de: { short: "Transdanubien", long: "Transdanubien" } },
-    "HRV::zagreb-central": { en: { short: "C HRV", long: "Central Croatia" }, de: { short: "M HRV", long: "Mittelkroatien" } },
+    "HRV::zagreb-central": { en: { short: "C CROA", long: "Central Croatia" }, de: { short: "M KRO", long: "Mittelkroatien" } },
     "HRV::istria-kvarner": { en: { short: "Istria", long: "Istria and Kvarner" }, de: { short: "Istrien", long: "Istrien und Kvarner" } },
     "HRV::slavonia": { en: { short: "Slavonia", long: "Slavonia" }, de: { short: "Slawonien", long: "Slawonien" } },
     "HRV::dalmatia": { en: { short: "Dalmatia", long: "Dalmatia" }, de: { short: "Dalmatien", long: "Dalmatien" } },
@@ -3851,7 +3917,9 @@ function renderRegionLayer(geoData) {
         .join("");
     const regionCorrectionMarkup = buildRegionCorrectionMarkup(geoData, groupedRegions, regionMetricRange);
     elements.regionLayer.innerHTML = regionBackfillMarkup + regionShapeMarkup + regionCorrectionMarkup;
-    const labelCandidates = groupedRegions.map((group) => {
+    const labelCandidates = groupedRegions
+        .filter((group) => REGION_MAP_LABEL_KEYS.has(group.visualRegionKey))
+        .map((group) => {
         const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
         const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
         const metricDetailRaw = buildMapMetricDetail(
@@ -3900,7 +3968,7 @@ function renderRegionLayer(geoData) {
         `,
         };
     }).filter(Boolean);
-    elements.regionLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 2)
+    elements.regionLabelLayer.innerHTML = selectNonOverlappingLabels(labelCandidates, 2, { keepForced: true })
         .map((entry) => entry.html)
         .join("");
 }
@@ -4346,13 +4414,17 @@ function estimateLabelBounds({
         bottom: top + height,
     };
 }
-function selectNonOverlappingLabels(candidates, padding = 2) {
+function selectNonOverlappingLabels(candidates, padding = 2, { keepForced = false } = {}) {
     const sorted = [...candidates].sort((a, b) => {
         const forceDiff = Number(Boolean(b.forceShow)) - Number(Boolean(a.forceShow));
         return forceDiff !== 0 ? forceDiff : b.priority - a.priority;
     });
     const accepted = [];
     for (const candidate of sorted) {
+        if (keepForced && candidate.forceShow) {
+            accepted.push(candidate);
+            continue;
+        }
         if (!accepted.some((entry) => boxesOverlap(entry.box, candidate.box, padding))) {
             accepted.push(candidate);
         }

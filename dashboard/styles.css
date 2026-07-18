@@ -289,13 +289,13 @@ code { font-family: Consolas, "Courier New", monospace; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 68px;
-    height: 50px;
-    min-width: 68px;
-    min-height: 50px;
+    width: 76px;
+    height: 54px;
+    min-width: 76px;
+    min-height: 54px;
     border-radius: 10px;
     padding: 0;
-    font-size: 1.42rem;
+    font-size: 1.64rem;
 }
 .metric-button-icon {
     line-height: 1;
