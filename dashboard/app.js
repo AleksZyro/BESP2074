@@ -533,18 +533,6 @@ const METRIC_VIEWS = {
         colorHigh: [144, 84, 140],
     },
 };
-const PINNED_METRIC_KEYS = Object.freeze([
-    "population",
-    "gdp_per_capita",
-    "unemployment",
-    "inflation",
-    "debt",
-    "attractiveness",
-    "integration",
-    "corruption",
-    "satisfaction",
-    "elections",
-]);
 const I18N = {
     en: {
         "hero.lead": "Calibrated Balkan simulation to 2074 with multiple runs, political dynamics, rarer regional events, and an integrated border mode.",
@@ -4818,18 +4806,14 @@ function bindMapSelectionEvents() {
                     hideMapContextMenu();
                 },
             };
-            const pinCountryAction = {
-                label: dashboardState.language === "de" ? "Land pinnen" : "Pin country",
-                handler: () => renderPinnedCountryDetails(countryCode),
-            };
             const chooseTargetAction = {
                 label: isCurrentTarget ? t("editor.targetCountryChosen") : t("editor.chooseTargetCountry"),
                 disabled: !canUseAsTarget || isCurrentTarget,
                 handler: () => selectInlineEditorTargetCountryFromMap(countryCode, { switchToRegion: true }),
             };
             const actions = hasExplicitTarget && !isCurrentTarget
-                ? [pinCountryAction, annexCountryAction, showRegionsAction, chooseTargetAction]
-                : [pinCountryAction, chooseTargetAction, showRegionsAction];
+                ? [annexCountryAction, showRegionsAction, chooseTargetAction]
+                : [chooseTargetAction, showRegionsAction];
             showMapContextMenu(event, `${countryName} (${displayCountryCode(countryCode)})`, actions);
         });
     }
@@ -4869,11 +4853,6 @@ function bindMapSelectionEvents() {
             const targetReady = Boolean(dashboardState.editorMode && dashboardState.editorTargetCountrySelected && targetCountryCode);
             const canAnnex = Boolean(group && targetReady && sourceOwnerCode !== targetCountryCode);
             showMapContextMenu(event, regionName, [
-                {
-                    label: dashboardState.language === "de" ? "Region pinnen" : "Pin region",
-                    disabled: !group,
-                    handler: () => renderPinnedRegionDetails(visualRegionKey, regionName),
-                },
                 {
                     label: targetReady
                         ? (dashboardState.language === "de" ? `An ${targetCountryName} annektieren` : `Annex to ${targetCountryName}`)
@@ -5102,114 +5081,6 @@ function renderRegionHover(countryCode, regionName, regionData, countryData) {
         return;
     }
     setMapHoverDetails(`${regionName} (${displayCountryCode(countryCode)})`, t("editor.noExportArea"));
-}
-function renderPinnedCountryDetails(countryCode) {
-    const normalizedCountryCode = normalizeCountryCode(countryCode);
-    const countryData = mapDataCache.countriesByCode.get(normalizedCountryCode) ?? null;
-    if (!countryData) {
-        renderCountryHover(normalizedCountryCode, null);
-        setMapDetailPanelOpen(true);
-        hideMapContextMenu();
-        return;
-    }
-    const previousCountry = mapDataCache.previousCountriesByCode.get(normalizedCountryCode) ?? null;
-    setMapHoverDetails(
-        `${countryDisplayName(countryData.country_code, countryData.country_name)} (${displayCountryCode(countryData.country_code)}) · ${countryData.yearKey}`,
-        buildPinnedDetailsHtml(countryData, previousCountry, "country"),
-        true
-    );
-    setMapDetailPanelOpen(true);
-    hideMapContextMenu();
-}
-function renderPinnedRegionDetails(visualRegionKey, fallbackRegionName = "Region") {
-    const group = mapDataCache.visualRegionsByKey.get(String(visualRegionKey ?? "")) ?? null;
-    const regionData = group?.displayData ?? null;
-    if (!regionData) {
-        setMapHoverDetails(fallbackRegionName, t("editor.noExportArea"));
-        setMapDetailPanelOpen(true);
-        hideMapContextMenu();
-        return;
-    }
-    const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
-    setMapHoverDetails(
-        `${displayRegionLabel(group)} (${displayCountryCode(regionData.country_code)}) · ${regionData.yearKey}`,
-        buildPinnedDetailsHtml(regionData, previousRegion, "region"),
-        true
-    );
-    setMapDetailPanelOpen(true);
-    hideMapContextMenu();
-}
-function buildPinnedDetailsHtml(row, previousRow, scopeType) {
-    const valueResolver = scopeType === "region" ? metricValueFromRegion : metricValueFromCountry;
-    const rows = [
-        buildHoverDetailRow(t("metric.gdp"), `${formatDecimal(Number(row.end_gdp_billion_eur ?? 0))} bn EUR`),
-        ...PINNED_METRIC_KEYS.map((metricKey) => {
-            const value = valueResolver(row, metricKey);
-            return buildHoverDetailRow(
-                localizedMetricLabel(metricKey),
-                formatMetricDisplay(value, metricKey),
-                pinnedMetricTone(metricKey, value)
-            );
-        }),
-    ];
-    const note = previousRow
-        ? `${t("metric.previous")}: ${formatPinnedChange(row, previousRow, valueResolver)}`
-        : t("metric.noPrevious");
-    return buildHoverDetailGrid(rows, note);
-}
-function localizedMetricLabel(metricKey) {
-    const view = METRIC_VIEWS[metricKey];
-    if (!view) {
-        return metricKey;
-    }
-    return dashboardState.language === "de"
-        ? view.labelDe ?? view.label
-        : view.labelEn ?? view.label;
-}
-function pinnedMetricTone(metricKey, value) {
-    const numeric = Number(value);
-    if (metricKey === "elections") {
-        return formatElectionTendency(numeric).tone;
-    }
-    if (!Number.isFinite(numeric)) {
-        return "neutral";
-    }
-    if (["unemployment", "inflation", "debt", "corruption"].includes(metricKey)) {
-        return numeric > 0 ? "negative" : "neutral";
-    }
-    if (["integration", "satisfaction", "attractiveness"].includes(metricKey)) {
-        return "positive";
-    }
-    return "neutral";
-}
-function formatPinnedChange(row, previousRow, valueResolver) {
-    const comparisonMetric = dashboardState.activeMetric === "classic" ? "gdp_per_capita" : dashboardState.activeMetric;
-    const populationDelta = valueResolver(row, "population") - valueResolver(previousRow, "population");
-    const activeDelta = valueResolver(row, comparisonMetric) - valueResolver(previousRow, comparisonMetric);
-    const activeLabel = localizedMetricLabel(comparisonMetric);
-    const activeValue = comparisonMetric === "elections"
-        ? "-"
-        : formatSignedMetricDelta(activeDelta, comparisonMetric);
-    return `${t("metric.population")} ${formatInteger(Math.round(populationDelta))}; ${activeLabel} ${activeValue}`;
-}
-function formatSignedMetricDelta(delta, metricKey) {
-    if (!Number.isFinite(delta)) {
-        return "-";
-    }
-    const sign = delta >= 0 ? "+" : "";
-    if (metricKey === "population") {
-        return `${sign}${formatInteger(Math.round(delta))}`;
-    }
-    if (metricKey === "gdp_per_capita") {
-        return `${sign}${formatInteger(Math.round(delta))} EUR`;
-    }
-    if (metricKey === "attractiveness") {
-        return `${sign}${formatDecimal(delta)}`;
-    }
-    if (metricKey === "integration" || metricKey === "corruption") {
-        return `${sign}${Math.round(delta * 100)}/100`;
-    }
-    return `${sign}${formatPercent(delta)}`;
 }
 function resetMapHoverDetails() {
     if (dashboardState.editorMode) {
