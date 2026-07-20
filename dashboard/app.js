@@ -688,8 +688,8 @@ const I18N = {
         "settings.pressKey": "Press a key",
         "runFinished.kicker": "Run complete",
         "runFinished.title": "Save this run?",
-        "runFinished.body": "Starting a new run overwrites the current output. Save it first or continue without saving.",
-        "runFinished.noSave": "Do not save",
+        "runFinished.body": "Save TXT or PDF as often as needed. Continue when you are ready to start the next run.",
+        "runFinished.noSave": "Continue without more saves",
         "common.cancel": "Cancel",
         "meta.selectedYear": "Selected year",
         "meta.startYear": "Start year",
@@ -888,8 +888,8 @@ const I18N = {
         "settings.pressKey": "Taste drücken",
         "runFinished.kicker": "Run fertig",
         "runFinished.title": "Run speichern?",
-        "runFinished.body": "Ein neuer Run überschreibt den aktuellen Output. Speichere ihn zuerst oder fahre ohne Speichern fort.",
-        "runFinished.noSave": "Nicht speichern",
+        "runFinished.body": "Speichere TXT oder PDF so oft wie nötig. Fahre weiter, wenn du den nächsten Run starten willst.",
+        "runFinished.noSave": "Ohne weiteres Speichern weiter",
         "common.cancel": "Abbrechen",
         "meta.selectedYear": "Ausgewähltes Jahr",
         "meta.startYear": "Startjahr",
@@ -1425,7 +1425,6 @@ const elements = {
     runFinishedDialog: document.getElementById("run-finished-dialog"),
     runSaveTxtButton: document.getElementById("run-save-txt"),
     runSavePdfButton: document.getElementById("run-save-pdf"),
-    runSaveDocxButton: document.getElementById("run-save-docx"),
     runSkipSaveButton: document.getElementById("run-skip-save"),
     runFinishedCancelButton: document.getElementById("run-finished-cancel"),
     mapHoverTitle: document.getElementById("map-hover-title"),
@@ -1700,10 +1699,9 @@ function closeRunFinishedDialog() {
     elements.runFinishedDialog?.classList.add("map-hidden");
 }
 async function saveCurrentRunThenStartNew(format) {
-    closeRunFinishedDialog();
     const saved = await triggerExportRunReport({ formatOverride: format });
     if (saved) {
-        await triggerGenerateRun({ runCount: 1, reason: "play-final-year" });
+        openRunFinishedDialog();
     }
 }
 function bindDashboardHotkeys() {
@@ -3921,7 +3919,7 @@ function renderRegionLayer(geoData) {
         .filter((group) => REGION_MAP_LABEL_KEYS.has(group.visualRegionKey))
         .map((group) => {
         const [offsetX, offsetY] = VISUAL_REGION_LABEL_OFFSETS[group.visualRegionKey] ?? [0, 0];
-        const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
+        const previousRegion = previousVisualRegionData(group);
         const metricDetailRaw = buildMapMetricDetail(
             metricValueFromRegion(group.displayData, dashboardState.activeMetric),
             previousRegion ? metricValueFromRegion(previousRegion, dashboardState.activeMetric) : Number.NaN,
@@ -4563,6 +4561,33 @@ function buildVisualRegionGroups(regionFeatures, regionSourceMap = mapDataCache.
         };
     });
 }
+function previousVisualRegionData(regionOrGroup) {
+    if (!regionOrGroup) {
+        return null;
+    }
+    const visualRegionKey = String(regionOrGroup.visualRegionKey ?? regionOrGroup.visual_region_key ?? "");
+    if (visualRegionKey) {
+        const directPrevious = mapDataCache.previousVisualRegionsByKey.get(visualRegionKey) ?? null;
+        if (directPrevious) {
+            return directPrevious;
+        }
+    }
+    const dataRegionKeys = Array.isArray(regionOrGroup.dataRegionKeys)
+        ? regionOrGroup.dataRegionKeys
+        : Array.isArray(regionOrGroup.data_region_keys)
+            ? regionOrGroup.data_region_keys
+            : [];
+    const dataRegionKey = regionOrGroup.dataRegionKey ?? regionOrGroup.data_region_key ?? null;
+    const lookupGroup = {
+        visualRegionKey,
+        label: regionOrGroup.label ?? regionOrGroup.region_name ?? visualRegionKey,
+        countryCode: normalizeCountryCode(regionOrGroup.countryCode ?? regionOrGroup.country_code),
+        dataRegionKey,
+        dataRegionKeys,
+        dataRegionShares: regionOrGroup.dataRegionShares ?? regionOrGroup.data_region_shares ?? null,
+    };
+    return buildVisualRegionDisplayData(lookupGroup, regionOrGroup.areaShare ?? regionOrGroup.area_share ?? 1, mapDataCache.previousRegionsByKey);
+}
 function buildInternalGuideMarkup(group, eventAffected = false) {
     const affectedClass = eventAffected ? " map-event-affected-guides" : "";
     if (REAL_SUBDIVISION_VISUAL_REGION_KEYS.has(group.visualRegionKey) && Array.isArray(group.features) && group.features.length > 1) {
@@ -4734,6 +4759,8 @@ function buildVisualRegionDisplayData(group, areaShare, regionSourceMap) {
     return {
         ...scaledSource,
         visual_region_key: group.visualRegionKey,
+        data_region_key: group.dataRegionKey ?? source.data_region_key ?? null,
+        data_region_keys: Array.isArray(group.dataRegionKeys) ? group.dataRegionKeys : null,
         region_name: group.label,
         source_region_name: VISUAL_REGION_SOURCE_NAME_OVERRIDES[group.visualRegionKey] ?? source.region_name,
         is_visual_split: normalizeRegionName(group.label) !== normalizeRegionName(source.region_name),
@@ -4768,8 +4795,15 @@ function aggregateVisualRegionRows(group, sourceRows) {
     return {
         ...base,
         visual_region_key: group.visualRegionKey,
+        data_region_key: group.dataRegionKey ?? base.data_region_key ?? null,
+        data_region_keys: Array.isArray(group.dataRegionKeys) ? group.dataRegionKeys : null,
+        data_region_shares: Array.isArray(group.dataRegionShares) ? group.dataRegionShares : null,
         region_name: group.label,
         source_region_name: sourceRows.map((row) => row.region_name).join(" + "),
+        source_country_code: base.source_country_code ?? base.country_code,
+        source_country_name: base.source_country_name ?? base.country_name,
+        country_code: group.countryCode,
+        country_name: countryDisplayName(group.countryCode, base.country_name ?? group.countryCode),
         start_population: startPopulation,
         end_population: endPopulation,
         births: Math.round(sumMetric(sourceRows, "births")),
@@ -5117,9 +5151,7 @@ function renderCountryHover(countryCode, countryData) {
 }
 function renderRegionHover(countryCode, regionName, regionData, countryData) {
     if (regionData) {
-        const previousRegion = mapDataCache.previousVisualRegionsByKey.get(
-            String(regionData.visual_region_key ?? "")
-        ) ?? null;
+        const previousRegion = previousVisualRegionData(regionData);
         if (!isClassicMetricView()) {
             setMapHoverDetails(
                 `${regionName} (${displayCountryCode(regionData.country_code)}) · ${regionData.yearKey}`,
@@ -5373,7 +5405,7 @@ function renderMapSummaryCards() {
         })
         .map((group) => {
             const currentRegion = group.displayData;
-            const previousRegion = mapDataCache.previousVisualRegionsByKey.get(group.visualRegionKey) ?? null;
+            const previousRegion = previousVisualRegionData(group);
             const regionLabel = displayRegionLabel(group);
             return isClassic
                 ? buildClassicSummaryCard(
