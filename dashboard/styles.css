@@ -210,15 +210,13 @@ code { font-family: Consolas, "Courier New", monospace; }
 }
 .metric-controls {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
-    gap: 8px 18px;
+    gap: 8px;
     max-width: none;
 }
 .metric-button-group {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: contents;
 }
 .view-strip {
     display: grid;
@@ -465,11 +463,11 @@ html[data-theme="light"] .control-hotkey-badge {
 }
 .map-title-block {
     min-width: 170px;
-    padding: 12px 14px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: rgba(13, 28, 46, 0.78);
-    backdrop-filter: blur(8px);
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
 }
 .map-title-block {
     display: inline-flex;
@@ -491,33 +489,25 @@ html[data-theme="light"] .control-hotkey-badge {
 .map-hud .map-mode-controls,
 .map-hud .metric-controls,
 .map-hud .map-app-controls {
-    padding: 8px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: rgba(13, 28, 46, 0.78);
-    backdrop-filter: blur(8px);
-}
-.map-hud-bottom .map-mode-controls,
-.map-hud-bottom .metric-controls {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-bottom-color: transparent;
+    padding: 4px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
 }
 .map-hud .map-app-controls {
     gap: 8px;
 }
 .map-hud .metric-controls {
-    max-width: min(760px, 64vw);
+    max-width: calc(100vw - 560px);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.map-hud .metric-controls::-webkit-scrollbar {
+    display: none;
 }
 .map-hud .map-mode-controls {
     flex: 0 0 auto;
-}
-html[data-theme="light"] .map-title-block,
-html[data-theme="light"] .map-hud .timeline-controls,
-html[data-theme="light"] .map-hud .map-mode-controls,
-html[data-theme="light"] .map-hud .metric-controls,
-html[data-theme="light"] .map-hud .map-app-controls {
-    background: rgba(213, 224, 232, 0.86);
 }
 .map-context-menu {
     position: absolute;
