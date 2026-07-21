@@ -4,6 +4,8 @@
 
 BESP2074 ist eine lokale, jahresbasierte Balkan-Simulation mit Python-Modell, strukturiertem JSON-Export, Web-Dashboard und Grenzeditor. Das Projekt simuliert Länder und Regionen vom automatisch erkannten Basisjahr bis `2074`, visualisiert Kennzahlen auf einer interaktiven Karte und enthält lokale Werkzeuge für Run-Verwaltung und Karten-Overrides.
 
+Für Nutzer ohne Informatik-Hintergrund gibt es eine Schritt-für-Schritt-Anleitung: [Installationsguide](./docs/INSTALLATION.md).
+
 ## Modellcharakter und Nicht-Prognose
 
 BESP2074 ist eine explorative Lern- und Szenariosimulation. Die Ergebnisse sind keine wirtschaftlichen, demografischen, politischen oder finanziellen Prognosen. Langfristige Verläufe entstehen aus vereinfachten Modellannahmen, Startwerten, Szenarien, Seeds und optionalen simulierten Schocks.
@@ -44,6 +46,8 @@ Das Projekt umfasst elf Länder:
 - Kein Node-Paketmanager und kein `npm install` nötig
 
 ## Installation
+
+Ausführlicher für normale Nutzer erklärt: [Installationsguide](./docs/INSTALLATION.md).
 
 ```powershell
 git clone https://github.com/AleksZyro/BESP2074.git
