@@ -129,14 +129,14 @@ The check runs the Python tests, JavaScript syntax checks, a baseline export, an
 
 Latest local audit run in this working tree:
 
-- Date: `2026-07-07`
+- Date: `2026-07-21`
 - Operating system: Windows 11 Home `10.0.26200`, 64-bit
 - Python: `3.11.9`
 - Node: `v24.15.0`
 - Command: `python tools\verify_release_ready.py`
 - Exit status: `0`
-- Runtime: `6.64s`
-- Result: `20 passed`, release verifier successful
+- Runtime: `5.40s`
+- Result: `21 passed`, release verifier successful
 
 This only documents the local audit run in this working tree. The check should be run again in the target environment before publication.
 

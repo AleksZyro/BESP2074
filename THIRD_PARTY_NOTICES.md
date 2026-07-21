@@ -30,6 +30,8 @@ Source URLs:
 
 - <https://api.worldbank.org/v2/country/{countries}/indicator/{indicator}?format=json&per_page=2000>
 - World Bank API help: <https://datahelpdesk.worldbank.org/knowledgebase/articles/898599-indicator-api-queries>
+- World Bank data access and licensing: <https://datacatalog.worldbank.org/public-licenses>
+- World Bank dataset terms: <https://www.worldbank.org/ext/en/legal/terms-conditions/datasets>
 
 Repository processing:
 
@@ -41,7 +43,9 @@ Repository processing:
 Licence / attribution status:
 
 - Source and indicator codes are documented.
-- Final public release should still verify the exact current World Bank data licence and attribution text.
+- The World Bank currently documents CC BY 4.0 as the default licence for datasets produced by the World Bank and distributed as open data.
+- The World Bank dataset terms require attribution to the World Bank and its data providers.
+- Before a public release, each used indicator should still be checked against its own metadata in case a third-party provider or extra condition applies.
 
 ## European Central Bank Exchange Rates
 
@@ -55,6 +59,7 @@ Source URL:
 
 - <https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip>
 - ECB reference-rate page: <https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html>
+- ECB / ESCB statistics reuse policy: <https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html>
 
 Repository processing:
 
@@ -64,7 +69,8 @@ Repository processing:
 Licence / attribution status:
 
 - Source URL and processing are documented.
-- Final public release should verify the exact ECB reuse wording for the exchange-rate dataset.
+- The ECB currently documents free reuse of publicly available ESCB statistics if the source is quoted and statistics, including metadata, are not modified.
+- BESP2074 stores derived annual average conversion values, so release notes should keep the processing step explicit and attribute the source as ECB statistics.
 
 ## geoBoundaries Geodata
 
@@ -102,6 +108,7 @@ Files affected:
 Source:
 
 - geoBoundaries: <https://www.geoboundaries.org/>
+- geoBoundaries country downloads: <https://www.geoboundaries.org/countryDownloads.html>
 
 Repository processing:
 
@@ -110,8 +117,9 @@ Repository processing:
 
 Licence / attribution status:
 
-- geoBoundaries describes itself as an open CC BY 4.0 boundary resource.
-- Final public release should verify whether each downloaded file/version has matching metadata and whether additional per-file attribution is required.
+- geoBoundaries describes itself as an open CC BY 4.0 administrative boundary resource.
+- geoBoundaries states that attribution is required for all uses of the country dataset.
+- Before a public release, each stored simplified file should still be checked against its downloaded file/version metadata.
 
 ## Eurostat GISCO / NUTS Geodata
 
@@ -122,6 +130,7 @@ Files affected:
 Source:
 
 - Eurostat GISCO NUTS geodata: <https://ec.europa.eu/eurostat/web/gisco/geodata/statistical-units/territorial-units-statistics>
+- Eurostat GISCO geodata overview: <https://ec.europa.eu/eurostat/web/gisco/geodata>
 
 Repository processing:
 
@@ -161,7 +170,7 @@ Generated outputs are not third-party source data and should not be committed:
 ## Open Licence Risks Before Public Release
 
 1. Confirm exact World Bank data licence and attribution wording.
-2. Confirm exact ECB exchange-rate reuse wording.
+2. Keep ECB statistics attribution and derived-average processing notes visible in release documentation.
 3. Confirm per-file geoBoundaries metadata and attribution for all stored ADM files.
 4. Confirm GISCO/NUTS redistribution rights and required attribution for the simplified Slovenia NUTS3 file.
 5. Decide whether public release should keep bundled geodata or instead document download/rebuild steps.

@@ -129,14 +129,14 @@ Der Check führt Tests, JavaScript-Syntaxchecks, einen Baseline-Export und mehre
 
 Letzter lokaler Auditlauf in diesem Arbeitsbaum:
 
-- Datum: `2026-07-07`
+- Datum: `2026-07-21`
 - Betriebssystem: Windows 11 Home `10.0.26200`, 64-bit
 - Python: `3.11.9`
 - Node: `v24.15.0`
 - Befehl: `python tools\verify_release_ready.py`
 - Exit-Status: `0`
-- Laufzeit: `6.64s`
-- Ergebnis: `20 passed`, Release-Verifier erfolgreich
+- Laufzeit: `5.40s`
+- Ergebnis: `21 passed`, Release-Verifier erfolgreich
 
 Diese Angabe beschreibt nur den lokalen Auditlauf in diesem Arbeitsbaum. Vor einer Veröffentlichung sollte der Check erneut in der Zielumgebung laufen.
 
