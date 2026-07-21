@@ -14,19 +14,17 @@ Landes-Baselines für Bevölkerung, GDP, Arbeitslosigkeit, Inflation und Demogra
 
 Das Projekt umfasst elf Länder:
 
-- Albania
-- Bosnia and Herzegovina
-- Bulgaria
-- Croatia
-- Greece
-- Hungary
+- Albanien
+- Bosnien und Herzegowina
+- Bulgarien
+- Griechenland
+- Kroatien
 - Montenegro
-- North Macedonia
-- Romania
-- Serbia
-- Slovenia
-
-Kosovo wird kartografisch als Overlay innerhalb des Serbien-Scopes geführt.
+- Nordmazedonien
+- Rumänien
+- Serbien
+- Slowenien
+- Ungarn
 
 ## Hauptfunktionen
 
@@ -48,7 +46,7 @@ Kosovo wird kartografisch als Overlay innerhalb des Serbien-Scopes geführt.
 ## Installation
 
 ```powershell
-git clone https://github.com/Aleksandros2/BESP2074.git
+git clone https://github.com/AleksZyro/BESP2074.git
 cd BESP2074
 python --version
 python -m pip install -r requirements-dev.txt

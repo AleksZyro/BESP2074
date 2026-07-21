@@ -26,8 +26,6 @@ The project covers eleven countries:
 - Serbia
 - Slovenia
 
-Kosovo is handled as a map overlay within the Serbia scope.
-
 ## Main Features
 
 - Python simulation model with country, region, and state indicators.
@@ -48,7 +46,7 @@ Kosovo is handled as a map overlay within the Serbia scope.
 ## Installation
 
 ```powershell
-git clone https://github.com/Aleksandros2/BESP2074.git
+git clone https://github.com/AleksZyro/BESP2074.git
 cd BESP2074
 python --version
 python -m pip install -r requirements-dev.txt
