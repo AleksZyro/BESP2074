@@ -133,7 +133,7 @@ Letzter lokaler Auditlauf in diesem Arbeitsbaum:
 - Node: `v24.15.0`
 - Befehl: `python tools\verify_release_ready.py`
 - Exit-Status: `0`
-- Laufzeit: `5.40s`
+- Laufzeit: `5.54s`
 - Ergebnis: `21 passed`, Release-Verifier erfolgreich
 
 Diese Angabe beschreibt nur den lokalen Auditlauf in diesem Arbeitsbaum. Vor einer Veröffentlichung sollte der Check erneut in der Zielumgebung laufen.
@@ -178,13 +178,13 @@ Geprüfte lokale Screenshots liegen unter `docs/screenshots/`:
 
 ## Projektstatus
 
-BESP2074 ist technisch lokal nutzbar und bereit für privaten Review. Für eine öffentliche Veröffentlichung bleiben Lizenz- und Quellenhinweise entscheidend, besonders für Karten- und Datendateien.
+BESP2074 ist technisch lokal nutzbar und bereit für Portfolio-Review. Ein offizieller öffentlicher Release sollte erst erfolgen, wenn die Geodaten-Attribution und Weiterverteilungsrechte final geklärt sind. Besonders relevant sind die vereinfachten Karten- und NUTS-Dateien in `dashboard/data/`.
 
 ## Bekannte Einschränkungen
 
 - Keine echte Prognose und keine Entscheidungshilfe für Politik, Wirtschaft oder Finanzen.
 - Regionale Werte enthalten Modellannahmen und Arbeitswerte.
-- Karten basieren auf vereinfachten Drittanbieter-Geodaten.
+- Karten basieren auf vereinfachten Drittanbieter-Geodaten; die vollständige Quellen- und Lizenzprüfung ist vor einem öffentlichen Release noch abzuschliessen.
 - Der Grenzeditor ordnet bestehende Flächen um, erstellt aber keine freien Grenzschnitte.
 - `output/` ist generiert und soll nicht committed werden.
 

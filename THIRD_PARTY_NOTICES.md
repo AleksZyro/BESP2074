@@ -114,12 +114,15 @@ Repository processing:
 
 - Files are simplified and compacted for browser use.
 - Some map display behaviour is adjusted through `dashboard/data/map_assignments.json`.
+- The simplified GeoJSON files keep administrative properties such as `shapeName`, `shapeISO`, `shapeID`, `shapeGroup`, and `shapeType`.
+- The simplified files do not preserve a complete downloaded metadata record such as source release date, download date, or original metadata URL.
 
 Licence / attribution status:
 
 - geoBoundaries describes itself as an open CC BY 4.0 administrative boundary resource.
 - geoBoundaries states that attribution is required for all uses of the country dataset.
-- Before a public release, each stored simplified file should still be checked against its downloaded file/version metadata.
+- The repository-level source and licence family are documented.
+- Before a public release, each stored simplified file should still be matched to its exact downloaded file/version metadata or regenerated from a documented source script.
 
 ## Eurostat GISCO / NUTS Geodata
 
@@ -136,11 +139,14 @@ Repository processing:
 
 - The file is simplified and compacted for browser use.
 - It is used for Slovenian NUTS3 inner lines inside larger project regions.
+- The local feature properties include `source: Eurostat GISCO NUTS 2021`.
 
 Licence / attribution status:
 
 - GISCO / Eurostat geodata has specific copyright and use conditions.
-- This is a release blocker until the exact required attribution and permitted redistribution conditions for the stored simplified file are confirmed.
+- The Eurostat GISCO pages document specific use rules for statistical-unit geodata and require source attribution.
+- This remains a release blocker until the exact required attribution, redistribution conditions, and any non-commercial-use restriction for the stored simplified file are confirmed.
+- If that cannot be confirmed before public release, remove this bundled file from the release package or replace it with documented rebuild/download instructions.
 
 ## Project Model Data
 
@@ -169,8 +175,8 @@ Generated outputs are not third-party source data and should not be committed:
 
 ## Open Licence Risks Before Public Release
 
-1. Confirm exact World Bank data licence and attribution wording.
+1. Confirm exact World Bank attribution wording for the used indicators and keep provider attribution visible.
 2. Keep ECB statistics attribution and derived-average processing notes visible in release documentation.
-3. Confirm per-file geoBoundaries metadata and attribution for all stored ADM files.
-4. Confirm GISCO/NUTS redistribution rights and required attribution for the simplified Slovenia NUTS3 file.
+3. Match every bundled geoBoundaries simplified file to exact downloaded file/version metadata, or regenerate from documented source inputs before public release.
+4. Confirm GISCO/NUTS redistribution rights, required attribution, and any non-commercial-use restriction for the simplified Slovenia NUTS3 file.
 5. Decide whether public release should keep bundled geodata or instead document download/rebuild steps.

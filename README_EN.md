@@ -133,7 +133,7 @@ Latest local audit run in this working tree:
 - Node: `v24.15.0`
 - Command: `python tools\verify_release_ready.py`
 - Exit status: `0`
-- Runtime: `5.40s`
+- Runtime: `5.54s`
 - Result: `21 passed`, release verifier successful
 
 This only documents the local audit run in this working tree. The check should be run again in the target environment before publication.
@@ -178,13 +178,13 @@ Checked local screenshots are stored in `docs/screenshots/`:
 
 ## Project Status
 
-BESP2074 is technically usable locally and ready for private review. Public publication still depends on complete licence and source attribution, especially for map and data files.
+BESP2074 is technically usable locally and ready for portfolio review. An official public release should wait until geodata attribution and redistribution rights are finally checked. The simplified map and NUTS files in `dashboard/data/` are the most relevant open point.
 
 ## Known Limitations
 
 - Not a real forecast and not a decision tool for politics, economics, or finance.
 - Regional values include model assumptions and working estimates.
-- Maps are simplified third-party geodata.
+- Maps are simplified third-party geodata; the full source and licence check still has to be completed before public release.
 - The boundary editor reassigns existing features but does not create free polygon cuts.
 - `output/` is generated and should not be committed.
 
