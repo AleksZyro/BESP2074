@@ -1,7 +1,6 @@
 import csv
 import io
 import json
-import ssl
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -48,13 +47,7 @@ def fetch_indicator_rows(indicator_code: str) -> tuple[str, list[dict]]:
         f"https://api.worldbank.org/v2/country/{WB_COUNTRY_QUERY}/indicator/{indicator_code}"
         "?format=json&per_page=2000"
     )
-    # Some Windows/Python setups in this workspace reject the World Bank chain,
-    # so the refresh tool falls back to an unverified context for this public API.
-    with urllib.request.urlopen(
-        url,
-        timeout=30,
-        context=ssl._create_unverified_context(),
-    ) as response:
+    with urllib.request.urlopen(url, timeout=30) as response:
         payload = json.load(response)
 
     if not isinstance(payload, list) or len(payload) < 2:
