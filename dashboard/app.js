@@ -1778,7 +1778,7 @@ function isHotkeyInputTarget(target) {
     if (!(target instanceof Element)) {
         return false;
     }
-    return Boolean(target.closest("input, select, textarea, button, [contenteditable='true']"));
+    return Boolean(target.closest("input, select, textarea, [contenteditable='true']"));
 }
 function getActionForHotkey(code) {
     return HOTKEY_ACTIONS.find((action) => dashboardState.hotkeys[action.key] === code)?.key ?? "";

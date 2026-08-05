@@ -44,7 +44,7 @@
     "baseline_inflation_rate": 0.033368,
     "base_integration_index": 0.5562,
     "base_satisfaction_index": 0.513295,
-    "base_election_alignment_index": -0.06,
+    "base_election_alignment_index": 0.0,
     "last_election_year": 2023,
     "election_cycle_years": 4,
     "election_sensitivity": 0.58
@@ -94,7 +94,7 @@
     "baseline_inflation_rate": 0.022159,
     "base_integration_index": 0.4924,
     "base_satisfaction_index": 0.54001,
-    "base_election_alignment_index": 0.12,
+    "base_election_alignment_index": -0.2,
     "last_election_year": 2021,
     "election_cycle_years": 4,
     "election_sensitivity": 0.61
@@ -119,7 +119,7 @@
     "baseline_inflation_rate": 0.034897,
     "base_integration_index": 0.5054,
     "base_satisfaction_index": 0.51091,
-    "base_election_alignment_index": 0.09,
+    "base_election_alignment_index": 0.22,
     "last_election_year": 2024,
     "election_cycle_years": 4,
     "election_sensitivity": 0.63
@@ -144,7 +144,7 @@
     "baseline_inflation_rate": 0.024465,
     "base_integration_index": 0.6412,
     "base_satisfaction_index": 0.637212,
-    "base_election_alignment_index": -0.02,
+    "base_election_alignment_index": 0.16,
     "last_election_year": 2024,
     "election_cycle_years": 4,
     "election_sensitivity": 0.72
@@ -194,7 +194,7 @@
     "baseline_inflation_rate": 0.02972,
     "base_integration_index": 0.6778,
     "base_satisfaction_index": 0.633894,
-    "base_election_alignment_index": 0.18,
+    "base_election_alignment_index": 0.22,
     "last_election_year": 2024,
     "election_cycle_years": 4,
     "election_sensitivity": 0.56
@@ -219,7 +219,7 @@
     "baseline_inflation_rate": 0.057214,
     "base_integration_index": 0.6454,
     "base_satisfaction_index": 0.585625,
-    "base_election_alignment_index": 0.14,
+    "base_election_alignment_index": 0.0,
     "last_election_year": 2024,
     "election_cycle_years": 4,
     "election_sensitivity": 0.59
@@ -245,7 +245,7 @@
     "baseline_inflation_rate": 0.019656,
     "base_integration_index": 0.7244,
     "base_satisfaction_index": 0.686411,
-    "base_election_alignment_index": -0.08,
+    "base_election_alignment_index": -0.2,
     "last_election_year": 2022,
     "election_cycle_years": 4,
     "election_sensitivity": 0.46
@@ -271,7 +271,7 @@
     "baseline_inflation_rate": 0.02741,
     "base_integration_index": 0.6686,
     "base_satisfaction_index": 0.573189,
-    "base_election_alignment_index": -0.04,
+    "base_election_alignment_index": 0.24,
     "last_election_year": 2023,
     "election_cycle_years": 4,
     "election_sensitivity": 0.6
