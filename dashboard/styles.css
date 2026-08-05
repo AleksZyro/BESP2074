@@ -922,8 +922,7 @@ html[data-theme="light"] .control-hotkey-badge {
 }
 .detail-card {
     min-height: 220px;
-    max-height: 320px;
-    overflow: hidden;
+    overflow: visible;
 }
 .detail-card .meta-value {
     overflow-wrap: anywhere;
@@ -934,9 +933,7 @@ html[data-theme="light"] .control-hotkey-badge {
 .meta-note { margin: 8px 0 0; line-height: 1.45; }
 #map-hover-body {
     min-height: 5.2rem;
-    max-height: 205px;
-    overflow-y: auto;
-    padding-right: 2px;
+    overflow: visible;
 }
 .hover-detail-content {
     display: grid;

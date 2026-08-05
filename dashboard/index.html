@@ -211,7 +211,7 @@
                                     </label>
                                     <button id="generate-run" class="timeline-button timeline-button-primary" type="button">Generate runs</button>
                                     <button id="reload-export" class="timeline-button" type="button">Reload export</button>
-                                    <a id="open-boundary-editor" class="timeline-button timeline-link-button" href="./editor.html">Expert mode</a>
+                                    <a id="open-boundary-editor" class="timeline-button timeline-link-button" href="./editor.html" data-i18n="command.boundaryEditor">Boundary editor</a>
                                 </div>
                                 <div class="run-controls report-controls" role="group" aria-label="Run export controls">
                                     <label class="timeline-select-wrap" for="report-start-year">
@@ -225,8 +225,8 @@
                                     <label class="timeline-select-wrap" for="report-detail">
                                         <span>Detail</span>
                                         <select id="report-detail" class="timeline-select">
-                                            <option value="countries">Countries</option>
-                                            <option value="countries_regions">Countries + regions</option>
+                                            <option value="countries" data-i18n="report.detailCountries">Countries</option>
+                                            <option value="countries_regions" data-i18n="report.detailCountriesRegions">Countries + regions</option>
                                         </select>
                                     </label>
                                     <label class="toggle-wrap compact-toggle-wrap" for="report-include-events">

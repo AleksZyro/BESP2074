@@ -72,6 +72,14 @@ Das PowerShell-Fenster muss offen bleiben, solange du BESP2074 benutzt.
 - Dashboard: <http://127.0.0.1:8011/dashboard/index.html>
 - Grenzeditor: <http://127.0.0.1:8011/dashboard/editor.html>
 
+Wenn das Dashboard beim ersten Start `No year loaded` anzeigt, fehlt noch der aktuelle Simulations-Export. Klicke im Dashboard auf `Runs starten` oder öffne ein zweites PowerShell-Fenster im Projektordner und führe aus:
+
+```powershell
+.\.venv\Scripts\python.exe main.py --scenario baseline
+```
+
+Lade danach das Dashboard neu.
+
 ## 5. Projekt später erneut starten
 
 Wenn das Projekt schon installiert ist, musst du nicht alles wiederholen. Öffne PowerShell:

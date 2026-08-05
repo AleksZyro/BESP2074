@@ -691,6 +691,9 @@ const I18N = {
         "runFinished.body": "Save TXT or PDF as often as needed. Continue when you are ready to start the next run.",
         "runFinished.noSave": "Continue without more saves",
         "common.cancel": "Cancel",
+        "command.boundaryEditor": "Boundary editor",
+        "report.detailCountries": "Countries",
+        "report.detailCountriesRegions": "Countries + regions",
         "meta.selectedYear": "Selected year",
         "meta.startYear": "Start year",
         "meta.endYear": "End year",
@@ -891,6 +894,9 @@ const I18N = {
         "runFinished.body": "Speichere TXT oder PDF so oft wie nötig. Fahre weiter, wenn du den nächsten Run starten willst.",
         "runFinished.noSave": "Ohne weiteres Speichern weiter",
         "common.cancel": "Abbrechen",
+        "command.boundaryEditor": "Grenzeditor",
+        "report.detailCountries": "Länder",
+        "report.detailCountriesRegions": "Länder + Regionen",
         "meta.selectedYear": "Ausgewähltes Jahr",
         "meta.startYear": "Startjahr",
         "meta.endYear": "Endjahr",
@@ -5623,7 +5629,7 @@ function buildInflationHoverHtml(row, previousRow) {
         buildHoverDetailRow(t("metric.direction"), formatInflationDirection(current), tone),
         buildHoverDetailRow(t("metric.rate"), formatPercent(Math.abs(current)), tone),
         buildHoverDetailRow(
-            t("metric.previous"),
+            t("metric.change"),
             Number.isFinite(delta)
                 ? `${delta >= 0 ? "▲" : "▼"} ${formatPercent(Math.abs(delta))}`
                 : t("metric.noPrevious"),
@@ -5631,30 +5637,23 @@ function buildInflationHoverHtml(row, previousRow) {
         ),
     ]);
 }
-function buildElectionHoverHtml(row, scopeType = "region") {
+function buildElectionHoverHtml(row, previousRow) {
     const current = Number(Object.hasOwn(row, "election_alignment_index") ? row.election_alignment_index : row.election_tension_index);
     const tendency = formatElectionTendency(current);
     const lastElectionYear = Number(row.election_last_year ?? 0);
     const nextElectionYear = Number(row.election_next_year ?? 0);
-    const comparisonYear = resolveElectionComparisonYear(row);
-    const firstSimulatedYear = Number.parseInt(String(dashboardState.yearKeys[0] ?? "").slice(0, 4), 10);
-    const referenceRow = scopeType === "country"
-        ? findHistoricalCountryRow(row.country_code, comparisonYear)
-        : findHistoricalVisualRegionRow(String(row.visual_region_key ?? ""), comparisonYear);
-    const changeText = referenceRow
+    const changeText = previousRow
         ? describeElectionBandShift(
             current,
-            Number(referenceRow.election_alignment_index ?? referenceRow.election_tension_index ?? current)
+            Number(previousRow.election_alignment_index ?? previousRow.election_tension_index ?? current)
         )
-        : (comparisonYear > 0 && Number.isFinite(firstSimulatedYear) && comparisonYear < firstSimulatedYear
-            ? t("election.beforeSimulation")
-            : t("election.noComparison"));
+        : t("metric.noPrevious");
     const rows = [
         buildHoverDetailRow(t("election.tendency"), tendency.label, tendency.tone),
         buildHoverDetailRow(t("election.leftRight"), `${current >= 0 ? "+" : ""}${current.toFixed(2)}`, tendency.tone),
         buildHoverDetailRow(t("election.last"), lastElectionYear > 0 ? String(lastElectionYear) : "-", "neutral"),
         buildHoverDetailRow(t("election.next"), nextElectionYear > 0 ? String(nextElectionYear) : "-", "neutral"),
-        buildHoverDetailRow(t("election.sinceLast"), changeText, "neutral"),
+        buildHoverDetailRow(t("metric.previous"), changeText, "neutral"),
     ];
     return `
         ${buildElectionScale(current)}
@@ -5671,7 +5670,7 @@ function buildMetricHoverHtml(metricKey, row, previousRow, scopeType = "region")
         return buildInflationHoverHtml(row, previousRow);
     }
     if (metricKey === "elections") {
-        return buildElectionHoverHtml(row, scopeType);
+        return buildElectionHoverHtml(row, previousRow, scopeType);
     }
     const currentValue = metricRowValue(row, metricKey);
     const previousValue = previousRow ? metricRowValue(previousRow, metricKey) : Number.NaN;
