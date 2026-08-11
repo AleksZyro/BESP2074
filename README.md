@@ -2,9 +2,27 @@
 
 **Deutsch** | [English](./README_EN.md)
 
-BESP2074 ist eine lokale, jahresbasierte Balkan-Simulation mit Python-Modell, strukturiertem JSON-Export, Web-Dashboard und Grenzeditor. Das Projekt simuliert Länder und Regionen vom automatisch erkannten Basisjahr bis `2074`, visualisiert Kennzahlen auf einer interaktiven Karte und enthält lokale Werkzeuge für Run-Verwaltung und Karten-Overrides.
+BESP2074 ist ein lokaler Balkan economy simulation player mit Python-Modell, strukturiertem JSON-Export, interaktivem Web-Dashboard und Grenzeditor. Das Projekt simuliert Länder und Regionen vom automatisch erkannten Basisjahr bis `2074`, visualisiert Kennzahlen auf einer Karte und zeigt, wie datengetriebene Szenario-Simulation, Dashboard-Frontend und Validierung zusammenarbeiten.
 
 Für Nutzer ohne Informatik-Hintergrund gibt es eine Schritt-für-Schritt-Anleitung: [Installationsguide](./docs/INSTALLATION.md).
+
+## Wofür dieses Projekt gefunden werden soll
+
+BESP2074 ist relevant für Suchen nach:
+
+- Balkan simulation, economy simulation und demographic simulation
+- Python simulation model mit JSON export
+- interactive dashboard, map dashboard und local web dashboard
+- scenario modelling, reproducible seeds und simulated shock events
+- portfolio project mit Python, JavaScript, tests und GitHub Actions
+
+## Kurzprofil
+
+- **Kategorie:** lokale Szenario- und Wirtschaftssimulation
+- **Frontend:** statisches HTML/CSS/JavaScript-Dashboard mit Kartenansicht
+- **Backend/Modell:** Python-CLI mit Länder-, Regions- und State-Dynamik
+- **Output:** validierter JSON-Export für Dashboard und Reports
+- **Ziel:** technische Portfolio-Demo für Simulation, Datenmodellierung und UI-State
 
 ## Modellcharakter und Nicht-Prognose
 
@@ -165,6 +183,11 @@ Es gibt keinen separaten Build-Schritt und keinen Node-Paketmanager. Das Dashboa
 ## CI
 
 Der Workflow `.github/workflows/ci.yml` läuft nur bei Pull Requests nach `main` und Pushes auf `main`. Er installiert `requirements-dev.txt`, richtet Node.js ein und führt `python tools\verify_release_ready.py` aus. Er deployt nichts und benötigt keine Secrets.
+
+## Repository-Metadaten Vorschlag
+
+- Description: `Local Balkan economy simulation with Python model, JSON export, map dashboard and scenario editor.`
+- Topics: `python`, `simulation`, `economy-simulation`, `balkan`, `dashboard`, `scenario-modelling`, `data-visualization`, `portfolio-project`
 
 ## Daten aktualisieren
 
