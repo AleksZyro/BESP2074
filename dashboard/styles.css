@@ -126,7 +126,7 @@ code { font-family: Consolas, "Courier New", monospace; }
 }
 .language-flag-gb {
     background:
-        linear-gradient(90deg, transparent 0 45%, #c8102e 45% 55%, transparent 55% 100%),
+        linear-gradient(90deg, transparent 0 43%, #c8102e 43% 57%, transparent 57% 100%),
         linear-gradient(0deg, transparent 0 41%, #c8102e 41% 59%, transparent 59% 100%),
         linear-gradient(34deg, transparent 0 42%, #ffffff 42% 47%, #c8102e 47% 53%, #ffffff 53% 58%, transparent 58% 100%),
         linear-gradient(-34deg, transparent 0 42%, #ffffff 42% 47%, #c8102e 47% 53%, #ffffff 53% 58%, transparent 58% 100%),
