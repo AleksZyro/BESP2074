@@ -76,8 +76,8 @@ Die Simulation schreibt den aktuellen Run nach `output/latest.json`. Das Dashboa
 
 BESP2074 ist eine Lern- und Szenariosimulation. Die Ergebnisse sind keine echten Prognosen und keine Entscheidungshilfe für Politik, Wirtschaft oder Finanzen.
 
-Der eigene Quellcode und die eigene Projektdokumentation stehen unter der MIT-Lizenz in `LICENSE`.
+Der eigene Quellcode und die eigene Projektdokumentation stehen unter der [MIT-Lizenz](./LICENSE).
 
-Drittanbieter-Daten und Geodaten behalten ihre eigenen Lizenzen und Nutzungsbedingungen. Weitere Hinweise stehen in `THIRD_PARTY_NOTICES.md`.
+Drittanbieter-Daten und Geodaten behalten ihre eigenen Lizenzen und Nutzungsbedingungen. Weitere Hinweise stehen in den [Third-Party Notices](./THIRD_PARTY_NOTICES.md).
 
 </details>

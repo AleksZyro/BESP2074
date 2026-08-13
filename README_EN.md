@@ -76,8 +76,8 @@ The simulation writes the current run to `output/latest.json`. The dashboard rea
 
 BESP2074 is a learning and scenario simulation. Its results are not real forecasts and are not decision support for politics, economics, or finance.
 
-The self-authored source code and project documentation are licensed under the MIT Licence in `LICENSE`.
+The self-authored source code and project documentation are licensed under the [MIT Licence](./LICENSE).
 
-Third-party data and geodata keep their own licences and terms of use. Further notes are listed in `THIRD_PARTY_NOTICES.md`.
+Third-party data and geodata keep their own licences and terms of use. Further notes are listed in the [Third-Party Notices](./THIRD_PARTY_NOTICES.md).
 
 </details>
