@@ -2,19 +2,53 @@
 
 [Deutsch](./README.md) | **English**
 
-BESP2074 is a local year-by-year Balkan simulation with a Python model, structured JSON export, web dashboard, and boundary editor. It simulates countries and regions from the automatically detected baseline year to `2074`, visualises indicators on an interactive map, and includes local tools for run management and map overrides.
+BESP2074 is a local Balkan simulation up to `2074`. The project combines a Python simulation model, JSON export, an interactive web dashboard, a map view, scenarios, shocks, and a boundary editor.
 
-For users without a programming background, use the step-by-step guide: [Installation Guide](./docs/INSTALLATION_EN.md).
+The goal is a clear portfolio demo: start a simulation, inspect the development on the map, and compare indicators or scenarios.
 
-## Model Character and Non-Forecast Notice
+## Demo
 
-BESP2074 is an exploratory learning and scenario simulation. Its results are not economic, demographic, political, or financial forecasts. Long-term paths are produced from simplified model assumptions, initial values, scenarios, seeds, and optional simulated shocks.
+![BESP2074 Simulation](./docs/screenshots/dashboard-simulation.gif)
 
-Country baselines for population, GDP, unemployment, inflation, and demography are refreshed from World Bank data and ECB exchange rates. Regional starting values and some social or political indicators are model assumptions or working estimates.
+![Dashboard Screenshot](./docs/screenshots/dashboard-country-view.png)
+
+## Features
+
+- Interactive Balkan map with country and region view
+- Timeline up to `2074` with play, next, and speed controls
+- Scenarios with reproducible seeds
+- Optional simulated shocks
+- KPI modes for population, GDP, unemployment, inflation, and more
+- Local boundary editor for map overrides and annexation scenarios
+
+## Quick Start
+
+```powershell
+git clone https://github.com/AleksZyro/BESP2074.git
+cd BESP2074
+python -m pip install -r requirements-dev.txt
+python tools\local_run_service.py --port 8011
+```
+
+Then open:
+
+- Dashboard: <http://127.0.0.1:8011/dashboard/index.html>
+- Boundary editor: <http://127.0.0.1:8011/dashboard/editor.html>
+
+A more detailed step-by-step guide is available in the [Installation Guide](./docs/INSTALLATION_EN.md).
+
+## Run a Simulation
+
+```powershell
+python main.py --scenario baseline
+python main.py --scenario baseline --disable-shocks
+python main.py --scenario reform --seed reform-a
+python main.py --list-scenarios
+```
+
+The simulation writes the current run to `output/latest.json`. The dashboard reads this file through the local Python service.
 
 ## Country Scope
-
-The project covers eleven countries:
 
 - Albania
 - Bosnia and Herzegovina
@@ -28,174 +62,22 @@ The project covers eleven countries:
 - Serbia
 - Slovenia
 
-## Main Features
+## Project Structure
 
-- Python simulation model with country, region, and state indicators.
-- Reproducible seeds, scenarios, multiple runs, and optional simulated events.
-- JSON export to `output/latest.json` for the dashboard and verifiers.
-- Local web dashboard with map, timeline, KPI modes, dark/light mode, and run service.
-- TXT export and deletion of the current run through the local service.
-- Local boundary editor for map overrides and annexation scenarios.
-- Automated tests, JavaScript syntax checks, and release validation.
-
-## Requirements
-
-- Python `3.10+`; locally checked with Python `3.11.9`
-- `pytest` for tests; pinned in `requirements-dev.txt`
-- Node.js for JavaScript syntax checks; locally checked with Node `v24.15.0`
-- No Node package manager and no `npm install` required
-
-## Installation
-
-Explained in more detail for regular users: [Installation Guide](./docs/INSTALLATION_EN.md).
-
-```powershell
-git clone https://github.com/AleksZyro/BESP2074.git
-cd BESP2074
-python --version
-python -m pip install -r requirements-dev.txt
-python -m pytest
-```
-
-On Windows, `py` may be used instead of `python` depending on the local installation.
-
-## Simulation
-
-```powershell
-python main.py --scenario baseline
-python main.py --scenario baseline --disable-shocks
-python main.py --scenario reform --seed reform-a
-python main.py --list-scenarios
-```
-
-By default, the simulation writes the current working run to `output/latest.json`. Old `simulation_*.json` files are not automatically collected in the standard run. Archive JSON export is only created when `--archive-output` is used deliberately.
-
-## Dashboard
-
-Start the local service:
-
-```powershell
-python tools\local_run_service.py --port 8011
-```
-
-Open:
-
-- Dashboard: <http://127.0.0.1:8011/dashboard/index.html>
-- Boundary editor: <http://127.0.0.1:8011/dashboard/editor.html>
-
-The dashboard shows countries, regions, KPI modes, events, dark/light mode, timeline playback, and run management. The current run can be exported as TXT, opened as a printable PDF view, or deleted.
-
-BESP2074 is not a GitHub Pages web version. The full application runs locally through the Python service, processes runs and data locally, and may later be packaged as a desktop application. No desktop release has been published yet.
-
-## Boundary Editor
-
-The boundary editor does not cut new polygons. It reassigns existing ADM features to a target country and optionally to a target region. This keeps the map topology stable.
-
-Workflow:
-
-1. Select a region or country.
-2. Set target country and target region.
-3. Apply the annexation assignment locally.
-4. Save.
-5. Reload the dashboard or simulation.
-
-## Scenarios and Seeds
-
-Scenarios are stored in `data/scenarios.json`. Seeds control reproducible variation. The same seed and settings should produce the same run. Different seeds produce different paths.
-
-## Events and Shocks
-
-Shocks are optional seed-stable model events from `data/shocks.json`. They are stored in the simulation output and are not invented by the frontend. Shocks are intentionally rarer and may affect multiple regions or countries.
-
-## Architecture
-
-- `data/countries.json`: country baselines and model parameters
-- `data/regions.json`: regional starting values and model assumptions
-- `data/scenarios.json`: scenarios
-- `data/shocks.json`: optional shocks
-- `main.py`: CLI entry point
+- `main.py`: CLI entry point for simulations
 - `besp/`: simulation model, loader, exporter, and validation
+- `data/`: countries, regions, scenarios, and shocks
+- `dashboard/`: HTML, CSS, JavaScript, map view, and editor
 - `tools/local_run_service.py`: local dashboard and run service
-- `dashboard/`: HTML, CSS, JavaScript, maps, and editor
-- `tests/`: automated tests
+- `docs/`: installation and screenshots
 
-## Tests and Release Check
+<details>
+<summary>Legal</summary>
 
-Required check:
-
-```powershell
-python tools\verify_release_ready.py
-```
-
-The check runs the Python tests, JavaScript syntax checks, a baseline export, and several export/geo verifiers.
-
-Latest local audit run in this working tree:
-
-- Date: `2026-07-21`
-- Operating system: Windows 11 Home `10.0.26200`, 64-bit
-- Python: `3.11.9`
-- Node: `v24.15.0`
-- Command: `python tools\verify_release_ready.py`
-- Exit status: `0`
-- Runtime: `5.54s`
-- Result: `21 passed`, release verifier successful
-
-This only documents the local audit run in this working tree. The check should be run again in the target environment before publication.
-
-Individual checks:
-
-```powershell
-python -m pytest
-node --check dashboard/app.js
-node --check dashboard/config.js
-node --check dashboard/editor.js
-node --check dashboard/map_utils.js
-python main.py --scenario baseline --seed test-local
-python tools\verify_export_year_state.py
-python tools\verify_state_dynamics.py
-python tools\verify_export_meta.py
-python tools\verify_geo_coverage.py
-python tools\verify_geo_name_normalization.py
-```
-
-## Build
-
-There is no separate build step and no Node package manager. The dashboard is static HTML/CSS/JavaScript served by the local Python service. Technical validation consists of tests, JavaScript syntax checks, and export/geo verifiers.
-
-## CI
-
-The `.github/workflows/ci.yml` workflow runs only on pull requests to `main` and pushes to `main`. It installs `requirements-dev.txt`, sets up Node.js, and runs `python tools\verify_release_ready.py`. It does not deploy anything and requires no secrets.
-
-## Data Updates
-
-```powershell
-python tools\refresh_country_baselines.py
-```
-
-The script uses World Bank indicators and ECB EUR/USD reference rates. It checks multiple candidate years and selects the best common coverage. Data refreshes should be treated as a separate reviewed change.
-
-## Screenshots
-
-Checked local screenshots are stored in `docs/screenshots/`:
-
-- `dashboard-country-view.png`
-
-## Project Status
-
-BESP2074 is technically usable locally and ready for portfolio review. An official public release should wait until geodata attribution and redistribution rights are finally checked. The simplified map and NUTS files in `dashboard/data/` are the most relevant open point.
-
-## Known Limitations
-
-- Not a real forecast and not a decision tool for politics, economics, or finance.
-- Regional values include model assumptions and working estimates.
-- Maps are simplified third-party geodata; the full source and licence check still has to be completed before public release.
-- The boundary editor reassigns existing features but does not create free polygon cuts.
-- `output/` is generated and should not be committed.
-
-## Licence and Third-Party Sources
+BESP2074 is a learning and scenario simulation. Its results are not real forecasts and are not decision support for politics, economics, or finance.
 
 The self-authored source code and project documentation are licensed under the MIT Licence in `LICENSE`.
 
-Third-party data, geodata, and external sources remain subject to their own licences and terms of use. The MIT Licence does not grant additional rights to those third-party materials.
+Third-party data and geodata keep their own licences and terms of use. Further notes are listed in `THIRD_PARTY_NOTICES.md`.
 
-Details are listed in `THIRD_PARTY_NOTICES.md`. Unclear or unverified licence points are marked as open risks there.
+</details>
