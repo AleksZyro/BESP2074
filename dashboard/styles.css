@@ -429,7 +429,20 @@ html[data-theme="light"] .control-hotkey-badge {
     padding: 0;
     overflow: hidden;
     display: block;
-    background: var(--canvas-bg);
+    background:
+        radial-gradient(ellipse at 32% 34%, rgba(118, 183, 214, 0.12), transparent 34%),
+        radial-gradient(ellipse at 70% 58%, rgba(220, 184, 107, 0.08), transparent 30%),
+        linear-gradient(rgba(173, 198, 224, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(173, 198, 224, 0.055) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(173, 198, 224, 0.045) 0 1px, transparent 1px 88px),
+        var(--canvas-bg);
+    background-size:
+        100% 100%,
+        100% 100%,
+        96px 96px,
+        96px 96px,
+        88px 88px,
+        auto;
 }
 #country-map {
     width: 100%;
