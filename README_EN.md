@@ -8,7 +8,7 @@ The goal is a clear portfolio demo: start a simulation, inspect the development 
 
 ## Demo
 
-![BESP2074 Simulation](./docs/screenshots/dashboard-simulation.gif)
+![BESP2074 Simulation](./docs/screenshots/dashboard-simulation.webp)
 
 ![Dashboard Screenshot](./docs/screenshots/dashboard-country-view.png)
 
