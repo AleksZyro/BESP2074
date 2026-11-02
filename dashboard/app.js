@@ -1804,31 +1804,14 @@ function executeHotkeyAction(action) {
             stepTimeline(1);
             break;
         case "countries":
-            if (dashboardState.editorMode) {
-                setEditorMode(false);
-            }
-            setMapMode("country");
-            break;
         case "regions":
             if (dashboardState.editorMode) {
                 setEditorMode(false);
             }
-            setMapMode("region");
+            setMapMode(action === "countries" ? "country" : "region");
             break;
         case "borders":
             setEditorMode(!dashboardState.editorMode);
-            break;
-        case "classicMetric":
-            setActiveMetric("classic");
-            break;
-        case "populationMetric":
-            setActiveMetric("population");
-            break;
-        case "jobsMetric":
-            setActiveMetric("unemployment");
-            break;
-        case "gdpMetric":
-            setActiveMetric("gdp_per_capita");
             break;
         case "theme":
             toggleTheme();
