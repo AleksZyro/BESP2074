@@ -515,32 +515,11 @@ function normalizeCountryCode(countryCode) {
 }
 
 function repairRegionTextMojibakeAscii(regionName) {
-    return String(regionName ?? "")
-        .replaceAll("ÃƒÂ«", "Ã«")
-        .replaceAll("ÃƒÂ§", "Ã§")
-        .replaceAll("Ã„Â", "Ä")
-        .replaceAll("ÃƒÂ¡", "Ã¡")
-        .replaceAll("ÃƒÂ¢", "Ã¢")
-        .replaceAll("ÃƒÂ©", "Ã©")
-        .replaceAll("ÃƒÂ­", "Ã­")
-        .replaceAll("ÃƒÂ³", "Ã³")
-        .replaceAll("ÃƒÂ¶", "Ã¶")
-        .replaceAll("ÃƒÂº", "Ãº")
-        .replaceAll("ÃƒÂ¼", "Ã¼")
-        .replaceAll("Ã…â€˜", "Å‘")
-        .replaceAll("Ã…Â±", "Å±");
+    return BESP_UTILS.repairRegionTextMojibakeAscii(regionName);
 }
 
 function normalizeRegionName(regionName) {
-    const compact = repairRegionTextMojibakeAscii(regionName)
-        .normalize("NFKD")
-        .replaceAll(/[\u0300-\u036f]/g, "")
-        .trim()
-        .toLowerCase()
-        .replaceAll("&", " and ")
-        .replaceAll(/[^a-z0-9 ]+/g, " ")
-        .replaceAll(/\s+/g, " ");
-    return REGION_NAME_ALIASES[compact] ?? compact;
+    return BESP_UTILS.normalizeRegionName(regionName, REGION_NAME_ALIASES);
 }
 
 function buildRegionKey(countryCode, regionName) {
