@@ -6126,66 +6126,33 @@ function describeElectionBandShift(currentValue, previousValue) {
     const direction = bandDelta > 0 ? t("election.stepRight") : t("election.stepLeft");
     return `${Math.abs(bandDelta)} ${direction}`;
 }
+function buildMetricTrend(tone, arrow, label, summaryKey) {
+    return { tone, arrow, label, summary: t(summaryKey) };
+}
 function metricTrend(metricKey, currentValue, previousValue) {
     const current = Number(currentValue);
     const previous = Number(previousValue);
     if (!Number.isFinite(current) || !Number.isFinite(previous)) {
-        return {
-            tone: "neutral",
-            arrow: "→",
-            label: t("metric.noPrevious"),
-            summary: t("trend.noPrevious"),
-        };
-    }
-    if (metricKey === "elections") {
-        const delta = current - previous;
-        if (Math.abs(delta) < 0.015) {
-            return {
-                tone: "neutral",
-                arrow: "↔",
-                label: dashboardState.language === "de" ? "stabil" : "stable",
-                summary: t("trend.politicalStable"),
-            };
-        }
-        return delta > 0
-            ? {
-                tone: "positive",
-                arrow: "↗",
-                label: dashboardState.language === "de" ? "rechter" : "rightward",
-                summary: t("trend.politicalRight"),
-            }
-            : {
-                tone: "negative",
-                arrow: "↙",
-                label: dashboardState.language === "de" ? "linker" : "leftward",
-                summary: t("trend.politicalLeft"),
-            };
+        return buildMetricTrend("neutral", "→", t("metric.noPrevious"), "trend.noPrevious");
     }
     const delta = current - previous;
+    if (metricKey === "elections") {
+        if (Math.abs(delta) < 0.015) {
+            return buildMetricTrend("neutral", "↔", dashboardState.language === "de" ? "stabil" : "stable", "trend.politicalStable");
+        }
+        return delta > 0
+            ? buildMetricTrend("positive", "↗", dashboardState.language === "de" ? "rechter" : "rightward", "trend.politicalRight")
+            : buildMetricTrend("negative", "↙", dashboardState.language === "de" ? "linker" : "leftward", "trend.politicalLeft");
+    }
     const magnitude = metricTrendMagnitude(metricKey, current, previous, delta);
     const lowerIsBetter = new Set(["unemployment", "inflation", "corruption", "debt"]);
     const isPositiveDirection = lowerIsBetter.has(metricKey) ? delta < 0 : delta > 0;
     if (magnitude === "neutral") {
-        return {
-            tone: "neutral",
-            arrow: "→",
-            label: dashboardState.language === "de" ? "stabil" : "stable",
-            summary: t("trend.small"),
-        };
+        return buildMetricTrend("neutral", "→", dashboardState.language === "de" ? "stabil" : "stable", "trend.small");
     }
     return isPositiveDirection
-        ? {
-            tone: "positive",
-            arrow: "↗",
-            label: dashboardState.language === "de" ? "positiv" : "positive",
-            summary: t("trend.positive"),
-        }
-        : {
-            tone: "negative",
-            arrow: "↘",
-            label: dashboardState.language === "de" ? "negativ" : "negative",
-            summary: t("trend.negative"),
-        };
+        ? buildMetricTrend("positive", "↗", dashboardState.language === "de" ? "positiv" : "positive", "trend.positive")
+        : buildMetricTrend("negative", "↘", dashboardState.language === "de" ? "negativ" : "negative", "trend.negative");
 }
 function buildMapMetricDetail(currentValue, previousValue, metricKey, labelScale) {
     if (isClassicMetricView()) {
