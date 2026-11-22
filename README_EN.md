@@ -2,9 +2,9 @@
 
 [Deutsch](./README.md) | **English**
 
-BESP2074 is a local Balkan simulation up to `2074`. The project combines a Python simulation model, JSON export, an interactive web dashboard, a map view, scenarios, shocks, and a boundary editor.
+BESP2074 is a personal scenario simulation for eleven Balkan and neighbouring countries through 2074. Bundled World Bank observations anchor national baselines. Regional allocations and scenario parameters are model assumptions. The dashboard displays the population and economic indicators calculated from those inputs.
 
-The goal is a clear portfolio demo: start a simulation, inspect the development on the map, and compare indicators or scenarios.
+A seed makes a run repeatable with the same inputs. Shocks are optional simulated events. The boundary editor lets you explore hypothetical regional assignments. These scenarios cannot support reliable economic forecasts.
 
 ## Demo
 
@@ -26,7 +26,7 @@ The goal is a clear portfolio demo: start a simulation, inspect the development 
 ```powershell
 git clone https://github.com/AleksZyro/BESP2074.git
 cd BESP2074
-python -m pip install -r requirements-dev.txt
+python main.py --scenario baseline --seed demo
 python tools\local_run_service.py --port 8011
 ```
 
@@ -62,22 +62,17 @@ The simulation writes the current run to `output/latest.json`. The dashboard rea
 - Serbia
 - Slovenia
 
-## Project Structure
+## Verification
 
-- `main.py`: CLI entry point for simulations
-- `besp/`: simulation model, loader, exporter, and validation
-- `data/`: countries, regions, scenarios, and shocks
-- `dashboard/`: HTML, CSS, JavaScript, map view, and editor
-- `tools/local_run_service.py`: local dashboard and run service
-- `docs/`: installation and screenshots
+```powershell
+python -m pip install -r requirements-dev.txt
+python tools\verify_release_ready.py
+```
 
-<details>
-<summary>Legal</summary>
+The release check uses Python 3.11 and Node.js 24 in CI.
 
-BESP2074 is a learning and scenario simulation. Its results are not real forecasts and are not decision support for politics, economics, or finance.
+## Licences
 
 The self-authored source code and project documentation are licensed under the [MIT Licence](./LICENSE).
 
 Third-party data and geodata keep their own licences and terms of use. Further notes are listed in the [Third-Party Notices](./THIRD_PARTY_NOTICES.md).
-
-</details>

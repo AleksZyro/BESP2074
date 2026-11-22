@@ -2,9 +2,9 @@
 
 **Deutsch** | [English](./README_EN.md)
 
-BESP2074 ist eine lokale Balkan-Simulation bis `2074`. Das Projekt verbindet ein Python-Simulationsmodell mit JSON-Export, interaktivem Web-Dashboard, Kartenansicht, Szenarien, Schocks und einem Grenzeditor.
+BESP2074 ist eine persönliche Szenariosimulation für elf Länder auf dem Balkan und in seiner Nachbarschaft bis 2074. Mitgelieferte Weltbankdaten bilden die Grundlage der nationalen Ausgangswerte. Regionale Verteilungen und Szenarioparameter beruhen auf Modellannahmen. Das Dashboard zeigt die daraus berechneten Bevölkerungs- und Wirtschaftskennzahlen.
 
-Das Ziel ist eine anschauliche Portfolio-Demo: Man startet eine Simulation, schaut sich die Entwicklung auf der Karte an und kann verschiedene Kennzahlen oder Szenarien vergleichen.
+Ein Seed macht einen Lauf bei identischen Eingaben wiederholbar. Schocks sind optionale simulierte Ereignisse. Mit dem Grenzeditor lassen sich hypothetische Zuordnungen von Regionen untersuchen. Aus solchen Szenarien lassen sich keine verlässlichen Wirtschaftsprognosen ableiten.
 
 ## Demo
 
@@ -26,7 +26,7 @@ Das Ziel ist eine anschauliche Portfolio-Demo: Man startet eine Simulation, scha
 ```powershell
 git clone https://github.com/AleksZyro/BESP2074.git
 cd BESP2074
-python -m pip install -r requirements-dev.txt
+python main.py --scenario baseline --seed demo
 python tools\local_run_service.py --port 8011
 ```
 
@@ -62,22 +62,17 @@ Die Simulation schreibt den aktuellen Run nach `output/latest.json`. Das Dashboa
 - Slowenien
 - Ungarn
 
-## Projektaufbau
+## Prüfung
 
-- `main.py`: CLI-Einstieg für Simulationen
-- `besp/`: Simulationsmodell, Loader, Exporter und Validierung
-- `data/`: Länder, Regionen, Szenarien und Schocks
-- `dashboard/`: HTML, CSS, JavaScript, Kartenansicht und Editor
-- `tools/local_run_service.py`: lokaler Dashboard- und Run-Service
-- `docs/`: Installation und Screenshots
+```powershell
+python -m pip install -r requirements-dev.txt
+python tools\verify_release_ready.py
+```
 
-<details>
-<summary>Rechtliches</summary>
+Die Release-Prüfung läuft in CI mit Python 3.11 und Node.js 24.
 
-BESP2074 ist eine Lern- und Szenariosimulation. Die Ergebnisse sind keine echten Prognosen und keine Entscheidungshilfe für Politik, Wirtschaft oder Finanzen.
+## Lizenzen
 
 Der eigene Quellcode und die eigene Projektdokumentation stehen unter der [MIT-Lizenz](./LICENSE).
 
 Drittanbieter-Daten und Geodaten behalten ihre eigenen Lizenzen und Nutzungsbedingungen. Weitere Hinweise stehen in den [Third-Party Notices](./THIRD_PARTY_NOTICES.md).
-
-</details>
