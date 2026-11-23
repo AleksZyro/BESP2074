@@ -1,6 +1,5 @@
 from besp.models import Country, Region
 
-
 MIN_REGION_UNEMPLOYMENT = 0.04
 MAX_REGION_UNEMPLOYMENT = 0.35
 
@@ -43,6 +42,7 @@ def scale_integer_attribute_to_total(
             setattr(region, attribute_name, even_share + (1 if index < remainder else 0))
         return
 
+    preserve_nonzero = safe_target_total >= sum(value > 0 for value in current_values)
     scaled_values: list[int] = []
     fractions: list[tuple[float, int]] = []
     running_total = 0
@@ -50,7 +50,7 @@ def scale_integer_attribute_to_total(
     for index, (region, current_value) in enumerate(zip(regions, current_values)):
         raw_scaled = (current_value / current_total) * safe_target_total
         scaled_value = int(raw_scaled)
-        if current_value > 0 and safe_target_total > 0:
+        if current_value > 0 and preserve_nonzero:
             scaled_value = max(scaled_value, 1)
         scaled_values.append(scaled_value)
         fractions.append((raw_scaled - int(raw_scaled), index))
@@ -73,7 +73,7 @@ def scale_integer_attribute_to_total(
         while difference < 0:
             adjusted = False
             for index in removable_indices:
-                minimum_allowed = 1 if current_values[index] > 0 and safe_target_total > 0 else 0
+                minimum_allowed = 1 if current_values[index] > 0 and preserve_nonzero else 0
                 if scaled_values[index] <= minimum_allowed:
                     continue
                 scaled_values[index] -= 1
