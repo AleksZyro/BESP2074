@@ -5,7 +5,6 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COUNTRIES_PATH = REPO_ROOT / "data" / "countries.json"
 SNAPSHOT_LATEST_PATH = REPO_ROOT / "data" / "world_bank_baseline_latest.json"

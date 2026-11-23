@@ -10,7 +10,12 @@ from besp.loader import (
     load_shock_map,
     load_world,
 )
-from besp.models import CountryYearResult, RegionYearResult, ShockEvent, SimulationScenario
+from besp.models import (
+    CountryYearResult,
+    RegionYearResult,
+    ShockEvent,
+    SimulationScenario,
+)
 from besp.simulation import aggregate_country_results, simulate_period
 from besp.validation import validate_simulation_results
 

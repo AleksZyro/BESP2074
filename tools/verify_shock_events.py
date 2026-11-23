@@ -5,12 +5,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from verify_common import fail, load_latest_export
+
 from besp.loader import load_shocks
 from besp.simulation import (
     MAX_SHOCK_EVENTS_PER_CATEGORY_COUNTRY_YEAR,
     MAX_SHOCK_EVENTS_PER_COUNTRY_YEAR,
 )
-from verify_common import fail, load_latest_export
 
 
 def main() -> None:

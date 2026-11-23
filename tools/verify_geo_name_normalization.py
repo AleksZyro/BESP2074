@@ -4,7 +4,6 @@ from pathlib import Path
 
 from verify_common import fail, read_json_file
 
-
 MOJIBAKE_REPLACEMENTS = (
     ("\u00C3\u00AB", "\u00EB"),
     ("\u00C3\u00A7", "\u00E7"),

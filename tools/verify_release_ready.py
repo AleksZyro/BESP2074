@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_END_YEAR = 2074
 RELEASE_SEED = "release-check"
