@@ -2,7 +2,12 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from besp.models import CountryYearResult, RegionYearResult, ShockEvent, SimulationScenario
+from besp.models import (
+    CountryYearResult,
+    RegionYearResult,
+    ShockEvent,
+    SimulationScenario,
+)
 
 
 def build_simulation_export(

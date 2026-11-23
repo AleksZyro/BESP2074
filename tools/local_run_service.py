@@ -9,6 +9,7 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCENARIOS_PATH = REPO_ROOT / "data" / "scenarios.json"
 LATEST_EXPORT_PATH = REPO_ROOT / "output" / "latest.json"

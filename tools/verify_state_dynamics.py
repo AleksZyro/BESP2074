@@ -1,6 +1,5 @@
 from verify_common import fail, load_latest_export, parse_year_bucket_start
 
-
 STATE_LIMITS = {
     "budget_balance_pct_gdp": (-0.12, 0.06, 0.035),
     "debt_to_gdp": (0.15, 1.50, 0.06),

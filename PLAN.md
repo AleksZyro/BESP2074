@@ -5,4 +5,4 @@
 3. In beiden READMEs Start, Szenarien, Grenzen der Aussagekraft und Lizenzen sichtbar machen.
 4. Die dokumentierten Python- und Dashboardprüfungen in einer isolierten Umgebung ausführen.
 
-Vor dem Commit `pytest -q` und `ruff check src tests` ausführen und ihre Anwendbarkeit dokumentieren. Nur geprüfte Projektdateien aufnehmen. Dateien unter `data/` vom Commit ausschliessen. Den Entwicklungsbranch pushen. Der Merge bleibt eine separate Entscheidung.
+Vor dem Commit `pytest -q` und `ruff check .` ausführen und ihre Anwendbarkeit dokumentieren. Nur geprüfte Projektdateien aufnehmen. Dateien unter `data/` vom Commit ausschliessen. Den Entwicklungsbranch pushen. Der Merge bleibt eine separate Entscheidung.

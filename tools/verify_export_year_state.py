@@ -1,11 +1,11 @@
+from pathlib import Path
+
 from verify_common import (
     fail,
     load_latest_export,
     parse_year_bucket_start,
     read_json_file,
 )
-from pathlib import Path
-
 
 EXACT_INTEGER_FIELDS = [
     "start_population",

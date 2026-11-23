@@ -2,7 +2,6 @@ from pathlib import Path
 
 from verify_common import fail
 
-
 DATA_DIR = Path("dashboard/data")
 EXPECTED_ADM0 = {
     "ALB",

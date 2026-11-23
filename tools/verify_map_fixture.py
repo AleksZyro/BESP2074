@@ -1,6 +1,6 @@
 from pathlib import Path
-from verify_common import fail, read_json_file
 
+from verify_common import fail, read_json_file
 
 EXPECTED_COUNTRY_CODES = {"BIH", "MNE", "SRB"}
 EXPECTED_REGIONS = {

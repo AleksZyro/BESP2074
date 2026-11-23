@@ -1,10 +1,10 @@
 from besp.models import CountryYearResult, RegionYearResult
 from besp.simulation import (
+    MAX_ELECTION_ALIGNMENT_INDEX,
     MAX_ELECTION_TENSION_INDEX,
     MAX_GDP_GROWTH,
     MAX_INFLATION_RATE,
     MAX_INTEGRATION_INDEX,
-    MAX_ELECTION_ALIGNMENT_INDEX,
     MAX_SATISFACTION_INDEX,
     MAX_UNEMPLOYMENT_RATE,
     MIN_ELECTION_ALIGNMENT_INDEX,
@@ -16,6 +16,7 @@ from besp.simulation import (
     MIN_UNEMPLOYMENT_RATE,
     STATE_SPECS,
 )
+
 BOUND_TOLERANCE = 1e-9
 REGION_BOUNDS = {
     "unemployment_rate": (MIN_UNEMPLOYMENT_RATE, MAX_UNEMPLOYMENT_RATE),
